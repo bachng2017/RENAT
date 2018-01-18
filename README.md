@@ -11,7 +11,7 @@ implied warranty.
 All product names and trademarks are the property of their respective owners, which are in no way associated or affiliated with this software. Use of these names does not imply any co-operation or endorsement.
 - Ixia, IxiaNetwork, IxiaLoad are trademarks of IXIA 
 - Calient is a trademark of CALIENT NETWORKS, INC.
-- Junos, Juniper trademarks of Junipter Networks.
+- Junos, Juniper are trademarks of Junipter Networks.
 - Cisco is a trademark of Cisco Systems, Inc.
 
 --- 
