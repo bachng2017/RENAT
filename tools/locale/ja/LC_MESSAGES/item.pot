@@ -1,0 +1,86 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-01-02 10:29+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../../../item.sh:34
+#, python-format
+msgid   "Error: %s already exists"
+msgstr  "エラー： `%s` は既にある"
+
+#: ../../../item.sh:43
+msgid   "Create local configuration file (local.yaml) or not [yes,no=default]:"
+msgstr  "ローカル設定ファル(local.yaml)作成するかしないか[yes,no=default]:"
+
+#: ../../../item.sh:47
+msgid   "Use tester [ex:ixnet03_8009]:"
+msgstr  "テスター名[例:ixnet03_8009]:"
+
+#: ../../../item.sh:48
+msgid   "Use tester config file [ex:traffic.ixncfg]:"
+msgstr  "テスター・ファイル[例:traffic.ixncfg]:"
+
+#: ../../../item.sh:49
+msgid   "Use node list (comma separated) [ex:vmx11]:"
+msgstr  "ノード・リスト（コンマで区切る）[例:vmx11]:"
+
+#: ../../../item.sh:50
+msgid   "Use web app list (comma separated)[ex:samurai1]:"
+msgstr  "Webアプ・リスト（コンマで区切る）[例:samurai1]:"
+
+#: ../../../item.sh:70
+#, python-format
+msgid   "=== Created `%s` test item ==="
+msgstr  "=== テスト・ケース `%s` 作成した ==="
+
+#: ../../../item.sh:71
+#, python-format
+msgid   "Case scenario:     %s/%s/main.robot"
+msgstr  "ケース・シナリオ:      %s/%s/main.robot"
+
+#: ../../../item.sh:72
+#, python-format
+msgid   "Case run file:     %s/%s/run.sh"
+msgstr  "ケースの実行ファイル:  %s/%s/run.sh"
+
+#: ../../../item.sh:73
+#, python-format
+msgid   "Local config file: %s/%s/config/local.yaml"
+msgstr  "設定ローカルファイル:  %s/%s/config/local.yaml"
+
+#: ../../../item.sh:74
+#, python-format
+msgid   "Tester config file:%s/%s/config/%s"
+msgstr  "テスターファイル:      %s/%s/config/%s"
+
+#: ../../../item.sh:75
+msgid   "Check and change the `local.yaml` local config file if necessary"
+msgstr  "必要に応じてローカル設定ファイル(local.yaml)の内容を確認および変更ください"
+
+#: ../../../item.sh:78
+#, python-format
+msgid   "Created test item `%s`"
+msgstr  "テスト項目 `%s` が作成された"
+
+#: ../../../item.sh:79
+#, python-format
+msgid   "Test scenario: %s/%s/main.robot"
+msgstr  "テストシナリオ:        %s/%s/main.robot"
+
+#: ../../../item.sh:80
+#, python-format
+msgid   "Test run file: %s/%s/run.sh"
+msgstr  "テスト実行ファイル:    %s/%s/run.sh"

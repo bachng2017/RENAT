@@ -1,0 +1,30 @@
+# $Rev: 0.1.6 $
+# $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
+# $Author: bachng $
+
+auth:
+    plain-text: 
+        default:
+            user: renat
+            pass: password!
+        juniper:
+            user: renat
+            pass: password!
+        arbor:
+            user: renat
+            pass: password!
+        samurai:
+            user: renat
+            pass: password!
+        calient:
+            user: renat
+            pass: password!
+        alcatel:
+            user: renat
+            pass: password!
+
+    public-key: # for Public Key authentication
+        default:
+            user: $USER
+            key: $HOME/.ssh/robot_id_rsa
+

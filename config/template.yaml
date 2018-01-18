@@ -1,0 +1,72 @@
+# $Rev: 0.1.6 $
+# $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
+# $Author: bachng $
+
+access-template:
+    ssh-host:
+        access: ssh
+        auth: public-key
+        profile: default
+        prompt: "@.*(>|\\$)"
+        init: 
+            - unalias -a
+    juniper:
+        access: telnet
+        auth: plain-text 
+        profile: default
+        prompt: "@.*(#|>) " 
+        init: 
+            - set cli idle-timeout 0 
+            - set cli screen-length 0
+    cisco:
+        access: ssh
+        auth: plain-text
+        profile: default
+        prompt: "@.*(#|>) "
+        init:
+            - set terminal length 0
+    cisco_asr:
+        access: telnet
+        auth: plain-text
+        profile: default
+        prompt: "CPU.*(#|>)" 
+        login_prompt: "Username:"
+        password_prompt: "Password:"
+        init:
+            - terminal length 0 
+    gr:
+        access: telnet
+        auth: plain-text
+        profile: flets
+        prompt: ".*(#|>) " 
+        init: 
+            - set terminal pager disable
+    alcatel:
+        access: telnet
+        auth: plain-text
+        profile: default 
+        prompt: ":.*(#|>) " 
+        login_prompt: "Login:"
+        password_prompt: "Password:"
+        init:
+            - environment no more    
+    samurai:
+        access: webapp
+        auth: plain-text
+        profile: samurai
+    smartcs:
+        access: telnet
+        auth: plain-text
+        profile: default
+        prompt: ".*(#|>) "
+        init:
+snmp-template:
+       juniper:
+            mib: ${RENAT_PATH}/tools/mib-Juniper.json
+            community: public
+            poller: apollo
+       cisco:
+            mib: ${RENAT_PATH}/tools/mib-Cisco.json
+            community: public
+            poller: apollo
+
