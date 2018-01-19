@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  Copyright 2018 NTT Communications
+#  Copyright 2017 NTT Communications
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 0.1.6 $
-# $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
-# $Author: bachng $
+# $Rev: 603 $
+# $Date: 2018-01-04 10:21:28 +0900 (Thu, 04 Jan 2018) $
+# $Author: $
 
 import requests
 import openpyxl
@@ -106,9 +106,9 @@ class OpticalSwitch(object):
             cells = sheet['B3': 'D326']
             for c1,c2,c3 in cells:
                 if any(x is None for x in [c1.value,c2.value,c3.value]): continue
-                port    = str(c1.value).lower() 
-                device  = str(c2.value).lower()
-                intf    = str(c3.value).lower()
+                port    = unicode(c1.value).lower() 
+                device  = unicode(c2.value).lower()
+                intf    = unicode(c3.value).lower()
                 if device not in self._intf_map: self._intf_map[device] = {}
 
                 self._intf_map[device][intf] = {}
@@ -121,9 +121,9 @@ class OpticalSwitch(object):
 
         # create session to all optical switch
         for entry in Common.GLOBAL['device']:
-            type    = Common.GLOBAL['device'][entry]['type']  
+            dev_type  = Common.GLOBAL['device'][entry]['type']  
 
-            if type != 'calient': continue  # only deal with calient type
+            if dev_type != 'calient': continue  # only deal with calient type
             ip      = Common.GLOBAL['device'][entry]['ip']  
 
             session = requests.Session()
@@ -204,7 +204,7 @@ class OpticalSwitch(object):
 
         rest_result = session.get("http://"+ip+"/rest/ports/?id=detail&port="+sport)
         if rest_result.status_code == requests.codes.ok:
-            BuiltIn().log("result = " + str(rest_result.json()[0]))
+            BuiltIn().log("result = %s" + rest_result.json()[0])
             return rest_result.json()[0]
         else:
             raise Exception("Error when collect port information")
