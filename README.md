@@ -225,10 +225,6 @@ Check and change the `local.yaml` local config file if necessary
 $ tree item01
 item01
 ├── config
-│   ├── internet.profile
-│   │   ├── cert8.db
-│   │   ├── cert_override.txt
-│   │   └── prefs.js
 │   ├── local.yaml
 │   └── vmx11.conf
 ├── lab.robot -> ../lab.robot
