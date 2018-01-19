@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  Copyright 2018 NTT Communications
+#  Copyright 2017 NTT Communications
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 0.1.6 $
-# $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
-# $Author: bachng $
+# $Rev: 592 $
+# $Date: 2018-01-02 17:07:43 +0900 (Tue, 02 Jan 2018) $
+# $Author: $
 
 """ Provides keywords for Juniper platform
 
@@ -226,12 +226,20 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_str='syn
     for err in err_str.split(','):
         if err in output: 
             self._vchannel.cmd("rollback 0")
-            raise Exception("An error happened while loading the config")
+            raise Exception("ERROR: An error happened while loading the config")
     
     if confirm_time == 0:
         output = self._vchannel.cmd("commit")
     else: 
         output = self._vchannel.cmd("commit confirmed %s" % (confirm_time))
+   
+    # check output 
+    for err in err_str.split(','):
+        if err in output: 
+            self._vchannel.cmd("rollback 0")
+            raise Exception("ERROR: An error happened while committing the change")
+
+
 
     self._vchannel.cmd('exit')
 
