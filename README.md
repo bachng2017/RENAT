@@ -17,6 +17,7 @@ All product names and trademarks are the property of their respective owners, wh
 - Junos, Juniper are trademarks of Junipter Networks.
 - Cisco is a trademark of Cisco Systems, Inc.
 
+For details about Robot Framework see [RobotFramework](http://www.robotframework.org/)
 --- 
 
 ## Table of contents

@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 0.1.6 $
-# $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
-# $Author: bachng $
+# $Rev: 632 $
+# $Date: 2018-01-22 05:33:18 +0900 (Mon, 22 Jan 2018) $
+# $Author: $
 
 """ Common library for RENAT
 
@@ -932,6 +932,16 @@ def follow_syslog_and_trap(pattern,log_file_name='syslog-trap.log',delay_str='1s
 
     log_file.close()
     BuiltIn().log('Found pattern `%s` in log file `%s`' % (pattern,log_file_name))
+
+def set_multi_item_variable(*vars):
+    """ Set multiple varibles to be `suite variable` at the same time
+
+    Suite variables (or item variable) could be access anywhere in all the item
+    scenario.
+    """
+    for var in vars:
+        BuiltIn().set_suite_variable(var)
+    BuiltIn().log('Set %d variables to suite(item) scope' % len(vars))
 
 # set RF global variables and load libraries
 try:
