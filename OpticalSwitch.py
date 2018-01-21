@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 603 $
-# $Date: 2018-01-04 10:21:28 +0900 (Thu, 04 Jan 2018) $
+# $Rev: 621 $
+# $Date: 2018-01-21 16:19:12 +0900 (Sun, 21 Jan 2018) $
 # $Author: $
 
 import requests
@@ -204,7 +204,7 @@ class OpticalSwitch(object):
 
         rest_result = session.get("http://"+ip+"/rest/ports/?id=detail&port="+sport)
         if rest_result.status_code == requests.codes.ok:
-            BuiltIn().log("result = %s" + rest_result.json()[0])
+            BuiltIn().log("result = %s" % rest_result.json()[0])
             return rest_result.json()[0]
         else:
             raise Exception("Error when collect port information")

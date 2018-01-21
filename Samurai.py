@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
-# $Rev: 0.1.6 $
-# $Author: bachng $
+# $Date: 2018-01-21 16:19:12 +0900 (Sun, 21 Jan 2018) $
+# $Rev: 621 $
+# $Author: $
 
 import os,time,re
 import lxml.html
@@ -603,18 +603,19 @@ _system_admin_.
             ['nw_monitor_gre1','nw_monitor_gre2','nw_monitor_ce1','nw_monitor_ce2','nw_monitor_p1','nw_monitor_pe2']):
             changing = True
             self.show_policy_monitor(policy_name)
-        if 'nw_monitor_gre1' in policy:
-            self._driver.input_text('gre_addr_1',policy['nw_monitor_gre1'])
-        if 'nw_monitor_gre2' in policy:
-            self._driver.input_text('gre_addr_6',policy['nw_monitor_gre2'])
-        if 'nw_monitor_pe1' in policy:
-            self._driver.select_from_list_by_label('pe_id_1',policy['nw_monitor_pe1'])
-        if 'nw_monitor_pe2' in policy:
-            self._driver.select_from_list_by_label('pe_id_2',policy['nw_monitor_pe2'])
-        if 'nw_monitor_ce1' in policy:
-            self._driver.input_text('ce_addr_1',policy['nw_monitor_ce1'])
-        if 'nw_monitor_ce2' in policy:
-            self._driver.input_text('ce_addr_2',policy['nw_monitor_ce2'])
+
+        if ('nw_monitor_gre1' in policy) or ('nw_monitor_gre2' in policy):
+            gre_elements = self._driver.get_webelements('//input[contains(@id,"gre_addr")]')
+            self._driver.input_text(gre_elements[0],policy['nw_monitor_gre1'])
+            self._driver.input_text(gre_elements[1],policy['nw_monitor_gre2'])
+        if ('nw_monitor_pe1' in policy) or ('nw_monitor_ce1' in policy):
+            pe_elements = self._driver.get_webelements('//select[contains(@name,"pe_id")]')
+            self._driver.select_from_list_by_label(pe_elements[0],policy['nw_monitor_pe1'])
+            self._driver.select_from_list_by_label(pe_elements[1],policy['nw_monitor_pe2'])
+        if ('nw_monitor_ce1' in policy) or ('nw_monitor_ce2' in policy):
+            ce_elements = self._driver.get_webelements('//input[contains(@id,"ce_addr")]')
+            self._driver.input_text(ce_elements[0],policy['nw_monitor_ce1'])
+            self._driver.input_text(ce_elements[1],policy['nw_monitor_ce2'])
         if changing:
             self._driver.click_button("submitbutton")
             self._driver.wait_until_page_contains(u"NW監視情報を変更しました")
@@ -766,16 +767,22 @@ _system_admin_.
             for k in items: self._driver.click_element(k)
             self._driver.click_button(u"//button[.='次へ']")
 
-        
         # Add more setting for Samurai16
         nw_monitor = int(self._driver.get_matching_xpath_count(u"//div[contains(.,'NW 監視設定')]"))
         if nw_monitor > 0:
-            if 'nw_monitor_gre1' in policy: self._driver.input_text('gre_addr_1',policy['nw_monitor_gre1'])
-            if 'nw_monitor_gre2' in policy: self._driver.input_text('gre_addr_6',policy['nw_monitor_gre2'])
-            if 'nw_monitor_pe1' in policy:  self._driver.select_from_list_by_label('pe_id_1',policy['nw_monitor_pe1'])
-            if 'nw_monitor_pe2' in policy:  self._driver.select_from_list_by_label('pe_id_2',policy['nw_monitor_pe2'])
-            if 'nw_monitor_ce1' in policy:  self._driver.input_text('ce_addr_1',policy['nw_monitor_ce1'])
-            if 'nw_monitor_ce2' in policy:  self._driver.input_text('ce_addr_2',policy['nw_monitor_ce2'])
+            if ('nw_monitor_gre1' in policy) or ('nw_monitor_gre2' in policy):
+                gre_elements = self._driver.get_webelements('//input[contains(@id,"gre_addr")]')
+                self._driver.input_text(gre_elements[0],policy['nw_monitor_gre1'])
+                self._driver.input_text(gre_elements[1],policy['nw_monitor_gre2'])
+            if ('nw_monitor_pe1' in policy) or ('nw_monitor_ce1' in policy):
+                pe_elements = self._driver.get_webelements('//select[contains(@name,"pe_id")]')
+                self._driver.select_from_list_by_label(pe_elements[0],policy['nw_monitor_pe1'])
+                self._driver.select_from_list_by_label(pe_elements[1],policy['nw_monitor_pe2'])
+            if ('nw_monitor_ce1' in policy) or ('nw_monitor_ce2' in policy):
+                ce_elements = self._driver.get_webelements('//input[contains(@id,"ce_addr")]')
+                self._driver.input_text(ce_elements[0],policy['nw_monitor_ce1'])
+                self._driver.input_text(ce_elements[1],policy['nw_monitor_ce2'])
+        
             self._driver.click_button(u"//button[.='次へ']")
 
         # Event
