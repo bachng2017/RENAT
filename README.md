@@ -34,6 +34,8 @@ For details about Robot Framework see [RobotFramework](http://www.robotframework
 - [Thanks](#thanks)
 
 ## Features
+![Renat scenario sample](doc/renat_sample.png)
+
 - An extension of widely used RobotFramework that add more suuports for Network Automation Testing
 - Easy to write and read testing scenario
 - Separate testing data and logic
