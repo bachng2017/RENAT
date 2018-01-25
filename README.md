@@ -57,8 +57,7 @@ $ python --version
 
 ### Other necessary packages
 ```
-$ wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
-$ rpm -ivh epel-release-6-8.noarch.rpm
+$ yum install epel-release
 $ yum install gettext gcc net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python27-tkinter xorg-x11-server-Xvfb
 $ pip install numpy pyte PyYAML openpyxl Jinja2 pandas paramiko lxml requests 
 $ pip install netsnmp-py==0.3 
