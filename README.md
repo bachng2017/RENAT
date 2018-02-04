@@ -34,9 +34,11 @@ For details about Robot Framework see [RobotFramework](http://www.robotframework
 - [Thanks](#thanks)
 
 ## Features
+The framework provides an simple way to conduct Network Automation Testing by using simple scenario as follow:
+
 ![Renat scenario sample](doc/renat_sample.png)
 
-- An extension of widely used RobotFramework that add more suuports for Network Automation Testing
+- An extension of widely used RobotFramework that add more supports for Network Automation Testing
 - Easy to write and read testing scenario
 - Separate testing data and logic
 - Easy to collect logs and activities on testing devices
@@ -151,6 +153,8 @@ export IXL_libs
 export PYTHONPATH
 ```
 
+``Notes:``
+The concept of ``Tester module`` is that the configuration should be created using Tester GUI (like Ixia Network or Ixia Load). RENAT framework supports controling the test items, stop/run the tests etc. but does not support traffic genrating itself
 
 ### Web server (optional)
 It is more convinence to access the test result from a web browser. Configure your favorite web server to display to access the test project and test item folder.
