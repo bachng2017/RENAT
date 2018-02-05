@@ -336,7 +336,7 @@ In case you has configure a web server, access `./result/log.html` or `./result/
 - See [item03](./sample/item03/main.robot) for sample about BGP Best Path Selection testing for a JunOS router
 
 ## Manual
-See [manual](./doc/index.html) for more details about RENAT keywords and its modules.
+See [manual](https://bachng2017.github.io/RENAT/doc/index.html) for more details about RENAT keywords and its modules.
 
 ## Copying And Copyrights
 This project is licensed under the Apache v2.0 license. For more detail see [license](./LICENSE)
