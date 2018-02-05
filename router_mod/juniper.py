@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 592 $
-# $Date: 2018-01-02 17:07:43 +0900 (Tue, 02 Jan 2018) $
+# $Rev: 648 $
+# $Date: 2018-02-06 00:11:41 +0900 (Tue, 06 Feb 2018) $
 # $Author: $
 
 """ Provides keywords for Juniper platform
@@ -76,8 +76,8 @@ def get_current_datetime(self,time_format='%H:%M:%S',delta_time='0s',dir='+',**k
 def number_of_ospf_neighbor(self,state="Full"):
     """ Returns number of OPSF neighbors with status ``state``
     """
-    output  = self._vchannel.cmd("show ospf neighbor")
-    count   = output.count(state)
+    output  = self._vchannel.cmd("show ospf neighbor").lower()
+    count   = output.count(state.lower())
 
     BuiltIn().log("Number of OSPF neighbors in `%s` state is %d" % (state,count))
     return count
@@ -96,8 +96,8 @@ def number_of_ospf3_neighbor(self,state="Full"):
 def number_of_bgp_neighbor(self,state="Established"):
     """ Returns number of BGP neighbor in ``state`` state
     """
-    output  = self._vchannel.cmd("show bgp neighbor")
-    count   = output.count(state)
+    output  = self._vchannel.cmd("show bgp neighbor").lower()
+    count   = output.count(state.lower())
 
     BuiltIn().log("Number of BGP neighbors in `%s` state is %d" % (state,count))
     return count
