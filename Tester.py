@@ -164,7 +164,7 @@ module.
             results.get()
 
         else:
-            raise Execption("Error while connecting IxNetwork: wrong module type")
+            raise Exception("Error while connecting IxNetwork: wrong module type")
     
         self._clients[name] = client
         self._cur_name = name
