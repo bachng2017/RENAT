@@ -13,9 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 632 $
-# $Date: 2018-01-22 05:33:18 +0900 (Mon, 22 Jan 2018) $
-# $Author: $
+# $Rev: 822 $
+# $Ver: 0.1.7 $
+# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
+# $Author: bachng $
 
 """ Common library for RENAT
 
@@ -75,10 +76,10 @@ cases.
 | auth:
 |     plain-text:
 |         default:
-|             user: ipc0re
+|             user: user
 |             pass: nttXXX
 |         flets:
-|             user: ipc0re
+|             user: user
 |             pass: IpcoXXXX
 |         arbor:
 |             user: admin
@@ -192,7 +193,7 @@ The GLOBAL variable holds all information defined by the master files and LOCAL
 variable holds all variables defined by active ``local.yaml``. And ``NODE`` is a
 list that hold all active nodes defined in the  ``local.yaml``.
 
-Users could access to the information of an key in ``local.yaml`` by
+Users could access to the information of a key in ``local.yaml`` by
 ``${LOCAL['key']}``, information of a node by ``${LOCAL['node']['vmx11']}`` or
 simply ``$NODE['vmx']``. When a keyword need a list of current node, ``@{NODE}``
 could be used.
@@ -204,21 +205,25 @@ the test and remove the node from its active node list.
 
 """
 
-ROBOT_LIBRARY_VERSION = 'RENAT 0.1.6'
+ROBOT_LIBRARY_VERSION = 'RENAT 0.1.7'
 
 import os
+import glob,fnmatch
 import re
 import yaml
 import glob
-import time
+import time,datetime
 import codecs
 import numpy
+import random
 import shutil
+import pdfkit
 import string
 import fileinput
 import difflib
 import hashlib
 import pandas
+import sys,select
 from sets import Set
 import robot.libraries.DateTime as DateTime
 from robot.libraries.BuiltIn import BuiltIn
@@ -240,6 +245,7 @@ GLOBAL  = {}
 LOCAL   = {}
 NODE    = []
 WEBAPP  = []
+START_TIME = datetime.datetime.now()
 
 def log(msg):
     """ Logs ``msg`` to the current log file
@@ -329,14 +335,33 @@ def get_renat_path():
     """
     return _folder
 
+def get_item_name():
+    """ Returns the name of the running item
+    """
+    return os.path.basename(os.getcwd())
+
 def get_config_path():
     """ Returns absolute path of RENAT config folder path
     """
     return _folder + "/config" 
 
+def get_item_config_path():
+    """ Returns absolute path of current item config folder
+    """
+    return os.getcwd() + '/config'
+    
+
+def get_result_path():
+    """ Returns absolute path of the current result folder
+    """
+    return os.getcwd() + '/' + _result_folder
+
 def get_result_folder():
     """ Returns current result folder name. Default is ``result`` in current
     test case.
+
+    *Note*: the keyword only returns the ``name`` of the result folder not its
+    absolue path.
     """
     return _result_folder
 
@@ -360,23 +385,27 @@ def set_result_folder(folder):
 
     folder_path = os.getcwd() + '/' + folder
     try:
-        os.makedirs(folder_path)
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
         os.chmod(folder_path,int('0775',8))
         
     except Exception as e:
-        BuiltIn().log("Error:" + str(e.args))
+        BuiltIn().log("ERROR:" + str(e.args))
    
     # set ROBOT variable 
-    BuiltIn().set_variable('${OUTPUT DIR}', folder_path)
-    BuiltIn().set_variable('${LOG_FODER}', folder)
-    BuiltIn().set_variable('${RESULT_FOLDER}', folder)
+    # BuiltIn().set_variable('${OUTPUT DIR}', folder_path)
+    # BuiltIn().set_variable('${OUTPUT DIR}', folder_path)
+    # BuiltIn().set_variable('${LOG_FODER}', folder)
+    BuiltIn().set_global_variable('${RESULT_FOLDER}', folder)
+    BuiltIn().set_global_variable('${LOG_FODER}', folder)
+    BuiltIn().set_global_variable('${RESULT_FOLDER}', folder)
 
     BuiltIn().log("Changed current result folder to `%s`" % (folder_path))
     return old_folder
 
 
 def version():
-    """ Returns the current version of RF Chibalab
+    """ Returns the current version of RENAT
     """
     return ROBOT_LIBRARY_VERSION
 
@@ -653,15 +682,19 @@ def create_sequence(start,end,interval,option='float'):
         result = numpy.arange(int(start),int(end),int(interval)).tolist()
     return result
 
-def change_mod(folder,mod):
+def change_mod(name,mod,relative=False):
     """ Changes file mod, likes Unix chmod
 
-    ``mod`` is a string
+    ``mod`` is a string specifying the privilege mode
+    ``relative`` is ``False`` or ``True``
 
     Examples:
     | Common.`Change Mod` | tmp | 0775 |
     """
-    path = os.getcwd() + "/" + folder
+    if relative:
+        path = os.getcwd() + "/" + name
+    else:
+        path = name
     os.chmod(path,int(mod,8))
     BuiltIn().log("Changed `%s` to mode %s" % (path,mod))
 
@@ -697,20 +730,38 @@ def file_md5(path):
     return result
 
 
-def pause(msg=""):
+def pause(msg="",time_out='1s',default_input='',error_on_timeout=False):
     """ Displays the message ``msg`` and pauses the test execution and wait for user input
 
-    Return user input
+    In case of ``error_on_timeout`` is False(default), the keyword will return
+    with ``default_input`` and the test will be continued wihout error.
+    Otherwise, the keyword will raise an error and stop.
 
     If the variable ``${RENAT_BATCH}`` was defined, the keyword will print out
     the message and keeps running without pausing.
+
+    Examples:
+    | Common.`Pause` | Waiting... | 10s | default | error_on_timeout=${TRUE} |
+    | Common.`Pause` | Waiting... | 10s | 
     """
 
-    input = None
+    BuiltIn().log("Pause and wait for user input")
     BuiltIn().log_to_console(msg)
+    input = None
+    wait = DateTime.convert_time(time_out)
+
     renat_batch = BuiltIn().get_variable_value('${RENAT_BATCH}')
     if renat_batch is None: 
-        input = raw_input()
+        i, o, e = select.select( [sys.stdin], [], [], wait)
+        if i:
+            input = sys.stdin.readline().strip()
+            BuiltIn().log("User input detected. Input was `%s`" % input)
+        else:
+            if not error_on_timeout:
+                input = default_input
+                BuiltIn().log("Pause finished with time out. Input was `%s`" % input)
+            else:
+                raise Exception("ERROR: timeout while waiting for user input")
     else:
         BuiltIn().log("Pausing is ignored in batch mode")
     return input
@@ -943,13 +994,76 @@ def set_multi_item_variable(*vars):
         BuiltIn().set_suite_variable(var)
     BuiltIn().log('Set %d variables to suite(item) scope' % len(vars))
 
+def random_number(a='0',b='99'):
+    """ Returns a random number between [a,b]
+    """
+    result = random.randint(int(a),int(b))
+    BuiltIn().log("Created a random number as `%d`" % result)
+    return result
+
+def random_name(base,a='0',b='99'):
+    """ Returns a random name by a `base` and a random number between [a,b]
+
+    Example:
+    | ${FOLDER}= |   `Random Name` | capture_%05d | 0 | 99 | 
+    """
+
+    number = random.randint(int(a),int(b))
+    result = base % number
+    BuiltIn().log("Created a random name  as `%s`" % result)
+    return result
+
+def convert_html_to_pdf(html_file,pdf_file):
+    """ Converts html file to pdf file
+    """
+    options = {
+        'page-size': 'A4',
+        'margin-top': '0.1in',
+        'margin-right': '0.1in',
+        'margin-bottom': '0.1in',
+        'margin-left': '0.1in',
+        'encoding': "UTF-8",
+        'no-outline': None
+    }
+    pdfkit.from_file(html_file,pdf_file,options)
+    BuiltIn().log("Converted `%s` to `%s`" % (html_file,pdf_file))
+
+
+def cleanup_result(ignore=u'^(log.html|output.xml|report.html)$'):
+    """ Cleans up the result folder 
+
+    Deletes all files in current active folder that does not match the
+    ``ignore`` expression and are older than the time the test has started.
+
+    *Note*: The keyword only removes files but not folders
+    """
+  
+    BuiltIn().log("Delete files in result folder `%s`" % _result_folder) 
+    candidates=[] 
+    for root, dirs, files in os.walk(_result_folder):
+        for basename in files:
+            if not re.search(ignore,basename) and not '/.svn' in root:
+                file_path = os.path.join(root,basename)
+                modified_time = os.path.getmtime(file_path)
+                if modified_time < int(START_TIME.strftime('%s')):
+                    candidates.append(file_path)
+
+    for x in candidates:
+        os.remove(x)
+        BuiltIn().log("    Deleted `%s`" % x)
+    BuiltIn().log("Deleted %d files in current result folder" % len(candidates))
+
+
 # set RF global variables and load libraries
 try:
+    
+
     BuiltIn().set_global_variable('${GLOBAL}',GLOBAL)
     BuiltIn().set_global_variable('${LOCAL}',LOCAL)
     BuiltIn().set_global_variable('${USER}',USER)
     BuiltIn().set_global_variable('${NODE}', NODE)
     BuiltIn().set_global_variable('${WEBAPP}', WEBAPP)
+    BuiltIn().set_global_variable('${START_TIME}', START_TIME)
 
     # define Ctrl A-Z
     for i,char in enumerate(list(string.ascii_uppercase)):

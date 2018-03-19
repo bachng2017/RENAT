@@ -13,16 +13,26 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 615 $
-# $Date: 2018-01-20 16:44:55 +0900 (Sat, 20 Jan 2018) $
-# $Author: $
+# $Rev: 822 $
+# $Ver: 0.1.7 $
+# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
+# $Author: bachng $
 
 """
 RENAT(Robotframework Extension for Network Automation Testing)
 
 == What's new ==
 
+=== 1.7 ===
+- added QuickTest support to IxNet module
+- added check mode to Cmd keyword
+- fixed bugs in several modules
+- rewrote project and item run scripts
+
 === 1.6 ===
+- fixed some minor bugs in Japanes codecs
+- enabled IxLoad to reassign ports and added more keyword (Get Test Report)
+- stopped using network drive to exchange files b/w renat server and Windows Ixia client
 - changed Samurai.py  proxy setting, no more use of config/profile directory
 - changed 'case.sh' to 'item.sh' and 'suite.sh' to 'project.sh'
 - move from chibalab.robot to lab.robot for more common use
@@ -33,6 +43,9 @@ RENAT(Robotframework Extension for Network Automation Testing)
 - added global variables ${NODE} and ${DEVICE}
 - added log level to renat default config
 - added library WebApp, Samurai and Arbor
+- added Quicktest support to IxNetwork module
+- changed suite/case concept to project/item and their scripts
+- changed OpticalSwitch 'Add' keyword not use 'force' by default
 
 === 1.5 ===
 - Added juniper mod.Get File keyword

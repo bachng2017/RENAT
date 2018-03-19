@@ -13,9 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-01-21 16:19:12 +0900 (Sun, 21 Jan 2018) $
-# $Rev: 621 $
-# $Author: $
+# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
+# $Rev: 822 $
+# $Ver: 0.1.7 $
+# $Author: bachng $
 
 import os,time,re
 import lxml.html

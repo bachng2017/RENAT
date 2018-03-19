@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
-# $Date: 2018-01-03 20:43:31 +0900 (Wed, 03 Jan 2018) $
-# $Rev: 597 $
+# $Date: 2018-03-20 00:33:18 +0900 (Tue, 20 Mar 2018) $
+# $Rev: 822 $
+# $Ver: $
 # $Author: $
 
 *** Variables ***
-${WORKING_FOLDER}           //home/${USER}/work
+# folder and script for polling process on Apollo
+${WORKING_FOLDER}           /home/${USER}/work 
+${POLLING_SCRIPT}           ${RENAT_PATH}/Pooling.rb -i 5
 
 *** Setting ***
 Resource                    ${RENAT_PATH}/config/extra.robot
@@ -21,8 +24,8 @@ SNMP Polling Start For Host
     Set Test Variable       ${device}       ${LOCAL['node'][u'${host}']['device']}
     Set Test Variable       ${ip}           ${GLOBAL['device']['${device}']['ip']}
     ${mibfile} =            MIB For Node    ${host}
-    VChannel.Cmd            ${RENAT_PATH}/tools/Pooling.rb -i 5 -m ${mibfile} -t ${ip} > ${filename_prefix}${host}.csv &
-    VChannel.Cmd            echo $! >> ${PID}_Pooling.txt
+    VChannel.Cmd            ${POLLING_SCRIPT} -m ${mibfile} -t ${ip} > ${filename_prefix}${host}.csv &
+    VChannel.Cmd            echo $! >> ${MYID}_Pooling.txt
 
 
 SNMP Polling Start
@@ -30,8 +33,8 @@ SNMP Polling Start
     [Arguments]             ${termname}         ${filename_prefix}=snmp_
     VChannel.Switch         ${termname}
     VChannel.Cmd            cd ${WORKING_FOLDER}
-    VChannel.Cmd            [ -s ${WORKING_FOLDER}/${PID}_Pooling.txt ] && kill -9 $(cat ${WORKING_FOLDER}/${PID}_Pooling.txt)
-    VChannel.Cmd            [ -f ${WORKING_FOLDER}/${PID}_Pooling.txt ] && rm -f ${WORKING_FOLDER}/${PID}_Pooling.txt
+    VChannel.Cmd            [ -s ${WORKING_FOLDER}/${MYID}_Pooling.txt ] && kill -9 $(cat ${WORKING_FOLDER}/${MYID}_Pooling.txt)
+    VChannel.Cmd            [ -f ${WORKING_FOLDER}/${MYID}_Pooling.txt ] && rm -f ${WORKING_FOLDER}/${MYID}_Pooling.txt
     :FOR    ${entry}   IN  @{NODE}
     \   Run Keyword If      ${NODE[u'${entry}']['snmp-polling']}        SNMP Polling Start For Host     ${entry}    ${filename_prefix}
 
@@ -40,16 +43,16 @@ SNMP Polling Stop
     [Documentation]         stop polling from ``host`` that started by `SNMP Polling Start`
     [Arguments]             ${termname}
     VChannel.Switch         ${termname}
-    VChannel.Cmd            [ -s ${WORKING_FOLDER}/${PID}_Pooling.txt ] && kill -9 $(cat ${WORKING_FOLDER}/${PID}_Pooling.txt)
-    VChannel.Cmd            [ -f ${WORKING_FOLDER}/${PID}_Pooling.txt ] && rm -f ${WORKING_FOLDER}/${PID}_Pooling.txt
+    VChannel.Cmd            [ -s ${WORKING_FOLDER}/${MYID}_Pooling.txt ] && kill -9 $(cat ${WORKING_FOLDER}/${MYID}_Pooling.txt)
+    VChannel.Cmd            [ -f ${WORKING_FOLDER}/${MYID}_Pooling.txt ] && rm -f ${WORKING_FOLDER}/${MYID}_Pooling.txt
 
 Follow Remote Log Start
     [Documentation]         start remote log from `host` for nodes that has ``follow-remote-log`` flag 
     [Arguments]             ${termname}
     VChannel.Switch         ${termname}
     VChannel.Cmd            cd /var/log
-    VChannel.Cmd            [ -s ${WORKING_FOLDER}/${PID}_TAIL.txt ] && kill -9 $(cat ${WORKING_FOLDER}/${PID}_TAIL.txt)
-    VChannel.Cmd            [ -f ${WORKING_FOLDER}/${PID}_TAIL.txt ] && rm -f ${WORKING_FOLDER}/${PID}_TAIL.txt
+    VChannel.Cmd            [ -s ${WORKING_FOLDER}/${MYID}_TAIL.txt ] && kill -9 $(cat ${WORKING_FOLDER}/${MYID}_TAIL.txt)
+    VChannel.Cmd            [ -f ${WORKING_FOLDER}/${MYID}_TAIL.txt ] && rm -f ${WORKING_FOLDER}/${MYID}_TAIL.txt
     @{nodes}=               Common.Node With Attr  follow-remote-log  ${TRUE} 
     ${file_list}=           Set Variable    ${EMPTY}
     :FOR    ${node}  IN  @{nodes}
@@ -57,14 +60,14 @@ Follow Remote Log Start
     \   ${ip}=          Set Variable    ${GLOBAL['device']['${dev}']['ip']} 
     \   ${file_list}=   Set Variable    ${file_list} syslog-net/${ip}.log snmptrap-net/${ip}.log
     Run Keyword If	'${file_list}' != ''	VChannel.Write	tail -n 0 -F ${file_list} &
-    Run Keyword If	'${file_list}' != ''	VChannel.Cmd	echo $! > ${WORKING_FOLDER}/${PID}_TAIL.txt
+    Run Keyword If	'${file_list}' != ''	VChannel.Cmd	echo $! > ${WORKING_FOLDER}/${MYID}_TAIL.txt
 
 Follow Remote Log Stop
     [Documentation]         stop and clean up process started by `Follow Remote Log Start`
     [Arguments]             ${termname}
     VChannel.Switch         ${termname}
-    VChannel.Write          [ -s ${WORKING_FOLDER}/${PID}_TAIL.txt ] && kill -9 $(cat ${WORKING_FOLDER}/${PID}_TAIL.txt)	2s
-    VChannel.Write          [ -f ${WORKING_FOLDER}/${PID}_TAIL.txt ] && rm -f ${WORKING_FOLDER}/${PID}_TAIL.txt 		2s
+    VChannel.Write          [ -s ${WORKING_FOLDER}/${MYID}_TAIL.txt ] && kill -9 $(cat ${WORKING_FOLDER}/${MYID}_TAIL.txt)	2s
+    VChannel.Write          [ -f ${WORKING_FOLDER}/${MYID}_TAIL.txt ] && rm -f ${WORKING_FOLDER}/${MYID}_TAIL.txt 		2s
 
 
 Follow Syslog And Trap Start
@@ -85,7 +88,9 @@ Lab Setup
     [Documentation]         initial setup for all test cases
     Create Directory        tmp 
     Change Mod              tmp                 0775
-    Change Mod              ${RESULT_FOLDER}    0775
+    Create Directory        ${WORKING_FOLDER}   
+
+    Change Mod              ${RESULT_FOLDER}    0755
 
     ${renat_ver}=           RENAT Version
     Set Suite MetaData      RENAT Ver                   ${renat_ver}
@@ -96,6 +101,9 @@ Lab Setup
     Log To Console          README:
     Log To Console          ${readme}
     Log To Console          ------------------------------------------------------------------------------
+
+    ${HAS_CLEAN}=           Get Variable Value  ${CLEAN}
+    Run Keyword If          "${HAS_CLEAN}"!="None"             CleanUp Result
 
     VChannel.Connect All 
 

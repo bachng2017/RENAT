@@ -13,8 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
-# $Rev: 0.1.6 $
+# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
+# $Rev: 822 $
+# $Ver: 0.1.7 $
 # $Author: bachng $
 
 import netsnmp
@@ -80,6 +81,9 @@ or directly called from ``Router``.
             # using juniper as a base mod for method name
             mod         = import_module('router_mod.juniper')
             cmd_list    = inspect.getmembers(mod, inspect.isfunction)
+   
+            # sync the nanme with current VChannel instance 
+            self._cur_name = self._vchannel._current_name
           
             for cmd,data in cmd_list:
                 if not cmd.startswith('_'):
@@ -126,7 +130,7 @@ or directly called from ``Router``.
         return  ip
 
 
-    def cmd(self,str_cmd,str_prompt = ''):
+    def cmd(self,str_cmd='',str_prompt = ''):
         """ Runs the command ``str_cmd`` and waits until the prompt defined for this
         router.
         This keyword is identical to ``VChannel.Cmd``
@@ -138,7 +142,7 @@ or directly called from ``Router``.
         | Router.`Cmd`   |         Renat2017     |                 |  # wait for default prompt |
         
         The above sample creates an output likes this:
-|   ipc0re@vmx11# set system login user testtest authentication plain-text-password
+|   user@vmx11# set system login user testtest authentication plain-text-password
 |   New password:Renat2017
 |   Retype new password:Renat2017
 |

@@ -13,8 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
-# $Rev: 0.1.6 $
+# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
+# $Rev: 822 $
+# $Ver: 0.1.7 $
 # $Author: bachng $
 
 import sys
@@ -61,7 +62,12 @@ class Tester(object):
 
 where ``device`` is the tester defined in the master ``device.yaml`` file.
 If ``real_port`` does not exist, port remapping will not take place.
-Otherwise, it will happen and override the existed setting.
+Otherwise, port remapping will use the ``real_port`` information to reassign
+all existed ports and map to Ixia ports.
+
+In this case, the order will be the order when user created the port in Ixia
+GUI. *Note:* User can always confirm the created order by ``clear sorting`` in
+Ixia GUI
 
     Examples:
     | Tester.`Connect All` |
@@ -69,7 +75,6 @@ Otherwise, it will happen and override the existed setting.
     | Tester.`Load And Start Traffic` |
     | `Sleep` | 30s |
     | Tester.`Stop Traffic` |
-
 
 Time format used in this module is same with ``time string`` format of Robot Framework. 
 For more details about this, see [http://robotframework.org/robotframework/latest/libraries/DateTime.html|DateTime] 
@@ -141,7 +146,7 @@ module.
             client['connection'] = ix
         elif type == 'ixload':
             tmp = os.getcwd().split('/')
-            win_folder = "D:/RENAT/RESULTS/%s_%s" % (tmp[-2],tmp[-1])
+            # win_folder = "D:/RENAT/RESULTS/%s_%s" % (tmp[-2],tmp[-1])
             win_case = "%s_%s" % (tmp[-2],tmp[-1])
 
             # start IxLoad in different process
@@ -164,7 +169,7 @@ module.
         self._clients[name] = client
         self._cur_name = name
     
-        BuiltIn().log("Connected to tester %s(%s)" % (self._cur_name,ip))
+        BuiltIn().log("Connected to tester `%s`(%s)" % (self._cur_name,ip))
 
 
 

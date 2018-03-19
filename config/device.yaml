@@ -1,11 +1,11 @@
-# $Rev: 0.1.6 $
-# $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
+# $Rev: 0.1.7 $
+# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
 # $Author: bachng $
 
 device:
     # Testers
     ixnet02_8009:
-       type: ixnet
+        type: ixnet
         description: TCL server
         ip: 10.128.4.22
         port: 8009

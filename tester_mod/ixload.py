@@ -13,8 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
-# $Rev: 0.1.6 $
+# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
+# $Rev: 822 $
+# $Ver: 0.1.7 $
 # $Author: bachng $
 
 """ provides functions for IxLoad
@@ -23,8 +24,6 @@ RENAT runs a virtual IxLoad client locally in the background that connects to a
 Windows App server. Keywords from test case will send control messages to the
 client, which in turn will control the test ports. 
 
-Test resuls remain on the remote App server.
-
 Different to IxNetwork, an IxLoad test case usually stops within predefined time
 before ``Stop Traffic`` was called.
 
@@ -32,7 +31,7 @@ before ``Stop Traffic`` was called.
 """
 
 from robot.libraries.BuiltIn import BuiltIn
-
+import Common
 
 
 def _check_result(results,keyword,extra="unknown"):
@@ -71,7 +70,7 @@ def start_traffic(self):
 def stop_traffic(self):
     """ Stops the current running test
     
-    Returns the time in second that the test has really ran.
+    Returns the  elapsed time in seconds
     """
     cli = self._clients[self._cur_name]
     tasks   = cli['tasks']
@@ -79,24 +78,87 @@ def stop_traffic(self):
 
     tasks.put(["ixload::stop_traffic"])
     tasks.join()
-    result = _check_result(results,'ixload::stop_traffic')
-    BuiltIn().log("Stopped the current test traffic")
-    return result[1]
-    
+    msg = _check_result(results,'ixload::stop_traffic')
+    BuiltIn().log("Stopped the current test traffic, elasped time is %s" % msg[1])
+    return msg[1]
+
 
 def load_traffic(self,file_path):
-    """ Loads the test traffic defined by ``file_path``
+    BuiltIn().log_to_console('WARNING: `Load Traffic` is deprecated. Using `Load Config` instead')
+    self.load_config(file_path) 
+
+
+def load_config(self,config_name=""):
+    """ Loads the test traffic defined by ``config_name``
 
     ``file_path`` is the path of the test file on the *remote* App server
-    Result will be saved in remote machine under the folder
-    ``D://RENAT/RESULS/<this case>``
+    A path to a remote network drive could be use to load a config file on Renat
+    server.
+    """
+
+    cli = self._clients[self._cur_name]
+    tasks   = cli['tasks']
+    results = cli['results']
+
+    # prepare port data
+    if 'real-port' in Common.LOCAL['tester'][self._cur_name]:
+        port_data = Common.LOCAL['tester'][self._cur_name]['real-port']
+    set_port = []
+    for item in port_data:
+        set_port.append("%s;%s;%s" % (item['chassis'],item['card'],item['port']))
+
+    # prepare config file
+    if config_name == '':
+        config_name = Common.LOCAL['tester'][self._cur_name]['config']
+    
+    tasks.put(["ixload::load_config",config_name,set_port])
+    tasks.join()
+    msg = _check_result(results,'ixload::load_config')
+    BuiltIn().log("Loaded config file `%s`, set result folder to `%s` and reassigned %d ports" % (config_name,msg[1],len(set_port)))
+
+    
+
+def collect_data(self,prefix='',more_file='',ignore_not_found=True):
+    """ Collects all result data and save them to the current active ``result``
+    folder
+
+    A ``prefix`` will be automatically added to the file names.
+
+    Currently the follow data will be downloaded to the local machine
+        - HTTP_Server.csv
+        - HTTP Client.csv
+        - HTTP Client - Per URL.csv
+        - HTTP Server - Per URL.csv
+        - L2-3 Stats for Client Ports.csv
+        - L2-3 Stats for Server Ports.csv
+        - L2-3 Throughput Stats.csv
+        - Port CPU Statistics.csv
+
+    Extra files could be add by ``more_file`` which is a comma separated
+    filename string 
+
+    When ``ignore_not_found`` is True, the keyword will not terminate even when
+    the expected file is not found.
     """
 
     cli = self._clients[self._cur_name]
     tasks   = cli['tasks']
     results = cli['results']
     
-    tasks.put(["ixload::load_traffic",file_path])
+    tasks.put(["ixload::collect_data",prefix,more_file,ignore_not_found])
     tasks.join()
-    _check_result(results,'ixload::load_traffic')
-    BuiltIn().log("Loaded repository file `%s` on remote machine" % file_path)
+    _check_result(results,'ixload::collect_data')
+    BuiltIn().log("Copied result data to local result folder")
+
+def get_test_report(self,prefix=''):
+    """ Get the test report(PDF) and put it into the active result folder
+    """
+    cli = self._clients[self._cur_name]
+    tasks   = cli['tasks']
+    results = cli['results']
+    
+    tasks.put(["ixload::get_test_report",prefix])
+    tasks.join()
+    _check_result(results,'ixload::get_test_report')
+    BuiltIn().log("Copied report files to local result folder")
+    

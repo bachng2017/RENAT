@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-# $Date: 2018-01-03 20:43:31 +0900 (Wed, 03 Jan 2018) $
-# $Rev: 597 $
+# $Date: 2018-03-20 00:33:18 +0900 (Tue, 20 Mar 2018) $
+# $Rev: 822 $
+# $Ver: $
 # $Author: $
 
 *** Variables ***
-${WORKING_FOLDER}           //home/${USER}/work
+${WORKING_FOLDER}           /home/${USER}/work
 
 *** Setting ***
 Resource                    ${RENAT_PATH}/config/extra.robot

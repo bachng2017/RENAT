@@ -13,8 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 0.1.6 $
-# $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
+# $Rev: 822 $
+# $Ver: 0.1.7 $
+# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
 # $Author: bachng $
 
 ####
@@ -57,3 +58,23 @@ def get_route_number(self,proto='ipv4'):
     BuiltIn().log("Got %d routes from `%s`" % (result,proto))
 
     return result
+
+def number_of_ospf_neighbor(self,state="Full"):
+    """ Returns number of OPSF neighbors with status ``state``
+    """
+    output  = self._vchannel.cmd("show ospf neighbor").lower()
+    count   = output.count(state.lower())
+
+    BuiltIn().log("Number of OSPF neighbors in `%s` state is %d" % (state,count))
+    return count
+
+
+def number_of_bgp_neighbor(self,state="Established"):
+    """ Returns number of BGP neighbor in ``state`` state
+    """
+    output  = self._vchannel.cmd("show bgp neighbor").lower()
+    count   = output.count("bgp state = " + state.lower())
+
+    BuiltIn().log("Number of BGP neighbors in `%s` state is %d" % (state,count))
+    return count
+

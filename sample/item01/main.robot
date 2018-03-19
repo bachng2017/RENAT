@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-# $Date: 2018-01-04 09:23:15 +0900 (Thu, 04 Jan 2018) $
-# $Rev: 602 $ 
+# $Date: 2018-03-20 00:33:18 +0900 (Tue, 20 Mar 2018) $
+# $Rev: 822 $ 
+# $Ver: $
 # $Author: $
 
 # Basic setting

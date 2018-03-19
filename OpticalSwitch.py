@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  Copyright 2017 NTT Communications
+#  Copyright 2018 NTT Communications
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -13,9 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 621 $
-# $Date: 2018-01-21 16:19:12 +0900 (Sun, 21 Jan 2018) $
-# $Author: $
+# $Rev: 822 $
+# $Ver: 0.1.7 $
+# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
+# $Author: bachng $
 
 import requests
 import openpyxl
@@ -91,9 +92,13 @@ class OpticalSwitch(object):
 
     def read_map(self):
         """ Reads the master port map file
+
+        Make lower for all informations.
         """
 
         ### create the master port-map
+        BuiltIn().log("Use `%s` for cable x-connect" % Common.newest_calient)
+
         _folder = os.path.dirname(__file__)
         _calient_file = _folder + "/tmp/calient.xlsx"
         # print _calient_file
@@ -164,14 +169,14 @@ class OpticalSwitch(object):
         and returns ``None`` if the connection stretches over multi optic
         switches  
         """
-        sw1 = self._intf_map[dev1][port1]['switch-name']
-        sw2 = self._intf_map[dev1][port1]['switch-name']
+        sw1 = self._intf_map[dev1.lower()][port1.lower()]['switch-name']
+        sw2 = self._intf_map[dev1.lower()][port1.lower()]['switch-name']
 
         if sw1 != sw2:
             return ()
         else:
-            s1 = self._intf_map[dev1][port1]['switch-port'] 
-            s2 = self._intf_map[dev2][port2]['switch-port'] 
+            s1 = self._intf_map[dev1.lower()][port1.lower()]['switch-port'] 
+            s2 = self._intf_map[dev2.lower()][port2.lower()]['switch-port'] 
 
             if dir == 'bi':
                 connect = '-'
@@ -196,8 +201,8 @@ class OpticalSwitch(object):
 | u'outowner': u'NONE', u'outcircuit': u''}
 
         """
-        sport   = self._intf_map[dev][intf]['switch-port']
-        switch  = self._intf_map[dev][intf]['switch-name']
+        sport   = self._intf_map[dev.lower()][intf.lower()]['switch-port']
+        switch  = self._intf_map[dev.lower()][intf.lower()]['switch-name']
         cli     = self._clients[switch]
         ip      = cli['ip']
         session = cli['session']
@@ -245,12 +250,13 @@ class OpticalSwitch(object):
         to ``dev 2:port 2``.
 
         With ``force`` mode, existed connection that use those ports will be deleted. 
-        Without ``force`` mode, an existed connection will make the keyword
-        fails
+        Without ``force`` mode, an existed connection will make the keyword fails
 
         Examples:
-
         | OpticalSwitch.`Add` | mx2008-31-33 | xe-3/0/0 | mx2008-31-33 | xe-3/0/1 | bi | ${TRUE} |
+
+        *Note*: when ``force`` is ``False`` but the current ports is owned by
+        the same connection endpoints, keyword will succeed.
 
         *Note:* For a bidirection connection, 2 single uni-direction connection
         will be made instead of 1 bi-direction connection. This will make the link could
@@ -285,10 +291,17 @@ class OpticalSwitch(object):
         else:
             tmp1 = self._get_circuit_from_port(switch,port1,['incircuit','outcircuit'])
             tmp2 = self._get_circuit_from_port(switch,port2,['incircuit','outcircuit'])
-            circuits = list(set(tmp1 + tmp2))
+            # circuits = list(set(tmp1 + tmp2))
+            used_port = []
+            for item in (tmp1 + tmp2):
+                for i in re.split(r'<|>',item):
+                    if not i in used_port: used_port.append(i)
 
-            if circuits:
+            if used_port and (sorted([port1,port2]) != sorted(used_port)):
                 raise Exception("Ports are being used: %s:%s by %s, %s:%s by %s" % (dev1,intf1,str(tmp1),dev2,intf2,str(tmp2))) 
+            else:
+                self._delete_conn_info(switch, port1, port2, direction)
+                BuiltIn().log("   deleted old circuits because same owner")
 
         if direction.lower() == 'bi':
             rest_result1 = session.post('http://'+ip+'/rest/crossconnects/',data={'id':'add','in':port1,'out':port2,'dir':'uni'})

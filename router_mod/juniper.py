@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  Copyright 2017 NTT Communications
+#  Copyright 2018 NTT Communications
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -13,9 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 648 $
-# $Date: 2018-02-06 00:11:41 +0900 (Tue, 06 Feb 2018) $
-# $Author: $
+# $Rev: 822 $
+# $Ver: 0.1.7 $
+# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
+# $Author: bachng $
 
 """ Provides keywords for Juniper platform
 
@@ -23,6 +24,7 @@
 """
 
 import os,re
+import codecs
 import json
 import jinja2
 import time
@@ -136,12 +138,14 @@ def flap_interface(self,intf,time_str='10s'):
     self._vchannel.cmd("configure")
     self._vchannel.cmd("set interface " + intf + " disable")
     self._vchannel.cmd("commit")
+
     time.sleep(DateTime.convert_time(time_str))
+
     self._vchannel.cmd("delete interface " + intf + " disable")
     self._vchannel.cmd("commit")
     self._vchannel.cmd("exit")
 
-    BuiltIn().log("Disabled interface `%s`" % (intf))
+    BuiltIn().log("Flapped interface `%s`" % (intf))
     
 
 def get_cli_mode(self):
@@ -160,7 +164,7 @@ def get_cli_mode(self):
 
 
 
-def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_str='syntax,error'):
+def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='( syntax | error )'):
     """ Loads configuration to a router. 
     Usable ``mode`` is ``set``, ``override``, ``merge`` and ``replace``
 
@@ -173,7 +177,10 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_str='syn
     with `LOCAL`, `GLOBAL` and varibles defined by `vars`. The `vars` has the
     format: var1=value1,var2=value2 ...
     
-    The comannd will wait for ``confirm`` seconds before rollback the commited configuration. A
+    If the loading has no error that match the ``error_match``, the
+    configuration will be commited.
+
+    The keywordl waits for ``confirm`` seconds before rollback the commited configuration. A
     zero value indicates an immediatly commit
     """
 
@@ -187,7 +194,8 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_str='syn
  
     folder              = os.getcwd() + '/config/'
     file_path           = os.getcwd() + '/config/' + config_file
-    file_path_replace = file_path + "_replace"
+    # file_path_replace = file_path + "_replace"
+    file_path_replace   = os.getcwd() + '/tmp/' + config_file + '_tmp'
 
     # jinja2 process
     loader=jinja2.Environment(loader=jinja2.FileSystemLoader(folder)).get_template(config_file)
@@ -198,24 +206,25 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_str='syn
             render_var.update({info[0].strip():info[1].strip()})
     compiled_config = loader.render(render_var)
 
-    with open(file_path_replace,'w') as f: 
+    with codecs.open(file_path_replace,'w','utf-8') as f: 
         f.write(compiled_config)
     cmd = "file copy robot@" + server + "://" + file_path_replace + ' /var/tmp/' + config_file
 
-    output = self._vchannel.write(cmd,'5s')
-      
+    output = self._vchannel.cmd(cmd,str_prompt="(yes/no|password:)")
     if "yes/no" in output:
-        self._vchannel.write("yes")
-        output = self._vchannel.read() 
-    if "password" in output:
-        self._vchannel.cmd(password)
+        output = self._vchannel.cmd("yes")
+    if "password:" in output:
+        output = self._vchannel.cmd(password)
 
     confirm_time = int(DateTime.convert_time(confirm) / 60) # minute
 
+
+    if not '100%' in output:
+        raise Exception("ERROR: error while copying config file `%s`" % config_file)
+
     if mode in ['override','merge','replace']:
         self._vchannel.cmd('configure')
-        output = self._vchannel.write("load " + mode + " /var/tmp/" + config_file)
-        output = output + self._vchannel.read()
+        output = self._vchannel.cmd("load " + mode + " /var/tmp/" + config_file)
     elif mode == 'set':
         self._vchannel.cmd('configure')
         output = self._vchannel.cmd("load set /var/tmp/" + config_file)
@@ -223,10 +232,9 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_str='syn
         raise Exception("Invalid ``mode``. ``mode`` should be ``set``,``override``,``merge``,``replace``")
 
     # check ouput
-    for err in err_str.split(','):
-        if err in output: 
-            self._vchannel.cmd("rollback 0")
-            raise Exception("ERROR: An error happened while loading the config")
+    if re.search(err_match, output):
+        self._vchannel.cmd("rollback 0")
+        raise Exception("ERROR: An error happened while loading the config. Output: `%s`" % output)
     
     if confirm_time == 0:
         output = self._vchannel.cmd("commit")
@@ -234,20 +242,20 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_str='syn
         output = self._vchannel.cmd("commit confirmed %s" % (confirm_time))
    
     # check output 
-    for err in err_str.split(','):
-        if err in output: 
-            self._vchannel.cmd("rollback 0")
-            raise Exception("ERROR: An error happened while committing the change")
-
+    if re.search(err_match, output):
+        self._vchannel.cmd("rollback 0")
+        raise Exception("ERROR: An error happened while committing the change so I rolled it back")
 
 
     self._vchannel.cmd('exit')
 
     BuiltIn().log("commit result is: " + output)
-    BuiltIn().log("config is loaded with ``%s`` mode and confirm = %s" % (mode,confirm_time))
+    BuiltIn().log("Loaded config with ``%s`` mode and confirm time %s" % (mode,confirm_time))
     return True
 
-def get_file(self,src_file,dst_file='',str_timeout='10s'):
+
+
+def get_file(self,src_file,dst_file=''):
     """ Gets a file from router
 
     - ``src_file`` is a absolute path insides the router
@@ -270,15 +278,16 @@ def get_file(self,src_file,dst_file='',str_timeout='10s'):
         dest_path   = os.getcwd() + '/' + Common.get_result_folder() + '/' + dst_file
 
     cmd = "file copy %s robot@%s://%s" % (src_file,server,tmp_path)
-    output = self._vchannel.write(cmd, str_timeout)
+    # output = self._vchannel.write(cmd, str_timeout)
     # output = self._vchannel.read() 
+    output = self._vchannel.cmd(cmd,str_prompt="(yes/no|password:)")
 
     if "yes/no" in output:
-        output = self._vchannel.write("yes")
+        output = self._vchannel.cmd("yes")
     if "password:" in output:
         output = self._vchannel.cmd(password)
     if "error" in output:
-        raise Exception(output) 
+        raise Exception("ERROR:" + output) 
 
     # change config mod
     # os.chmod(dest_path,int('0775',8)) 
@@ -288,7 +297,7 @@ def get_file(self,src_file,dst_file='',str_timeout='10s'):
 
 
 
-def get_config(self,dst_name='',str_timeout='10s'):
+def get_config(self,dst_name=''):
     """ Gets the current configuration file of the router to current ``result``
     folder. Wait for ``str_timeout`` to finish the download, default
     ``str_timeout`` is 10 seconds. Increases this value if the config file is large.   
@@ -296,7 +305,7 @@ def get_config(self,dst_name='',str_timeout='10s'):
     Default ``dst_name`` is ``juniper.conf.gz``
     """
 
-    return self.get_file('/config/juniper.conf.gz',dst_name,str_timeout)
+    return self.get_file('/config/juniper.conf.gz',dst_name)
 
 
 def link_status(self,if_name):

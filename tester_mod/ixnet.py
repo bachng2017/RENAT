@@ -13,8 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
-# $Rev: 0.1.6 $
+# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
+# $Rev: 822 $
+# $Ver: 0.1.7 $
 # $Author: bachng $
 
 """ provides functions for IxNetwork
@@ -40,8 +41,20 @@ from datetime import datetime
 from robot.libraries.BuiltIn import BuiltIn
 import robot.libraries.DateTime as DateTime
 
-def wait_for_port(self,timeout_str='5m'):
-    """ Waits until ports become enabled
+
+def reset_config(self):
+    """ Clears current config and creates new blank config
+    """
+
+    cli     = self._clients[self._cur_name]
+    ix      = cli['connection']
+
+    ix.execute('newConfig')
+    BuiltIn().log("Created a new blank config")
+
+
+def wait_until_connected(self,timeout_str='5m'):
+    """ Waits until ports become enabled and connected
     """
 
     BuiltIn().log("Waiting for all ports become enable ...")
@@ -54,7 +67,7 @@ def wait_for_port(self,timeout_str='5m'):
 
     while not port_ok and count < timeout:
         try :
-            BuiltIn().log("Checking...")
+            BuiltIn().log("    checking port status ...")
             vport_list  = ix.getList(ix.getRoot(),'vport')
             port_ok     = len(vport_list) > 0
 
@@ -66,22 +79,41 @@ def wait_for_port(self,timeout_str='5m'):
             port_ok = False
             BuiltIn().log("err type %s" % type(err))
             BuiltIn().log(err)
+            raise Exception("ERROR: errors found on ixnetwork ports")
         time.sleep(5)
         count = count + 5 
+    if (count >= timeout):
+        raise Exception("ERROR: errors found on ixnetwork ports")
 
     BuiltIn().log("Finished checking ports, state is %s (%d seconds elapsed)" % (port_ok,count))        
     return port_ok
 
+def load_traffic(self,wait_time='2m',wait_time2='2m',apply=True,protocol=True,force=True,tx_mode=u'interleaved'):
+    str = "***WARNING: `Load Traffic` is deprecated. Use `Load Config` instead ***"
+    BuiltIn().log(str)
+    BuiltIn().log_to_console(str)
+    self.load_config(wait_time='2m',wait_time2='2m',apply=True,protocol=True,force=True,tx_mode=u'interleaved')
 
-def load_traffic(self,wait_time='2m',wait_time2='1m',apply=True,protocol=True):
+
+def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,protocol=True,force=True,tx_mode=u'interleaved'):
     """ loads traffic configuration, applies and start protocol if necessary.
 
     The config file name was defined in the ``local.yaml` which is a Ixia
     Network configuration file and located in the `config` folder of the test.
 
-    Parameter:
+    The keyword remap the vports to real port when data is specified in the
+    local configuration file. For some reasons, the txMode is cleared when
+    remapping happens. Use ``tx_mode`` to set the TxMode of the remapped ports.
+
+    Parameters:
     - ``apply``: applies traffic when ``True`` otherwise 
     - ``protocol``: starts all protocols when ``True`` otherwise 
+    - ``force``: force to reclaim the ports when ``True`` otherwise
+    - ``tx_mode``: `sequential` or `interleaved`(default)
+    - ``wait_time``: wait time after applying protocols
+    - ``wait_time2``: maximum wait time befor all ports become available. In
+    common case, this is calculated automatically so user does not need to
+    change this value.
 
     See [./Common.html|Common] for more details about the yaml configuration files.
     """
@@ -91,15 +123,17 @@ def load_traffic(self,wait_time='2m',wait_time2='1m',apply=True,protocol=True):
 
     cli     = self._clients[self._cur_name]
     ix      = cli['connection']
-    config_file = Common.LOCAL['tester'][self._cur_name]['config']
+    if config_name == '':
+        config_name = Common.LOCAL['tester'][self._cur_name]['config']
     
     # reset config
-    ix.execute('newConfig')
+    # ix.execute('newConfig')
 
     # load config
-    ix.execute('loadConfig',ix.readFrom(os.getcwd() + '/config/' + config_file))
+    config_path = Common.get_item_config_path() + '/' + config_name
+    ix.execute('loadConfig',ix.readFrom(config_path))
     
-    BuiltIn().log("Loaded config:" + config_file)
+    BuiltIn().log("Loaded config `%s`" % config_path)
 
     real_port_data = []
     if 'real_port' in Common.LOCAL['tester'][self._cur_name]:
@@ -115,42 +149,69 @@ def load_traffic(self,wait_time='2m',wait_time2='1m',apply=True,protocol=True):
                 port    = item['port']
                 real_ports.append((chassis,card,port)) 
 
-            # assign ports without force to reclaim them
-            result_id = ix.setAsync().execute('assignPorts',real_ports,[],vports,False) 
-        
+            # assign ports
+            result_id = ix.setAsync().execute('assignPorts',real_ports,[],vports,force) 
+       
+            BuiltIn().log("    Assigning ports ...")
             interval = 5
             is_done = "false"
             count = 0
             while is_done == "false" and count < wait2:  
-                count = count + 5
-                time.sleep(5)
+                count = count + interval
+                BuiltIn().log_to_console('.','STDOUT',True)
+                time.sleep(interval)
                 is_done = ix.isDone(result_id)
-                BuiltIn().log("is_done = %s, wait for more %d seconds ..." % (is_done,interval))
+                BuiltIn().log("    status is `%s`, wait for more %d seconds ..." % (is_done,interval))
 
             if is_done != "true" :
-                raise Exception("Error while remapping ports. The chassis IP might be wrong")
+                raise Exception("ERROR: Error while remapping ports. The chassis IP might be wrong")
+
+            # txmode
+            for port in vports:
+                ix.setAttribute(port,'-txMode',tx_mode.encode('ascii','ignore'))
 
             result = ix.commit()
             if result != '::ixNet::OK' :
-                raise Exception("Error while remapping ports: " + result)    
-            BuiltIn().log("Remapped %s ports in % seconds" % (len(vports),count))
+                raise Exception("ERROR: Error while remapping ports: " + result)    
+            BuiltIn().log("Loaded config and reassigned %d ports in %d seconds" % (len(vports),count))
 
-    self.wait_for_port(wait_time2)
+    # check port status again
+    self.wait_until_connected(wait_time2)
 
     # start protocol
     if protocol :
+        BuiltIn().log("Starting all protocols...")
         result = ix.execute('startAllProtocols')
         if result != '::ixNet::OK' :
-            raise Exception("Error while starting protocols: " + result)    
+            raise Exception("ERROR: Error while starting protocols: "+result)    
         time.sleep(wait) # wait enough for protocol to start
         BuiltIn().log("Started all protocols")
 
     # apply traffic
     if apply :
+        BuiltIn().log("Applying traffic ...")
         result = ix.execute('apply',ix.getRoot()+'traffic')
         if result != '::ixNet::OK' :
-            raise Exception("Error while applying traffic: " + result)    
+            raise Exception("ERROR: Error while applying traffic: " + result)    
         BuiltIn().log("Applied traffic")
+
+
+def start_protocol(self,wait_time='1m'):
+    """ Starts all protocols and wait for ``wait_time``
+
+    Default ``wait_time`` is 1 minute. Make sure ``wait_time`` is big engouh to
+    start all protocols.
+    """
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+
+    result = ix.execute('startAllProtocols')
+    if result != '::ixNet::OK' :
+        raise Exception("Error while starting protocols: " + result)    
+
+    wait    = DateTime.convert_time(wait_time)
+    time.sleep(wait) # wait enough for protocol to start
+    BuiltIn().log("Started all protocols")
 
 
 def apply_traffic(self):
@@ -258,17 +319,18 @@ def change_frame_size(self,type,value,pattern='.*'):
     # target_list = [ item for item in traffic_item_list if re.match(pattern,item) ]
 
     for  item in target_list:
-        stream      = ix.getList(item, 'highLevelStream')[0]
-        frame_size  = ix.getList(stream, 'frameSize')[0] 
-        if type == 'increment_from' :
-            ix.setAttribute(frame_size,'-incrementFrom',value)
-        elif type == 'increment_step' :
-            ix.setAttribute(frame_size,'-incrementStep',value)
-        elif type == 'increment_to' :
-            ix.setAttribute(frame_size,'-incrementTo',value)
-        else:
-            ix.setAttribute(frame_size,'-fixedSize',value)
-            
+        stream_list      = ix.getList(item, 'highLevelStream')
+        for stream in stream_list:
+            frame_size_list  = ix.getList(stream, 'frameSize') 
+            for frame_size in frame_size_list:
+                if type == 'increment_from' :
+                    ix.setAttribute(frame_size,'-incrementFrom',value)
+                elif type == 'increment_step' :
+                    ix.setAttribute(frame_size,'-incrementStep',value)
+                elif type == 'increment_to' :
+                    ix.setAttribute(frame_size,'-incrementTo',value)
+                else:
+                    ix.setAttribute(frame_size,'-fixedSize',value)
 
     result1 = ix.commit()
     result2 = ix.execute('apply', ix.getRoot() + 'traffic')
@@ -360,8 +422,10 @@ def set_all_traffic_item(self,enabled=True):
 def start_traffic(self,wait_time='30s'):
     """ Starts the current traffic settiing and wait for ``wait_time``.
 
-    *Note:* This is a asynchronus action. After called, traffic will take a while
-    before start to come out, the the keyword will finish immediatly.
+    *Note:* This is a asynchronus action. After called, the keyword finishes
+    immediatly but it will take a while before traffic starts
+
+    By default the keyword will wait for 30 seconds.
     """
     wait = DateTime.convert_time(wait_time)
     
@@ -393,12 +457,26 @@ def stop_traffic(self,stop_protocol=False,wait_time='10s'):
     ix  = cli['connection']
 
     ix.execute('stop',ix.getRoot()+'traffic')
-    BuiltIn().log("stopped the traffic")
+    BuiltIn().log("Stopped the traffic")
 
     if stop_protocol :
         ix.execute('stopAllProtocols')
-        BuiltIn().log("stopped all protocols")
+        BuiltIn().log("Stopped all protocols")
     time.sleep(wait)
+
+
+def stop_all_protocols(self,wait_time='30s'):
+    """ Stop all running protocols
+    """
+
+    wait = DateTime.convert_time(wait_time)
+    
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+    ix.execute('stopAllProtocols')
+    
+    time.sleep(wait)
+    BuiltIn().log("Stopped all protocols")
 
 
 def close(self):
@@ -415,6 +493,8 @@ def close(self):
 
 
 def _fix_data(data):
+    """
+    """
     result = [[]]
     rows = re.findall(r'{{(.+?)}}',data)
     for row in rows:
@@ -425,20 +505,26 @@ def _fix_data(data):
     return result
 
 
-
 def collect_data(self,view,prefix="stat_"):
+    """ Depricated. Use `Get Test Result`
+    """
+    BuiltIn().log_to_console("WARNING: `Collect Data` is deprecated. Use `Get Test Result instead")
+    self.get_test_result(view,prefix)
+
+
+def get_test_result(self,view,prefix="stat_"):
     """ Collects traffic data of a ``view`` and export to a CSV file in
     ``result`` folder 
 
     Currently, supported views are: 
 
-    ``Port_Statistics``, 
-    ``Global_Protocol_Statistics``, ``BGP_Aggregated_Statistics``,
-    ``BGP_Aggregated_State_Counts``, ``OSPF_Aggregated_Statistics``, 
-    ``OSPF_Aggregated_State_Counts``, ``OSPFv3_Aggregated_Statistics``,
-    ``OSPFv3_Aggregated_State_Counts``, ``L2-L3_Test_Summary_Statistics``,
-    ``Flow_Statistics``, ``Flow_Detective``, ``Data_Plane_Port_Statistics``,
-    ``User_Defined_Statistics``, ``Traffic_Item_Statistics``
+    ``Port Statistics``, 
+    ``Global Protocol Statistics``, ``BGP Aggregated Statistics``,
+    ``BGP Aggregated State Counts``, ``OSPF Aggregated Statistics``, 
+    ``OSPF Aggregated State Counts``, ``OSPFv3 Aggregated Statistics``,
+    ``OSPFv3 Aggregated State Counts``, ``L2-L3 Test Summary Statistics``,
+    ``Flow Statistics``, ``Flow Detective``, ``Data Plane Port Statistics``,
+    ``User Defined Statistics``, ``Traffic Item Statistics``
 
     Result were store as CSV files in ``result`` folder.
     If there is no valid data, view will be silently ignored
@@ -449,6 +535,10 @@ def collect_data(self,view,prefix="stat_"):
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
     BuiltIn().log("Collecting data for view `%s`" % view)
+
+    if not "::ixNet::OBJ" in view:
+        view = ix.getRoot()+'/statistics/view:"%s"' % view
+    
     result_path = os.getcwd() + '/' + Common.get_result_folder()
     result_id = ix.setAsync().getAttribute(view+'/page','-isReady')
     time.sleep(5) # wait for 5 second
@@ -473,17 +563,32 @@ def collect_data(self,view,prefix="stat_"):
             row = ix.getAttribute(view+'/page', '-rowValues')
             
         if type(row) is not list: row = _fix_data(row)
-        file_name = result_path + "/" + prefix + view.split(':')[-1].strip('"').replace(" ","_") + '.csv'
-        f = open(file_name,'w+')
+        file_name = view.split(':')[-1].strip('"') + '.csv'
+        file_name = file_name.replace('-','')
+        file_name = file_name.replace(' ','_')
+        file_name = file_name.replace('__','_')
+        file_name = prefix + file_name
+
+        # open result file for write
+        file_path = result_path + '/' + file_name
+        f = open(file_path,'w+')
         w  = csv.writer(f, lineterminator='\n')
         w.writerow(cap)
         for i in range(len(row)):
             for j in range(len(row[i])):
                 w.writerow(row[i][j])
         f.close()
-    BuiltIn().log("Collected data for view `%s`" % view) 
+    BuiltIn().log("Got test data for view `%s`" % view) 
+
 
 def collect_all_data(self,prefix="stat_"):
+    """ Deprecated. Use
+    """
+    BuiltIn().log_to_console("WARNING: `Collect All Data` is deprecated. Use `Get All Test Result` instead") 
+    self.get_all_test_result(prefix)
+
+
+def get_all_test_result(self,prefix="stat_"):
     """ Collects all Ixia traffic data after traffic is stopped. 
 
     Results are CSV files that are stored in ``result`` folder. The prefix ``prefix`` is appended
@@ -501,9 +606,9 @@ def collect_all_data(self,prefix="stat_"):
         views = _fix_data(views)
 
     for view in views:
-        self.collect_data(view,prefix)    
+        self.get_test_result(view,prefix)    
 
-    BuiltIn().log("Collected all available data")
+    BuiltIn().log("Got all available test data")
    
 
 def loss_from_file(self,file_name='Flow_Statistics.csv',tx_frame_i=3,frame_delta_i=5,time1_i=23,time2_i=24):
@@ -544,8 +649,8 @@ def set_bgp_neighbor(self,*indexes,**kwargs):
     - enabled: TRUE or FALSE 
 
     Examples:
-    | Tester.`Set BGP Item` | 0 | 1 | vport_index=0 | enabled=${FALSE}
-    | Tester.`Set BGP Item` | 0 | 1 | vport_index=1 | enabled=${TRUE}
+    | Tester.`Set BGP Item` | 0 | 1 | vport_index=0 | enabled=${FALSE} | 
+    | Tester.`Set BGP Item` | 0 | 1 | vport_index=1 | enabled=${TRUE} |
     """
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
@@ -607,4 +712,525 @@ def set_bgp_items(self,port_index,neighbor_index,route_range_index,is_enable):
     ix.commit()
     BuiltIn().log("Set BGP items to value `%s`" % (is_enable))
 
+def set_capture_port(self,data_mode=True,control_mode=True,port_index=0):
+    """ Capture packets for follow ``port``
 
+    ``port_index``:     is a index of current test port (start from 0)
+    ``data_mode``:      capture data packets and save in <intf>_HW.cap file
+    ``control_mode``:   capture controls packets and save in <intf>_SW.cap file
+
+    *Note*: ``control_mode`` saves all control packets and ``data_mode`` only
+    saves data packets.
+
+    *Note*: ``control_mode`` saves all control packets and ``data_mode`` only
+saves data packet
+
+    Examples:
+    | Tester.`Set Capture` | 0 |
+    | Tester.`Set Capture` | control_mode=${TRUE} | 0 | 1 |
+
+    """
+
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+    vports      = ix.getList(ix.getRoot(),'vport')
+
+    ix.execute('closeAllTabs')
+    port = vports[int(port_index)]
+    desc = ix.getAttribute(port,'-name')
+    ix.setAttribute(port,'-rxMode','capture')
+    ix.setAttribute(port+'/capture', '-hardwareEnabled', data_mode)
+    ix.setAttribute(port+'/capture', '-softwareEnabled', control_mode)
+    ix.commit()
+
+    BuiltIn().log("Set capture data=`%s` control=`%s` for port `%s`" % (data_mode,control_mode,desc))
+
+def start_capture(self,wait_time='30s'):
+    """ Start packet capture
+
+    Target ports are set by the configuration file or by [Set Capture] keyword
+    """
+
+    wait = DateTime.convert_time(wait_time)
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+   
+    ix.execute('startCapture') 
+    time.sleep(wait)
+
+    BuiltIn().log("Started packet capture")
+
+ 
+def stop_and_save_capture(self,prefix='',wait_until_finish=True,monitor_interval='5s'):
+    """ Stop current capture and save the resuls to folder specified by ``path``
+
+    Captured files will be saved in current ``result`` folder with ``prefix``
+    appended in their names.
+
+    Examples:
+    | Tester.`Start Capture` | 
+    | Sleep                  | 10s |
+    | Tester.`Stop And Save Capture` | ${RESULT_FOLDER}/capture.zip |
+
+    """
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+    vports      = ix.getList(ix.getRoot(),'vport')
+    interval = DateTime.convert_time(monitor_interval)
+   
+    ix.execute('stopCapture') 
+    
+    
+    if wait_until_finish:
+        all_ready = False
+        while not all_ready:
+            all_ready = True
+            time.sleep(interval)
+            BuiltIn().log("    wait for more %s ..." % monitor_interval)
+            for port in vports:
+                mode = ix.getAttribute(port,'-rxMode')
+                data_mode       = ix.getAttribute(port + '/capture','-hardwareEnabled') == 'true'
+                control_mode    = ix.getAttribute(port + '/capture','-softwareEnabled') == 'true'
+                if mode == 'capture':
+                    if data_mode:
+                        ready = ix.getAttribute(port + '/capture', '-dataCaptureState')
+                        all_ready = all_ready and (ready == 'ready')
+                    if control_mode:
+                        ready = ix.getAttribute(port + '/capture', '-controlCaptureState')
+                        all_ready = all_ready and (ready == 'ready')
+
+    folder = ix.getAttribute(ix.getRoot()+'/testConfiguration','-resultPath') 
+    # temporary folder
+    folder = "C:/tmp/" + os.getcwd().replace('/','_')
+    ix.execute('saveCapture', folder)
+   
+    count = 0 
+    for port in vports:
+        mode = ix.getAttribute(port,'-rxMode')
+        if mode== 'capture':
+            name = ix.getAttribute(port,'-name')
+            src1 = folder + '/' + name + '_HW.cap'
+            src2 = folder + '/' + name + '_SW.cap'
+            name = name.replace('-','')
+            name = name.replace(' ','_')
+            name = name.replace('__','_')
+            dst1 = Common.get_result_path() + '/' + prefix + name + '_HW.cap' 
+            dst2 = Common.get_result_path() + '/' + prefix + name + '_SW.cap' 
+
+            ix.execute('copyFile',ix.readFrom(src1,'-ixNetRelative'),ix.writeTo(dst1.encode('ascii','ignore')))
+            ix.execute('copyFile',ix.readFrom(src2,'-ixNetRelative'),ix.writeTo(dst2.encode('ascii','ignore')))
+            count = count + 2
+        
+
+    BuiltIn().log("Stopped packet capture and saved %d files" % count)
+
+
+def get_quicktest_list(self):
+    """ Returns current loaded Quicktest list
+    """
+        
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+
+    test_list = ix.getAttribute(ix.getRoot() + '/quickTest', '-testIds')
+    BuiltIn().log("Get current loaded Quictest list: %d items" % (len(test_list)))
+    
+    return test_list
+
+
+def stop_quicktest(self,test_index='0'):
+    """ Stops a running test
+    """
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+
+    index = int(test_index)
+    test_list = ix.getAttribute(ix.getRoot() + '/quickTest', '-testIds')
+    ix.execute('stop',test_list[index])
+   
+    BuiltIn().log("Stopped the Quicktest")
+
+
+def add_port(self,force=True,time_out='2m',learn_time='2m'):
+    """ Add ports using the information from active local config
+
+    - ``time_out`` is the wait time until port is connected (default is 2m)
+    - ``learn_time`` is the time waiting for arp to be learned (default is 2m)
+    
+    Sample of local config
+|tester:
+|    tester:
+|        device: ixnet03_8009
+|        config: quicktest.ixncfg
+|        real_port:
+|            -   chassis: 10.128.4.41
+|                card: 4
+|                port: 3
+|                ip: 10.100.11.2
+|                mask: 24
+|                gw: 10.100.11.1
+|            -   chassis: 10.128.4.41
+|                card: 4
+                port: 4
+|                ip: 10.100.14.2
+|                mask: 24
+|                gw: 10.100.14.1 
+
+    """
+    
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+
+    wait_time = DateTime.convert_time(time_out)
+
+    real_ports = []
+    vports = []
+    port_data = Common.LOCAL['tester'][self._cur_name]['real_port']
+    for item in port_data:
+        chassis = item['chassis']
+        card    = item['card']
+        port    = item['port']
+        real_ports.append((chassis,card,port)) 
+
+    # assign ports
+    result_id = ix.setAsync().execute('assignPorts',real_ports,[],vports,force) 
+        
+    interval = 5
+    is_done = "false"
+    count = 0
+    while is_done == "false" and count < wait_time:
+        count = count + 5
+        BuiltIn().log_to_console('.','STDOUT',True)
+        time.sleep(interval)
+        is_done = ix.isDone(result_id)
+        BuiltIn().log("    is_done = %s, wait for more %d seconds ..." % (is_done,interval))
+
+    if is_done != "true":
+        raise Exception("ERROR: Error while remapping ports. The chassis IP might be wrong")
+
+    # wait for ports become enable
+    self.wait_until_connected(wait_time)
+
+    vports = ix.getList(ix.getRoot(),'vport')
+
+    # adding Ether proocol to port
+    for data,port in zip(port_data,vports):
+        if 'tx_mode' in data: tx_mode = data['tx_mode']
+        else: tx_mode = 'interleaved'
+        ix.setAttribute(port,'-transmitMode',tx_mode)
+        interface = ix.add(port,'interface')
+        ix.setAttribute(interface,'-enabled','true')
+        ip = ix.add(interface,'ipv4')
+        ix.setAttribute(ip,'-ip',data['ip'])
+        ix.setAttribute(ip,'-maskWidth',data['mask'])
+        ix.setAttribute(ip,'-gateway',data['gw'])
+
+    result = ix.commit()
+    if result != '::ixNet::OK' :
+        raise Exception("ERROR: " + result)    
+
+    # need time for the ARP learning
+    time.sleep(DateTime.convert_time(learn_time))
+
+    BuiltIn().log("Added %d Ixia ports" % len(port_data))
+
+    
+
+def add_quicktest(self,name,test_type=u'rfc2544throughput',tx_mode=u'interleaved',clear_all=True):
+    """ Create a new Quicktest with default value
+
+    Type could be one of following: ``rfc2544throughput``,``rfc2544frameLoss``,``rfc2544back2back``
+    Use Tester.`Load Config` to load a customized quicktest
+
+    When ``clear_all`` is True, any existed quicktests will be cleared.
+
+    Transmit mode ``tx_mode`` takes following values: ``interleaved`` (default)
+    or ``sequential``. The mode should be identical with the transmit mod of the
+    ports.
+
+    *Notes*: The keyword *does not* create necessary ports. It should be used with a
+    existed configuration by Tester.`Load Config` or Tester.`Add Port` keyword.
+    """
+    BuiltIn().log("Adding quicktest `%s`" % name)
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+
+    if clear_all:
+        test_list = ix.getAttribute(ix.getRoot() + '/quickTest', '-testIds')
+        for test in test_list:
+            ix.remove(test)
+        traffic_item_list = ix.getList(ix.getRoot() + 'traffic', 'trafficItem')
+        for item in traffic_item_list:
+            ix.remove(item)
+        ix.commit() 
+        BuiltIn().log("    cleared all %d existed Quicktest items" % (len(test_list)))
+
+    test = ix.add(ix.getRoot()+'/quickTest',test_type.encode('ascii','ignore'))
+    ix.setMultiAttribute(test,'-name',name.encode('ascii','ignore'),'-mode','newMode')
+    result = ix.commit()
+    if result != '::ixNet::OK':
+        raise Exception("ERROR: could not create new Quicktest")
+    BuiltIn().log("    added and commited `%s` quicktest" % name)
+
+    vports = ix.getList(ix.getRoot(),'vport')
+
+    # apply traffic item 
+    result = ix.execute('apply',test) # apply will create traffic items
+    if result != '::ixNet::OK':
+        raise Exception("ERROR: could not applying the config of configured Quicktest")
+
+    # customize more
+    tx_mode='interleaved'
+    for port in vports:
+        ix.setAttribute(port,'-txMode',tx_mode.encode('ascii','ignore'))
+    traffic_items = ix.getList(ix.getRoot()+'/traffic','trafficItem')
+
+    ix.setAttribute(traffic_items[0],'-trafficType', 'ipv4')
+    for item in traffic_items:
+        ix.setAttribute(item,'-transmitMode',tx_mode.encode('ascii','ignore'))
+
+    # 1st half will be TX and 2nd half will be RX
+    end_point = ix.add(traffic_items[0],'endpointSet')
+    half = len(vports) / 2
+    for i in range(0,half):
+        ix.setMultiAttribute(end_point,'-sources',vports[i]+'/protocols','-destinations',vports[half+i]+'/protocols')
+
+    # end_point = ix.add(traffic_items[0],'endpointSet','-sources',vports[0]+'/protocols','-destinations',vports[1]+'/protocols')
+    result = ix.commit()
+    if result != '::ixNet::OK':
+        raise Exception("ERROR: could not create new Quicktest") 
+    
+    BuiltIn().log("Created a new Quicktest with type `%s` for %d ports " % (type,len(vports))) 
+
+    
+
+def run_quicktest(self,test_index='0',wait_until_finish=True):
+    """ Runs the Quicktest and wait until it finishes
+
+    *Warning*: it could take a long time to finish a quicktest
+    """
+
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+
+    index = int(test_index)
+
+    test_list = ix.getAttribute(ix.getRoot() + '/quickTest', '-testIds')
+    result = ix.execute('start',test_list[index])
+    # BuiltIn().log_to_console(result)
+
+    # interval for recheck the proress
+    interval = 30
+ 
+    if not wait_until_finish: 
+        BuiltIn().log("Started the Quicktest. Test is still running")
+    else:
+        elapsed_time = 0 
+        is_running = ix.getAttribute(test_list[index]+'/results','-isRunning')
+        while is_running == 'true':
+            BuiltIn().log_to_console('.','STDOUT',True)
+            time.sleep(interval)
+            elapsed_time = elapsed_time + interval
+            is_running = ix.getAttribute(test_list[index]+'/results','-isRunning')
+ 
+        result = ix.getAttribute(test_list[index]+'/results','-result')
+        if result == 'fail':
+            str = "ERROR: Quicktest failed"
+            BuiltIn().log(str)
+            raise Exception(str)
+        else:
+            BuiltIn().log("Ran and finished the Quicktest with result `%s` in %d seconds" % (result,elapsed_time))
+            
+
+
+
+def get_test_report(self,local_name='ixnet_report.pdf',enable_all=True):
+    """ Generates and get report of the current active test in PDF format
+
+    ``local_name``: name of the report on local machine. Default is ``ixnet_report.pdf``
+    """
+    BuiltIn().log("Get report of the current test")
+
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+
+    ix.setMultiAttribute(
+        ix.getRoot()+'/reporter/testParameters',
+        '-testCategory','RENAT item',
+        '-testDUTName','DUT',
+        '-testerName',cli['desc'],
+        '-testName',Common.get_item_name())
+ 
+    result_path = ix.getAttribute(ix.getRoot()+'/testConfiguration','-resultPath') 
+    BuiltIn().log("    current result path is `%s`" % result_path)
+     
+    # prepare report using default template
+    report_file = result_path + '/report.pdf'
+    ix.setMultiAttribute(ix.getRoot()+'/reporter/generate',
+        '-outputFormat','pdf',
+        '-outputPath',report_file.encode('ascii','ignore'))
+    ix.commit()
+
+    # enable all statistics
+    if enable_all:
+        ix.setAttribute(ix.getRoot()+'/reporter/saveResults','-enableAllResult','true') 
+        ix.commit()
+    # save result in details
+    ix.execute('saveDetailedResults',ix.getRoot()+'/reporter/saveResults') 
+    state = ix.getAttribute(ix.getRoot()+'/reporter/saveResults','-state')
+    while state != 'done':
+        state = ix.getAttribute(ix.getRoot()+'/reporter/saveResults','-state')
+        BuiltIn().log_to_console('.','STDOUT',True)
+        time.sleep(5)
+
+    # generate report
+    ix.execute('generateReport',ix.getRoot()+'/reporter/generate')
+    state = ix.getAttribute(ix.getRoot()+'/reporter/generate','-state')
+    while state != 'done':
+        state = ix.getAttribute(ix.getRoot()+'/reporter/generate','-state')
+        BuiltIn().log_to_console('.','STDOUT',True)
+        time.sleep(5)
+
+    # copy to local folder (renat server)
+    dest_file = Common.get_result_path() + '/' + local_name
+    ix.execute('copyFile',ix.readFrom(report_file,'-ixNetRelative'),ix.writeTo(dest_file,'-overwrite'))
+
+    BuiltIn().log("Got the report file `%s`" % local_name) 
+
+
+
+def get_quicktest_result_path(self,test_index=u'-1'):
+    """ Returns the path of the newest run of a Quicktest
+
+    ``test_index`` is a index of the current  Quicktest. ``-1`` means that last one.
+    """
+    BuiltIn().log("Get Quicktest result path")
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+
+    index = int(test_index)
+    # get quicktest list    
+    index = int(test_index)
+    test_list = ix.getAttribute(ix.getRoot() + '/quickTest', '-testIds')
+
+    # get the result path
+    result_path = ix.getAttribute(test_list[index]+'/results','-resultPath')
+    if result_path == "":
+        raise Exception("ERROR: did not found a result of this test. Run it first") 
+
+    BuiltIn().log("Got the path of the newest run: %s" % result_path)
+    return result_path
+
+
+
+def get_quicktest_result(self,test_index=u'-1',prefix='',enable_all=True):
+    """ Get the result.csv file from the latest Quicktests
+
+    ``test_index`` is a index of the current  Quicktest. ``-1`` means that last one.
+    """
+
+    BuiltIn().log("Get result of the `%s` Quicktest" % test_index)
+
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+
+    index = int(test_index)
+
+    # get quicktest list    
+    index = int(test_index)
+    test_list = ix.getAttribute(ix.getRoot() + '/quickTest', '-testIds')
+
+    # get the result path
+    result_path = ix.getAttribute(test_list[index]+'/results','-resultPath')
+    if result_path == "":
+        raise Exception("ERROR: did not found a result of this test. Run it first") 
+
+    # enable all statistics
+    if enable_all:
+        ix.setAttribute(ix.getRoot()+'/reporter/saveResults','-enableAllResult','true') 
+        ix.commit()
+    # save result in details
+    ix.execute('saveDetailedResults',ix.getRoot()+'/reporter/saveResults') 
+    state = ix.getAttribute(ix.getRoot()+'/reporter/saveResults','-state')
+    while state != 'done':
+        state = ix.getAttribute(ix.getRoot()+'/reporter/saveResults','-state')
+        BuiltIn().log_to_console('.','STDOUT',True)
+        time.sleep(5)
+
+    file_list = [
+        'results.csv',
+        'AggregateResults.csv',
+        'BGP Aggregated Statistics.csv',
+        'Data Plane Port Statistics.csv',
+        'Flow Statistics.csv',
+        'Flow View.csv',
+        'Global Protocol Statistics.csv',
+        'L2-L3 Test Summary Statistics.csv',
+        'Port CPU Statistics.csv',
+        'Port Statistics.csv',
+        'Traffic Item Statistics.csv',
+        'PortMap.csv',
+        'Real Time Stats.csv',
+        'User Defined Statistics.csv' ]
+
+    count = 0        
+    for item in file_list:
+        src_file = result_path + '/' + item
+        dst_file = Common.get_result_path() + '/' + prefix + item.replace(' ','_')
+        try:
+            ix.execute('copyFile',ix.readFrom(src_file,'-ixNetRelative'),ix.writeTo(dst_file,'-overwrite'))
+            count = count + 1
+        except IxNetwork.IxNetError as err:
+            BuiltIn().log("   Could not found `%s`, but ignore that" % item)
+
+    BuiltIn().log("Got %d result files for the Quicktest" % count)
+
+def should_be_pingable(self,dst_ip,src_port_index=0,src_intf_index=0):
+    """ Ping from Ixia and raise an error if ping fails
+    
+        The keyword return `True` if succeeds
+    """
+    output = self.ping(dst_ip,src_port_index,src_intf_index)
+    if 'failed' in output or 'Error' in output:
+        BuiltIn().log("ERROR: ping to `%s` failed with result `%s`" % (dst_ip,output))
+        raise Exception(output)
+    else:
+        BuiltIn().log("Pinged successful to `%s` with output `%s`" % (dst_ip,output)) 
+        return True
+
+
+def ping(self,dst_ip,src_port_index=0,src_intf_index=0):
+    """ Ping from Ixia to ``dst_ip``
+
+    The keyword return the output string as it is. The return could be
+    | Port <portName>: ping failed: port not assigned
+    | Response received from <sourceIp>/unknown . Sequence Number <sequenceNumber>
+    | Ping request to <destinationIp>/unknown ip failed: <GenericPingError>/<error>: <genericError>unknown reason
+    | Error: Couldn't find any source interface for Send Ping to <destinationIp> on <portName> Id <id>
+
+Error: Couldn't find any source IP for Send Ping to <destinationIp> on
+<portName> Id <id>
+
+
+    Parameters:
+    - src_port_index: index of Ixia port (starts from 0)
+    - src_intf_index: index of interface insides the port (starts from 0)
+
+    Examples:
+    | Tester.Ping  | 1.1.1.1 | 0 | 0 |
+    | Tester.Ping  | 1.1.1.1 |
+    """
+
+    BuiltIn().log("Ping IP address `%s`" % dst_ip)
+
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+    vports = ix.getList(ix.getRoot(),'vport')
+
+    port = vports[int(src_port_index)]
+    interfaces = ix.getList(port,'interface')
+    intf = interfaces[int(src_intf_index)]
+    
+    output = ix.execute("sendPing",intf,dst_ip)
+    BuiltIn().log("Pinged `%s` with result `%s`" % (dst_ip,output))
+    return output

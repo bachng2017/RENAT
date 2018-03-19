@@ -1,10 +1,11 @@
 #! /opt/rh/python27/root/usr/bin/python
 # -*- coding: utf-8 -*-
 # $Rev: 0.1.6 $
-# $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
+# $Ver: 0.1.7 $
+# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
 # $Author: bachng $
 
-import os
+import os,re
 import sys
 import jinja2
 import shutil
@@ -50,14 +51,19 @@ if create_local.lower() in ['yes','y']:
     str_app     = raw_input(_('Use web app list (comma separated)[ex:samurai1]:'))
 
     ## customize local.yaml
-    node_list   = str_node.split()
-    app_list    = str_app.split()
+    node_list   = re.split(r'[, ]+',str_node)
+    if '' in node_list: node_list.remove('')
+    app_list    = re.split(r'[, ]+',str_app)
+    if '' in app_list: app_list.remove('')
 
     ## create null config file for nodes:
     for item in node_list: os.system("touch %s/config/%s.conf" % (CASE,item))
     
     if str_tester == "":    tester_list = []
-    else:                   tester_list = str_tester.split()
+    else:                   
+        tester_list = re.split(r'[, ]+',str_tester)
+        if '' in tester_list: tester_list.remove('')
+
     # create traffic file 
     os.system("touch %s/config/%s" % (CASE,traffic))
 

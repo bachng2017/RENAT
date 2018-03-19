@@ -6,7 +6,7 @@ if [[ ! -f chibalab.robot ]] && [[ ! -f lab.robot ]]; then
 else
   for i in $(find . -type f -name "chibalab.robot"); do
     LAB=$(echo $i | sed 's/chiba//')
-    mv $i $F
+    mv $i $LAB
   done
   echo "moved chibalab.robot to lab.robot"
 

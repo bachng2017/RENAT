@@ -13,48 +13,156 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
-# $Rev: 0.1.6 $
+# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
+# $Rev: 822 $
+# $Ver: 0.1.7 $
 # $Author: bachng $
 
-import os,sys
+import os,sys,shutil
 import IxLoad
+import Common
 from datetime import datetime
 from multiprocessing import Process,Queue
 
 class SubIxLoad(Process):
     """ A multi process supported IxLoad wrapper
+
+    A IxLoad test will automatically starts and runs this Ixload client in the
+    background. The test item and this client communicates through predefined
+    fortmat messages.
+
+    The client will be terminated when the test finishes.
     """
+
     def __init__(self,log_name,task_queue, result_queue):
         Process.__init__(self)
         self.task_queue     = task_queue
         self.result_queue   = result_queue
         self.elapsed = None
+        self.random = Common.random_name('_tmp%5d','0','99999')
 
     def connect(self,ip):
         self.ix = IxLoad.IxLoad()
         self.ix.connect(ip)
-        # logger      = self.ix.new("ixLogger","Ixload-RENAT",1)
-        # log_engine  = logger.getEngine()
-        # log_engine.setLevels(self.ix.ixLogger.kLevelDebug,self.ix.ixLogger.kLevelInfo)
+
+        logger      = self.ix.new("ixLogger","Ixload-RENAT",1)
+        log_engine  = logger.getEngine()
+        log_engine.setLevels(self.ix.ixLogger.kLevelDebug,self.ix.ixLogger.kLevelInfo)
+
         self.result_queue.put(["ixload::ok"])
         self.task_queue.task_done()
 
-
-    def load_traffic(self,file_path):
-        """ Loads test defined by ``file_path``
-
-        Result will be saved in remote machine under the folder
-        ``D://RENAT/RESULS/<this case>``
-        """
+    
+    def _ixload_tmp_dir(self):
+        """ Returns a temporary folder for this test
+        """ 
+        result_base = Common.GLOBAL['default']['ixload-tmp-remote']
 
         tmp = os.getcwd().split('/')
         folder_name = "%s_%s" % (tmp[-2],tmp[-1])
 
-        self.repository = self.ix.new("ixRepository",name=file_path)
+        # create a temporary result directory
+        result = "%s/%s" % (result_base,folder_name)
+        result = result.replace('-','')
+        result = result.replace(' ','_')
+        result = result.replace('__','_')
+   
+        return result + self.random    
+
+
+
+    def load_config(self,config_name,port_list):
+        """ Loads config file named ``config``
+
+        ``config`` is the name of the confif file related to current active
+        config path.
+        """
+
+        ixload_tmp_dir = self._ixload_tmp_dir()
+
+        config_src = Common.get_item_config_path() + '/' + config_name
+        config_dst = ixload_tmp_dir + '_' + config_name
+        IxLoad._TclEval("::IxLoad sendFileCopy %s %s" % (config_src,config_dst))
+
+        
         self.controller = self.ix.new("ixTestController",outputDir=1)
-        self.controller.setResultDir("D:/RENAT/RESULTS/%s" % folder_name)
-        self.result_queue.put(["ixload::ok"])
+        self.controller.setResultDir(ixload_tmp_dir)
+        self.repository = self.ix.new("ixRepository",name=config_dst)
+
+        test_name = self.repository.testList[0].cget('name')
+        test = self.repository.testList.getItem(test_name)
+        port_num = 0
+        num = int(test.clientCommunityList.indexCount())
+        for i in range(num):
+            port_num = port_num + int(test.clientCommunityList[i].network.portList.indexCount())
+        num = int(test.serverCommunityList.indexCount())
+        for i in range(num):
+            port_num = port_num + int(test.serverCommunityList[i].network.portList.indexCount())
+    
+        if len(port_list) == 0:
+            self.result_queue.put(["ixload::ok"])
+        elif port_num != len(port_list):
+            self.result_queue.put(["ixload::err","Wrong port number"])
+        else:
+            num = int(test.clientCommunityList.indexCount())
+            for i in range(num): test.clientCommunityList[i].network.portList.clear()
+
+            num = int(test.serverCommunityList.indexCount())
+            for i in range(num): test.serverCommunityList[i].network.portList.clear()
+
+            test.setPorts(port_list)
+            self.result_queue.put(["ixload::ok",ixload_tmp_dir])
+
+        self.task_queue.task_done()
+
+
+    def collect_data(self,prefix='',more_file='',ignore_not_found=True):
+        """ Collect all data files
+
+        Currently the follow data will be downloaded to the local machine
+            - HTTP_Server.csv
+            - HTTP Client.csv
+            - HTTP Client - Per URL.csv
+            - HTTP Server - Per URL.csv
+            - L2-3 Stats for Client Ports.csv 
+            - L2-3 Stats for Server Ports.csv 
+            - L2-3 Throughput Stats.csv 
+            - Port CPU Statistics.csv 
+    
+        Extra file could be add by ``more_file`` which is a comma separated
+        filename string
+        """
+        
+        ixload_tmp_dir = self._ixload_tmp_dir()
+
+        result_folder = Common.get_result_path()
+        file_list = [
+            'HTTP_Server.csv',
+            'HTTP_Client.csv',
+            'HTTP Client - Per URL.csv',
+            'HTTP Server - Per URL.csv',
+            'L2-3 Stats for Client Ports.csv', 
+            'L2-3 Stats for Server Ports.csv', 
+            'L2-3 Throughput Stats.csv', 
+            'Port CPU Statistics.csv', 
+        ]
+        
+        # add more files
+        file_list.extend(more_file.split(','))
+        file_list.remove('')
+
+        try:
+            for item in file_list:
+                dst = item.replace('-','')
+                dst = dst.replace(' ','_')
+                dst = dst.replace('__','_')
+                try:
+                    self.ix.retrieveFileCopy("%s/%s" % (ixload_tmp_dir,item), "%s/%s%s" % (result_folder,prefix,dst))
+                except Exception as err:
+                    if not ignore_not_found: raise err
+            self.result_queue.put(["ixload::ok"])
+        except Exception as err:
+            self.result_queue.put(err)
         self.task_queue.task_done()
 
     
@@ -96,9 +204,36 @@ class SubIxLoad(Process):
             self.elapsed = (stop - self.run_start).total_seconds()
         self.result_queue.put(["ixload::ok",self.elapsed])
         self.task_queue.task_done()
+
+
+    def get_test_report(self,prefix=''):
+        self.controller.generateReport(detailedReport=1, format="PDF")
+        ixload_tmp_dir = self._ixload_tmp_dir()
+
+        result_folder = Common.get_result_path()
+        file_list = [
+            'IxLoad Detailed Report.pdf'
+        ]
+        
+        try:
+            for item in file_list:
+                dst = item.replace('-','')
+                dst = dst.replace(' ','_')
+                dst = dst.replace('__','_')
+                try:
+                    self.ix.retrieveFileCopy("%s/%s" % (ixload_tmp_dir,item), "%s/%s%s" % (result_folder,prefix,dst))
+                except Exception as err:
+                    if not ignore_not_found: raise err
+            self.result_queue.put(["ixload::ok"])
+        except Exception as err:
+            self.result_queue.put(err)
+        self.result_queue.put(["ixload::ok"])
+        self.task_queue.task_done()
         
     
     def disconnect(self):
+        self.ix.delete(self.repository)
+        self.ix.delete(self.controller)
         self.ix.disconnect()
         self.result_queue.put(["ixload::ok"])
         self.task_queue.task_done()
@@ -114,12 +249,16 @@ class SubIxLoad(Process):
                 elif next_task[0] == "ixload::disconnect":
                     self.disconnect()
                     break
-                elif next_task[0] == "ixload::load_traffic":
-                    self.load_traffic(next_task[1])
+                elif next_task[0] == "ixload::load_config":
+                    self.load_config(next_task[1],next_task[2])
                 elif next_task[0] == "ixload::start_traffic":
                     self.start_traffic()
                 elif next_task[0] == "ixload::stop_traffic":
                     self.stop_traffic()
+                elif next_task[0] == "ixload::get_test_report":
+                    self.get_test_report(next_task[1])
+                elif next_task[0] == "ixload::collect_data":
+                    self.collect_data(next_task[1],next_task[2],next_task[3])
                 else:
                     raise Exception()
 

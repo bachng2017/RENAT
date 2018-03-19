@@ -13,11 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 0.1.6 $
-# $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
+# $Rev: 822 $
+# $Ver: 0.1.7 $
+# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
 # $Author: bachng $
 
-import os
+import os,re
 import sys
 import yaml
 import pyte
@@ -135,14 +136,17 @@ class VChannel(object):
         """
 
         channel = self._channels[self._current_name]
-        # in case the channel has already has the logger
+ 
+       # in case the channel has already has the logger
         if 'logger' in channel:
             logger      = channel['logger']
             separator   = channel['separator']
             if separator != "":
                 if channel['screen']: logger.write(Common.newline)
                 logger.write(Common.newline + separator + Common.newline)
-            logger.write(msg)
+            # logger.write(msg)
+            # remove some special control char before write to file
+            logger.write(re.sub(r"[\x07]", "", msg))
             logger.flush()
 
 
@@ -160,23 +164,26 @@ class VChannel(object):
 
         The only difference is that the mode of the log file is set to ```a+``` by default
         """
+        BuiltIn().log("Reconnect to `%s`" % name)
 
         # remember the current channel name
-        _curr_name  = self._current_name
-        _node       = self._channels[name]['node']
-        _name       = self._channels[name]['name']
-        _log_file   = self._channels[name]['log_file']
-        _w          = self._channels[name]['w'] 
-        _h          = self._channels[name]['h'] 
-        _mode       = self._channels[name]['mode'] 
-        _timeout    = self._channels[name]['timeout']
+        # _curr_name  = self._current_name
+        _node       = self._current_channel_info['node']
+        _name       = self._current_channel_info['name']
+        _log_file   = self._current_channel_info['log_file']
+        _w          = self._current_channel_info['w'] 
+        _h          = self._current_channel_info['h'] 
+        _mode       = self._current_channel_info['mode'] 
+        _timeout    = self._current_channel_info['timeout']
 
         # reconect to the node. Appending the log
-        if name in self._channels: self._channels.pop(name)
+        if name in self._channels: 
+            self._channels.pop(name)
+            BuiltIn().log("    Removed `%s` from current channel" % name)
         self.connect(_node, _name, _log_file, _timeout, _w, _h, 'a+')
 
         # restore the current channel name
-        self._current_name = _curr_name
+        # self._current_name = _curr_name
 
         # flush anything remained
         # self._channels[name]['logger'].flush() 
@@ -185,7 +192,8 @@ class VChannel(object):
         BuiltIn().log("Reconnected successfully to `%s`" % (name))
         
 
-    def connect(self,node,name,log_file,timeout='10s', \
+    def connect(self,node,name,log_file,\
+                timeout=Common.GLOBAL['default']['terminal-timeout'], \
                 w=Common.LOCAL['default']['terminal']['width'],\
                 h=Common.LOCAL['default']['terminal']['height'],mode='w'):
         """ Connects to the node and create a VChannel instance
@@ -226,7 +234,10 @@ class VChannel(object):
         _profile        = _access_tmpl['profile']
         _prompt         = _access_tmpl['prompt'] + '$' # automatically append <dollar> to the prompt from yaml config 
         _auth           = Common.GLOBAL['auth'][_auth_type][_profile]
-        _init           = _access_tmpl['init'] # initial command 
+        if 'init' in _access_tmpl:
+            _init           = _access_tmpl['init'] # initial command 
+        else:
+            _init = None
         _timeout        = timeout
         if 'login_prompt' in _access_tmpl: 
             _login_prompt = _access_tmpl['login_prompt']
@@ -249,8 +260,12 @@ class VChannel(object):
                 local_id = self._telnet.open_connection(_ip,
                                                         alias=name,terminal_type='vt100', window_size=s,
                                                         prompt=_prompt,prompt_is_regexp=True,timeout=_timeout)
-                out = self._telnet.login(_auth['user'],_auth['pass'],
+                if _login_prompt is not None:
+                    out = self._telnet.login(_auth['user'],_auth['pass'],
                                         login_prompt=_login_prompt,password_prompt=_password_prompt)
+                else:
+                    out = self._telnet.read_until(_password_prompt)
+                    self.write(_auth['pass'])
     
                 # allocate new channel id
                 id = self._max_id + 1
@@ -309,9 +324,14 @@ class VChannel(object):
         
             # remember this info by name(alias)
             self._channels[name]   = channel_info 
+            self._current_channel_info = channel_info
     
-            # 
+            # logging the ouput 
             self.log(out)
+
+
+            # by default switch to the connected device
+            self.switch(name)
         
             # enable
             if 'enable' in _auth:
@@ -320,7 +340,7 @@ class VChannel(object):
                 self.cmd(_auth['enable'])
     
             ### execute 1st command after login
-            if _init: 
+            if _init is not None: 
                 for item in _init: 
                     BuiltIn().log("Executing init command: %s" % (item))
                     self.cmd(item)
@@ -328,11 +348,9 @@ class VChannel(object):
             BuiltIn().log("Opened connection to `%s(%s)`" % (name,_ip))
         except Exception as err:
             if not ignore_dead_node: 
-                err_msg = "ERROR: Error occured when connect to `%s(%s)`" % (name,_ip)
-                
+                err_msg = "ERROR: Error occured when connecting to `%s(%s)`" % (name,_ip)
                 BuiltIn().log(err_msg)
-                BuiltIn().log_to_console(err_msg)
-                
+                # BuiltIn().log_to_console(err_msg)
                 raise 
             else:
                 warn_msg = "WARN: Error occured when connect to `%s(%s)` but was ignored" % (name,_ip)
@@ -429,17 +447,20 @@ class VChannel(object):
         """
     
         if name in self._channels: 
+            channel_info = self._channels[name]
             self._current_name = name
-            channel = self._channels[name]
+            self._current_channel_info = channel_info
 
-            self._current_id = channel['id']
+            self._current_id = channel_info['id']
 
-            channel['connection'].switch_connection(channel['local_id'])
+            channel_info['connection'].switch_connection(channel_info['local_id'])
 
             BuiltIn().log("Switched current channel to `%s`" % name)
-            return channel['id'], channel['local_id']
+            return channel_info['id'], channel_info['local_id']
         else:
-            raise Exception("Error: Could not find `%s` in current channels" % (name))
+            err_msg = "ERROR: Could not find `%s` in current channels" % (name)
+            BuiltIn().log(err_msg)
+            raise Exception(err_msg)
 
 
     def change_log(self,log_file,mode='w'):
@@ -453,8 +474,11 @@ class VChannel(object):
 
         channel['logger'].flush()
         channel['logger'].close()
-         
-        channel['logger'] = codecs.open(Common.LOCAL['default']['result_folder'] + '/' + log_file,mode,'utf-8') 
+    
+        result_path = Common.get_result_path() 
+        # channel['logger'] = codecs.open(Common.LOCAL['default']['result_folder'] + '/' + log_file,mode,'utf-8') 
+        channel['logger'] = codecs.open(result_path+'/'+log_file,mode,'utf-8') 
+        channel['log_file'] = log_file
 
         BuiltIn().log("Changed current log file to %s" % log_file)
         return old_log_file
@@ -470,21 +494,33 @@ class VChannel(object):
         for i in range(max_retry):
             try:
                 return f(*args)
-            except Exception as e:
-            # except EOFError,ChannelException as e
+            # except Exception as e:
+            except (EOFError,KeyError) as e:
                 BuiltIn().log("    Exception(%s): %s" % (str(type(e)),str(e)))
-                BuiltIn().log(traceback.format_exc())
+                # BuiltIn().log(traceback.format_exc())
 
-                BuiltIn().log("    Try reconnection :" + str(i+1))
+                BuiltIn().log("    Try reconnection: " + str(i+1))
                 try:
                     self.reconnect(self._current_name)
                     continue
                 except Exception as e:
-                    BuiltIn().log("Exception(%s): %s" % (str(type(e)),str(e)))
+                    BuiltIn().log("    WARNING: %s: %s" % (str(type(e)),str(e)))
+                    # BuiltIn().log(traceback.format_exc())
                     if i == max_retry - 1:
-                        raise Exception("Error: Failed to reconnect to node `%s`" % self._current_name)
-                    time.sleep(interval)
-        # BuiltIn().log("Safely executed command with reconnection ability")
+                        err_msg = "    ERROR: Failed to reconnect to node `%s`" % self._current_name
+                        BuiltIn().log(err_msg)
+                        raise Exception(err_msg)
+                    else:
+                        time.sleep(interval)
+                        BuiltIn().log_to_console('.','STDOUT',True)
+            except Exception as e:
+                err_msg = "ERROR: timeout while processing command. Tunning ``terminal-timeout`` in RENAT config file or check your command"
+                BuiltIn().log(err_msg)
+                raise Exception(err_msg)
+
+        err_msg = "    ERROR: failed to execute command `%s`" % f
+        BuiltIn().log(err_msg)
+        raise Exception(err_msg)
 
 
     def _write(self,cmd,wait):
@@ -601,31 +637,55 @@ class VChannel(object):
         else:
             output  = channel['connection'].read_until_regexp('.*' + str_prompt)
         self.log(output)
-    
         return output
 
+#        # experimentally implement VChannel without using prompt
+#        result = ''
+#        old_output = ''
+#        count = 0
+#        output  = channel['connection'].read()
+#        while count < 3:
+#            # BuiltIn().log_to_console("***" + result + "***")
+#            result = result + output
+#            old_output = output
+#            output  = channel['connection'].read()
+#            if output == old_output: 
+#                count = count + 1
+#                time.sleep(1)
+#            else:
+#                count = 0
+#        self.log(result)
+#    
+#        return result
 
-    def cmd(self,str_cmd,str_prompt=''):
-        """Executes a ``cmd`` and wait until for the prompt. 
+
+    def cmd(self,command,prompt='',match_err='\r\n(unknown command.|syntax error, expecting <command>.)\r\n'):
+        """Executes a ``command`` and wait until for the prompt. 
   
         This is a blocking keyword. Execution of the test case will be postponed until the prompt appears.
-        If ``str_prompt`` is a null string (default), its value is defined in the ``./config/template.yaml``
+        If ``prompt`` is a null string (default), its value is defined in the ``./config/template.yaml``
 
         Output will be automatically logged to the channel current log file.
 
         See [./Common.html|Common] for details about the config files.
         """
-        # read remains
-        # self.read()
 
-        BuiltIn().log("Execute command: %s" % (str_cmd))
-        output = self._with_reconnect(self._cmd,str_cmd,str_prompt)
+        BuiltIn().log("Execute command: `%s`" % (command))
+        output = self._with_reconnect(self._cmd,command,prompt)
+
+        # result checking
+        if Common.GLOBAL['default']['cmd-auto-check'] and match_err != '' and re.search(match_err, output):
+            err_msg = "ERROR: error while execute command `%s`" % command
+            BuiltIn().log(err_msg)
+            BuiltIn().log(output)
+            raise Exception(err_msg)
+
             
-        BuiltIn().log("Executed command '%s'" % (str_cmd))
+        BuiltIn().log("Executed command `%s`" % (command))
         return output
     
 
-    def cmd_yesno(self, cmd,ans='yes',question='? [yes,no] '):
+    def cmd_yesno(self,cmd,ans='yes',question='? [yes,no] '):
         """ Executes a ``str_cmd``, waits for ``question`` and answers that by
         ``ans``
         """
@@ -647,14 +707,17 @@ class VChannel(object):
   
         if channel['screen']:
             channel['stream'].feed(channel['connection'].read())
-            output = self._dump_screen() + Common.newline
-            self.log(output)
+            try:
+                output = self._dump_screen() + Common.newline
+            except UnicodeDecodeError as err:
+                output = err.args[1].decode('utf-8','replace')
         else:
             try:
                 output = channel['connection'].read() 
             except UnicodeDecodeError as err:
                 output = err.args[1].decode('utf-8','replace')
-            self.log(output)
+
+        self.log(output)
         return output
 
 
