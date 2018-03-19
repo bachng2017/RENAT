@@ -1,25 +1,37 @@
 #!/bin/sh
 
-RENAT_DOC="/var/www/html/renat-doc/"
+PUBLISH_DOC=/var/www/html/renat-doc/
 export PYTHONPATH=$PYTHONPATH:$RENAT_PATH
 
-python -m robot.libdoc $RENAT_PATH/Common.py Common.html
-python -m robot.libdoc $RENAT_PATH/Logger.py Logger.html
-python -m robot.libdoc $RENAT_PATH/Router.py Router.html
-python -m robot.libdoc $RENAT_PATH/Tester.py Tester.html
-python -m robot.libdoc $RENAT_PATH/OpticalSwitch.py OpticalSwitch.html
-python -m robot.libdoc $RENAT_PATH/VChannel.py VChannel.html
-python -m robot.libdoc $RENAT_PATH/router_mod/juniper.py router_mod_juniper.html
-python -m robot.libdoc $RENAT_PATH/router_mod/cisco.py router_mod_cisco.html
-python -m robot.libdoc $RENAT_PATH/router_mod/gr.py router_mod_gr.html
-python -m robot.libdoc $RENAT_PATH/tester_mod/ixnet.py tester_mod_ixnet.html
-python -m robot.libdoc $RENAT_PATH/tester_mod/ixload.py tester_mod_ixload.html
-python -m robot.libdoc $RENAT_PATH/WebApp.py WebApp.html
-python -m robot.libdoc $RENAT_PATH/Samurai.py Samurai.html
-python -m robot.libdoc $RENAT_PATH/Arbor.py Arbor.html
-python -m robot.libdoc -F REST -n RENAT ./index.py index.html
-python -m robot.libdoc $RENAT_PATH/Readme.py Readme.html
+python -m robot.libdoc $RENAT_PATH/Common.py html/Common.html
+python -m robot.libdoc $RENAT_PATH/Logger.py html/Logger.html
+python -m robot.libdoc $RENAT_PATH/Router.py html/Router.html
+python -m robot.libdoc $RENAT_PATH/Tester.py html/Tester.html
+python -m robot.libdoc $RENAT_PATH/OpticalSwitch.py html/OpticalSwitch.html
+python -m robot.libdoc $RENAT_PATH/VChannel.py html/VChannel.html
+python -m robot.libdoc $RENAT_PATH/router_mod/juniper.py html/router_mod_juniper.html
+python -m robot.libdoc $RENAT_PATH/router_mod/cisco.py html/router_mod_cisco.html
+python -m robot.libdoc $RENAT_PATH/router_mod/gr.py html/router_mod_gr.html
+python -m robot.libdoc $RENAT_PATH/tester_mod/ixnet.py html/tester_mod_ixnet.html
+python -m robot.libdoc $RENAT_PATH/tester_mod/ixload.py html/tester_mod_ixload.html
+python -m robot.libdoc $RENAT_PATH/WebApp.py html/WebApp.html
+python -m robot.libdoc $RENAT_PATH/Samurai.py html/Samurai.html
+python -m robot.libdoc $RENAT_PATH/Arbor.py html/Arbor.html
+python -m robot.libdoc -F REST -n RENAT ./index.py html/index.html
+python -m robot.libdoc $RENAT_PATH/CHANGES.txt html/Changes.html
 
-cp *.html $RENAT_DOC 
+cp html/*.html $PUBLISH_DOC 
 
+
+# html to pdf
+for i in $(cat list.txt); do 
+    echo $i
+    /usr/local/bin/wkhtmltopdf -q html/$i.html pdf/$i.pdf
+done
+
+# merge to all-in-one pdf
+LIST=$(cat list.txt | sed 's/$/.pdf/'|  paste -s -d' ')
+cd pdf
+/usr/bin/pdfjoin -o renat.pdf $LIST 
+cp renat.pdf $PUBLISH_DOC
 
