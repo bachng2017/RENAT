@@ -26,7 +26,7 @@ usage() {
     echo "  -X                      stop immediately if a step fails (default is not set)"
     echo "  -v VAR:VALUE            define a global RF variable ${VAR} with value VALUE"
     echo "  -v CLEAN                execute CleanUp Result keyword before in Setup step"
-    echo "  -v BATCH                do not wait for user input (useful for patch process)
+    echo "  -v BATCH                do not wait for user input (useful for patch process)"
     echo
 }
 
