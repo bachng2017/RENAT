@@ -13,10 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
-# $Rev: 822 $
-# $Ver: 0.1.7 $
-# $Author: bachng $
+# $Date: 2018-03-24 20:42:36 +0900 (土, 24  3月 2018) $
+# $Rev: 861 $
+# $Ver: 1.7.1 $
+# $Author: $
 
 import sys
 import os
@@ -43,8 +43,10 @@ __all__ = ['switch','connect','connect_all','close_all']
 class Tester(object):
     """ A class provides keywords for controlling testers and traffic
     generators.
-    It could load predefined traffic file, manipulate traffic item, start and
-    stop traffic flows. It also could generate traffic reports ...
+
+    It could load predefined traffic file, manipulate traffic items, start and
+    stop traffic flows. It also could generate traffic reports and support
+    QuickTest for IxNetwork.
 
     Tester information is stored in the active ``local.yaml`` likes this:
 
@@ -53,10 +55,12 @@ class Tester(object):
 |         device: ixnet03_8009
 |         config: vmx_20161129.ixncfg
 |         real_port:
-|            -   chassis: 10.128.32.71
+|            -   description: to egde router   
+                 chassis: 10.128.32.71
 |                card: 6
 |                port: 11
-|            -   chassis: 10.128.32.71
+|            -   description: to backbone router 
+                 chassis: 10.128.32.71
 |                card: 6
 |                port: 9
 
@@ -66,8 +70,10 @@ Otherwise, port remapping will use the ``real_port`` information to reassign
 all existed ports and map to Ixia ports.
 
 In this case, the order will be the order when user created the port in Ixia
-GUI. *Note:* User can always confirm the created order by ``clear sorting`` in
-Ixia GUI
+GUI. 
+
+*Note:* User can always confirm the created order by ``clear sorting`` in
+Ixia GUI.
 
     Examples:
     | Tester.`Connect All` |
@@ -164,7 +170,7 @@ module.
             results.get()
 
         else:
-            raise Exception("Error while connecting IxNetwork: wrong module type")
+            raise Exception("ERROR: wrong module type")
     
         self._clients[name] = client
         self._cur_name = name

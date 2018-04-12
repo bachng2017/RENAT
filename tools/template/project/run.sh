@@ -1,9 +1,9 @@
 #!/bin/sh
 
-# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
-# $Rev: 822 $
-# $Ver: 0.1.7 $
-# $Author: bachng $
+# $Date: 2018-03-25 18:06:17 +0900 (日, 25  3月 2018) $
+# $Rev: 863 $
+# $Ver: 1.7.1 $
+# $Author: $
 # suite run script
 # runs all test cases in sub folders if it has `run.sh` and does not has `.ignore` file
 # returns 0 if all sub test cases were succeed otherwise return a non zero value
@@ -26,7 +26,7 @@ usage() {
     echo "  -X                      stop immediately if a step fails (default is not set)"
     echo "  -v VAR:VALUE            define a global RF variable ${VAR} with value VALUE"
     echo "  -v CLEAN                execute CleanUp Result keyword before in Setup step"
-    echo "  -v BATCH                do not wait for user input (useful for patch process)"
+    echo "  -v RENAT_BATCH          do not wait for user input (useful for patch process)"
     echo
 }
 
@@ -53,7 +53,7 @@ process() {
             SUCCEED=$(expr $SUCCEED + 1)
         else
             FAIL=$(expr $FAIL + 1)
-            FAIL_ITEM="$FAIL_ITEM $entry"
+            FAIL_ITEM="$PWD \n$FAIL_ITEM"
         fi
         echo "Finished with exit code $CODE"
     fi
@@ -75,13 +75,13 @@ for OPT in "$@"; do
     esac
 done
 
-process .
+process
 
 # summerize
 echo "---"
 echo "succeeded items: " $SUCCEED
 echo "failed items:    " $FAIL
-echo "    $FAIL_ITEM"
+echo -e $FAIL_ITEM
 echo ""
 exit $RETURN
 

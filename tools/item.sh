@@ -1,8 +1,8 @@
 #! /opt/rh/python27/root/usr/bin/python
 # -*- coding: utf-8 -*-
 # $Rev: 0.1.6 $
-# $Ver: 0.1.7 $
-# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
+# $Ver: 1.7.1 $
+# $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
 # $Author: bachng $
 
 import os,re

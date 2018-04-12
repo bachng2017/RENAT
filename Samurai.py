@@ -13,10 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
-# $Rev: 822 $
-# $Ver: 0.1.7 $
-# $Author: bachng $
+# $Date: 2018-03-24 11:37:45 +0900 (土, 24  3月 2018) $
+# $Rev: 859 $
+# $Ver: 1.7.1 $
+# $Author: $
 
 import os,time,re
 import lxml.html
@@ -454,7 +454,7 @@ _system_admin_.
                     result_map[k] = item_map[k]
         count = len(result_map)
         # if count == 0:
-        #    raise Exception("Error: Could not found any item in the table")
+        #    raise Exception("ERROR: Could not found any item in the table")
         for item in result_map:
             checkbox = result_map[item].find_element_by_xpath(xpath2) 
             self._driver.click_element(checkbox)

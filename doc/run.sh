@@ -14,13 +14,16 @@ python -m robot.libdoc $RENAT_PATH/router_mod/cisco.py html/router_mod_cisco.htm
 python -m robot.libdoc $RENAT_PATH/router_mod/gr.py html/router_mod_gr.html
 python -m robot.libdoc $RENAT_PATH/tester_mod/ixnet.py html/tester_mod_ixnet.html
 python -m robot.libdoc $RENAT_PATH/tester_mod/ixload.py html/tester_mod_ixload.html
+python -m robot.libdoc $RENAT_PATH/optic_mod/calient.py html/optic_mod_calient.html
+python -m robot.libdoc $RENAT_PATH/optic_mod/g4ntm.py html/optic_mod_g4ntm.html
 python -m robot.libdoc $RENAT_PATH/WebApp.py html/WebApp.html
 python -m robot.libdoc $RENAT_PATH/Samurai.py html/Samurai.html
 python -m robot.libdoc $RENAT_PATH/Arbor.py html/Arbor.html
 python -m robot.libdoc -F REST -n RENAT ./index.py html/index.html
-python -m robot.libdoc $RENAT_PATH/CHANGES.txt html/Changes.html
+# python -m robot.libdoc $RENAT_PATH/CHANGES.txt html/Changes.html
 
 cp html/*.html $PUBLISH_DOC 
+cp $RENAT_PATH/CHANGES.txt $PUBLISH_DOC 
 
 
 # html to pdf

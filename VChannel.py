@@ -13,10 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 822 $
-# $Ver: 0.1.7 $
-# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
-# $Author: bachng $
+# $Rev: 861 $
+# $Ver: 1.7.1 $
+# $Date: 2018-03-24 20:42:36 +0900 (土, 24  3月 2018) $
+# $Author: $
 
 import os,re
 import sys
@@ -363,7 +363,7 @@ class VChannel(object):
 
     
     def connect_all(self,prefix=""):
-        """ Connects to *All* nodes that are defined in active ``local.yaml``. 
+        """ Connects to *all* nodes that are defined in active ``local.yaml``. 
 
         A prefix ``prefix`` was appended to the alias name of the connection. A
         new log file by ``<alias>.log`` was automatiocally created.
@@ -458,7 +458,7 @@ class VChannel(object):
             BuiltIn().log("Switched current channel to `%s`" % name)
             return channel_info['id'], channel_info['local_id']
         else:
-            err_msg = "ERROR: Could not find `%s` in current channels" % (name)
+            err_msg = "ERROR: Could not find `%s` in current channels" % name
             BuiltIn().log(err_msg)
             raise Exception(err_msg)
 
@@ -561,10 +561,12 @@ class VChannel(object):
         char by your own and the ouput is not be logged or returned from the keyword.
 
         Parameters:
-        - str_cmd: the command
-        - str_wait: time to wait after apply the command
+        - ``str_cmd``: the command
+        - ``str_wait``: time to wait after apply the command
+        - ``start_screen_mode``: whether start the ``screen mode`` right after
+          writes the command
 
-        Special key likes Ctrl-C etc. could be used with global variable ${CTRL-<char>}
+        Special input likes Ctrl-C etc. could be used with global variable ${CTRL-<char>}
 
         Returns the output after writing the command the the channel.
    
@@ -686,7 +688,7 @@ class VChannel(object):
     
 
     def cmd_yesno(self,cmd,ans='yes',question='? [yes,no] '):
-        """ Executes a ``str_cmd``, waits for ``question`` and answers that by
+        """ Executes a ``cmd``, waits for ``question`` and answers that by
         ``ans``
         """
         channel = self._channels[self._current_name]

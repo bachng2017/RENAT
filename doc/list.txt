@@ -3,6 +3,8 @@ Common
 VChannel
 Logger
 OpticalSwitch
+optic_mod_calient
+optic_mod_g4ntm
 Router
 router_mod_cisco
 router_mod_gr

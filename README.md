@@ -61,7 +61,7 @@ $ python --version
 ```
 $ yum install epel-release
 $ yum install gettext gcc net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python27-tkinter xorg-x11-server-Xvfb
-$ pip install numpy pyte PyYAML openpyxl Jinja2 pandas paramiko lxml requests 
+$ pip install numpy pyte PyYAML openpyxl Jinja2 pandas paramiko lxml requests pdfkit
 $ pip install netsnmp-py==0.3 
 ```
 
@@ -154,7 +154,7 @@ export PYTHONPATH
 ```
 
 ``Notes:``
-The concept of ``Tester module`` is that the configuration should be created using Tester GUI (like Ixia Network or Ixia Load). RENAT framework supports controling the test items, stop/run the tests etc. but does not support traffic genrating itself
+The concept of ``Tester module`` is that the configuration should be created using Tester GUI (like Ixia Network or Ixia Load). RENAT framework supports controling the test items, stop/run the tests etc. but does not support traffic generating itself.
 
 ### Web server (optional)
 It is more convinence to access the test result from a web browser. Configure your favorite web server to display to access the test project and test item folder.
@@ -329,7 +329,7 @@ Log:     /home/user/work/renat/sample/item01/result/log.html
 Report:  /home/user/work/renat/sample/item01/result/report.html
 ```
 
-In case you has configure a web server, access `./result/log.html` or `./result/report.html` for more details about the result.
+In case you has configured a web server, access `./result/log.html` or `./result/report.html` for more details about the result.
 
 ## More Examples
 - See [item02](./sample/item02/main.robot) for sample about `Exec File` keyword

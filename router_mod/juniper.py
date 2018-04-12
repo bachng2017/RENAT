@@ -13,10 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 822 $
-# $Ver: 0.1.7 $
-# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
-# $Author: bachng $
+# $Rev: 828 $
+# $Ver: 1.7.1 $
+# $Date: 2018-03-20 09:41:00 +0900 (火, 20  3月 2018) $
+# $Author: $
 
 """ Provides keywords for Juniper platform
 
@@ -210,7 +210,7 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(
         f.write(compiled_config)
     cmd = "file copy robot@" + server + "://" + file_path_replace + ' /var/tmp/' + config_file
 
-    output = self._vchannel.cmd(cmd,str_prompt="(yes/no|password:)")
+    output = self._vchannel.cmd(cmd,prompt="(yes/no|password:)")
     if "yes/no" in output:
         output = self._vchannel.cmd("yes")
     if "password:" in output:
@@ -280,7 +280,7 @@ def get_file(self,src_file,dst_file=''):
     cmd = "file copy %s robot@%s://%s" % (src_file,server,tmp_path)
     # output = self._vchannel.write(cmd, str_timeout)
     # output = self._vchannel.read() 
-    output = self._vchannel.cmd(cmd,str_prompt="(yes/no|password:)")
+    output = self._vchannel.cmd(cmd,prompt="(yes/no|password:)")
 
     if "yes/no" in output:
         output = self._vchannel.cmd("yes")

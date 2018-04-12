@@ -13,12 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 822 $
-# $Ver: 0.1.7 $
-# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
-# $Author: bachng $
+# $Rev: 882 $
+# $Ver: 1.7.1 $
+# $Date: 2018-04-04 00:53:15 +0900 (水, 04  4月 2018) $
+# $Author: $
 
-"""
 RENAT(Robotframework Extension for Network Automation Testing)
 
 == What's new ==
@@ -28,6 +27,7 @@ RENAT(Robotframework Extension for Network Automation Testing)
 - added check mode to Cmd keyword
 - fixed bugs in several modules
 - rewrote project and item run scripts
+- modulized optical module and added support for Telescent NTM
 
 === 1.6 ===
 - fixed some minor bugs in Japanes codecs
@@ -97,8 +97,3 @@ In this case, test cases insides the suite will be run by in order of case's alp
 
 A test case could be ignored in suite run by having a file `.ignore` in its folder
 
-
-
-""" 
-import Common
-ROBOT_LIBRARY_VERSION = Common.version()

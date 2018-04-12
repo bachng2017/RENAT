@@ -13,10 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
-# $Rev: 822 $
-# $Ver: 0.1.7 $
-# $Author: bachng $
+# $Date: 2018-03-25 18:11:28 +0900 (日, 25  3月 2018) $
+# $Rev: 864 $
+# $Ver: 1.7.1 $
+# $Author: $
 
 import datetime
 import Common
@@ -28,7 +28,8 @@ class Logger(object):
     [./VChannel.html|VChannel] object and the is synchronized with the current active
     [./VChannel.html|VChannel].
 
-    
+    *Notes:* log file is not updated pararelly. Anytime a terminal is switched
+    to, it will update its log file.
     """
 
     ROBOT_LIBRARY_SCOPE = 'TEST SUITE'
@@ -43,7 +44,7 @@ class Logger(object):
             if self._vchannel is None:
                 raise Exception("Could not find an instance of VChannel. Need import VChannel first")
         except RobotNotRunningError as e:
-            Common.err("RENAT is not running")
+            Common.err("ERROR: RENAT is not running")
 
 
     def switch(self,name):
@@ -55,18 +56,12 @@ class Logger(object):
         | Logger.`Switch` | vmx11 |
         """
         self._vchannel.switch(name) 
-
-
-    def _log(self,channel,msg,with_time,mark):
-        note = ""
-        if with_time :
-            note = datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y: ") + msg
-        else :
-            note = msg
-        note = mark + ' ' + note + ' ' + mark
-        channel['logger'].write(Common.newline + Common.newline + note + Common.newline + Common.newline)
+        buffer = self._vchannel.read()
+        channel = self._vchannel.get_current_channel()
+        channel['logger'].write(buffer)
         channel['logger'].flush()
-  
+#        self._vchannel.write(self._vchannel.read())
+
 
     def log(self,msg,with_time=False,mark="***"):
         """ Inserts a message ``msg`` to the current `VChannel` log file. 
@@ -79,7 +74,15 @@ class Logger(object):
 
         """
         channel = self._vchannel.get_current_channel()
-        self._log(channel,msg,with_time,mark)
+        note = ""
+        if with_time :
+            note = datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y: ") + msg
+        else :
+            note = msg
+        note = mark + ' ' + note + ' ' + mark
+
+        channel['logger'].write(Common.newline + Common.newline + note + Common.newline + Common.newline)
+        channel['logger'].flush()
 
     
     def log_all(self,msg,with_time=False,mark="***"):
@@ -102,9 +105,14 @@ class Logger(object):
 | configure
         
         """
-        clients = self._vchannel.get_channels()
-        for name in clients:
-            self._log(clients[name],msg,with_time,mark)
-        BuiltIn().log("Wrote msg to `%d` clients" % (len(clients)))
+
+        old_name = self._vchannel.current_name
+        channels = self._vchannel.get_channels()
+        for name in channels:
+            self.switch(name)
+            self.log(msg,with_time,mark)
+        if old_name: self.switch(old_name)
+
+        BuiltIn().log("Wrote msg to `%d` clients" % (len(channels)))
 
 

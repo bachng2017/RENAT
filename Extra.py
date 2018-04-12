@@ -17,17 +17,18 @@ class Extra():
                 BuiltIn().log_to_console("Loaded extra library `%s`" % lib)
         
         except Exception as e:
-            # raise Exception("Error while loading extra libraries")
-            Common.err("Error while loading extra libraries")
+            Common.err("ERROR: while loading extra libraries")
             Common.err(e)
 
     def connect_all(self):
-        for lib in Common.GLOBAL['extra-lib']:
-            BuiltIn().run_keyword(lib+'.Connect All')
+        if Common.GLOBAL['extra-lib']:
+            for lib in Common.GLOBAL['extra-lib']:
+                BuiltIn().run_keyword(lib+'.Connect All')
     
     def close_all(self):
-        for lib in Common.GLOBAL['extra-lib']:
-            BuiltIn().run_keyword(lib+'.Close All')
+        if Common.GLOBAL['extra-lib']:
+            for lib in Common.GLOBAL['extra-lib']:
+                BuiltIn().run_keyword(lib+'.Close All')
     
     def test(self): 
         pass

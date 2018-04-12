@@ -19,7 +19,7 @@ VChannel_:
 Logger_:
     Library provides enhanced loggging keywords
 Optical_: 
-    Library provides keywords for controlling L1 Switch(Calient)
+    Library provides keywords to control L1 switches, includes mod_calient_ mod, mod_ntm_ mod
 Router_:
     Library provides keywords to control routers, includes mod_juniper_ mod , mod_cisco_ mod and mod_gr_ mod
 Tester_:
@@ -34,8 +34,8 @@ Others
 ######
 
 
-Readme_:
-    Release information
+Changes_:
+    Changes information
 
 Choose each libraries for detail infomration and samples about keywords.
 
@@ -52,9 +52,11 @@ Choose each libraries for detail infomration and samples about keywords.
 .. _mod_gr:         ./router_mod_gr.html
 .. _mod_ixnet:      ./tester_mod_ixnet.html
 .. _mod_ixload:     ./tester_mod_ixload.html
+.. _mod_calient:    ./optic_mod_calient.html
+.. _mod_ntm:        ./optic_mod_ntm.html
 .. _Samurai:        ./Samurai.html   
 .. _Arbor:          ./Arbor.html   
-.. _Readme:         ./Readme.html   
+.. _Changes:        ./CHANGES.txt  
 
 """
 ROBOT_LIBRARY_DOC_FORMAT = 'reST'

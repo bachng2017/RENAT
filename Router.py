@@ -13,10 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
-# $Rev: 822 $
-# $Ver: 0.1.7 $
-# $Author: bachng $
+# $Date: 2018-03-24 20:42:36 +0900 (土, 24  3月 2018) $
+# $Rev: 861 $
+# $Ver: 1.7.1 $
+# $Author: $
 
 import netsnmp
 import time
@@ -102,6 +102,7 @@ or directly called from ``Router``.
         """ Changes the current channel of this router to ``name``
 
         Rerturns old node name
+    
         *Note:* This is identical to VChannel.Switch
 
         Examples:
@@ -130,8 +131,8 @@ or directly called from ``Router``.
         return  ip
 
 
-    def cmd(self,str_cmd='',str_prompt = ''):
-        """ Runs the command ``str_cmd`` and waits until the prompt defined for this
+    def cmd(self,command='',prompt = ''):
+        """ Runs the command ``command`` and waits until the prompt defined for this
         router.
         This keyword is identical to ``VChannel.Cmd``
 
@@ -150,7 +151,7 @@ or directly called from ``Router``.
 
         """
 
-        result = self._vchannel.cmd(str_cmd,str_prompt)
+        result = self._vchannel.cmd(command,prompt)
         return result
 
 
@@ -284,8 +285,8 @@ or directly called from ``Router``.
         """ Runs the vendor independent keywords.
 
         Parametes:
-        - cmd: a keyword 
-        - args: other argumemts
+        - ``cmd``: a keyword 
+        - ``args``: other argumemts
         
         Examples:
             | Router.`Xrun` | Flap Interface | ge-0/0/0 |
@@ -398,11 +399,33 @@ or directly called from ``Router``.
         return self._vchannel.stop_screen_mode()
 
 
-    def follow_syslog(self,pattern):
-        """ Watches syslog of this device on Apollo server and block the
-        excuation until the ``pattern`` is matched
+    def cmd_and_wait_for(self,command,keyword,interval='30s',max_num=10,error_with_max_num=True):
+        """ Execute a command and expect ``keyword`` occurs in the output.
+        If not wait for ``interval`` and repeat the process again
+       
+        After ``max_num``, if ``error_with_max_num`` is ``True`` then the
+        keyword will fail. Ortherwise the test continues. 
         """
-     
+       
+        num = 1 
+        BuiltIn().log("Execute command `%s` and wait for `%s`" % (command,keyword))
+        while num <= max_num:
+            BuiltIn().log("    %d: command is `%s`" % (num,command))
+            output = self.cmd(command)
+            if keyword in output:
+                BuiltIn().log("Found keyword `%s` and stopped the loop" % keyword)
+                break;
+            else:
+                num = num + 1
+                time.sleep(DateTime.convert_time(interval))
+                BuiltIn().log_to_console('.','STDOUT',True)
+        if error_with_max_num and num > max_num:
+            msg = "ERROR: Could not found keyword `%s`" % keyword
+            BuiltIn().log(msg)
+            raise Exception(msg)
+
+        BuiltIn().log("Executed command `%s` and waited for keyword `%s`" % (command,keyword))
+
     
     # @Common.run_async 
     # def async_cmd(self,cmd,*args):

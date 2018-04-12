@@ -13,10 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 822 $
-# $Ver: 0.1.7 $
-# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
-# $Author: bachng $
+# $Rev: 901 $
+# $Ver: 1.7.1 $
+# $Date: 2018-04-10 19:44:08 +0900 (火, 10  4月 2018) $
+# $Author: $
 
 """ Common library for RENAT
 
@@ -205,7 +205,7 @@ the test and remove the node from its active node list.
 
 """
 
-ROBOT_LIBRARY_VERSION = 'RENAT 0.1.7'
+ROBOT_LIBRARY_VERSION = 'RENAT 1.7.1'
 
 import os
 import glob,fnmatch
@@ -224,6 +224,7 @@ import difflib
 import hashlib
 import pandas
 import sys,select
+import subprocess
 from sets import Set
 import robot.libraries.DateTime as DateTime
 from robot.libraries.BuiltIn import BuiltIn
@@ -247,21 +248,60 @@ NODE    = []
 WEBAPP  = []
 START_TIME = datetime.datetime.now()
 
-def log(msg):
-    """ Logs ``msg`` to the current log file
+def log(msg,level=1):
+    """ Logs ``msg`` to the current log file (not console)
+   
+    The ``msg`` will logged only if the level is bigger than the global level
+    ``${DEBUG}`` which could be defined at runtime.
+    If ``${DEBUG}`` is not defined, it will be considered as the default
+    ``level`` as 1.
+
+    Examples:
+    | Common.`Log` | XXX | # this always be logged |
+    | Common.`Log` | AAA | level=2 | # this will not be logged with common run.sh |
+    | Common.`Log` | BBB | level=2 | # ./run.sh -v ``DEBUG:2`` will log the message |
+
+    *Notes*: For common use
+    - level 1: is default
+    - level 2: is debug mode
+    - level 3: is very informative mode
     """
-    BuiltIn().log(msg)
+    _level = None
+    try:
+        _level = BuiltIn().get_variable_value('${DEBUG}') 
+    except:
+        pass 
+    if _level is None: _level=1
+    if int(_level) >= int(level): 
+        BuiltIn().log(msg)
+
+def log_to_console(msg,level=1):
+    """ Logs a message to console
+
+    See Common.`Print` for more details about debug level
+
+    """
+    _level = None
+    try:
+        _level = BuiltIn().get_variable_value('${DEBUG}') 
+    except:
+        pass 
+    if _level is None: _level=1
+    if int(_level) >= int(level): 
+        BuiltIn().log_to_console(msg)
+
 
 def err(msg):
     """ Prints error ``msg`` to console
     """
     BuiltIn().log_to_console(msg) 
 
+
 ###
 try:
     _result_folder = os.path.basename(BuiltIn().get_variable_value('${OUTPUT DIR}'))
 except:
-    log("Error while trying to get global RF variables")
+    log("ERROR: Error happened while trying to get global RF variables")
     
     
 _folder = os.path.dirname(__file__)
@@ -273,21 +313,28 @@ with open(_folder + '/config/config.yaml') as f:
 
 ### copy config file from maser to tmp
 ### overwrite the current files
+_tmp_folder = _folder + '/tmp/'
 _renat_master_folder    = GLOBAL['default']['renat-master-folder']
 if _renat_master_folder:
     _renat_master_folder = os.path.expandvars(_renat_master_folder)
-_calient_master_path    = GLOBAL['default']['calient-master-path']
-if _calient_master_path:
-    _calient_master_path = os.path.expandvars(_calient_master_path)
-_tmp_folder = _folder + '/tmp/'
 shutil.copy2(_renat_master_folder+'/device.yaml',_tmp_folder)
 shutil.copy2(_renat_master_folder+'/auth.yaml',_tmp_folder)
 shutil.copy2(_renat_master_folder+'/template.yaml',_tmp_folder)
 
-###
+_calient_master_path    = GLOBAL['default']['calient-master-path']
+if _calient_master_path:
+    _calient_master_path = os.path.expandvars(_calient_master_path)
 if _calient_master_path:
     newest_calient = max(glob.iglob(_calient_master_path))
-    shutil.copy2(newest_calient,_tmp_folder + "/calient.xlsx")
+    shutil.copy2(newest_calient,_tmp_folder + "/calient.xlsm")
+
+_ntm_master_path        = GLOBAL['default']['ntm-master-path']
+if _ntm_master_path:
+    _ntm_master_path = os.path.expandvars(_ntm_master_path)
+if _ntm_master_path:
+    newest_ntm = max(glob.iglob(_ntm_master_path))
+    shutil.copy2(newest_ntm,_tmp_folder + "/g4ntm.xlsm")
+
 
 ### expand environment variable and update GLOBAL config
 for entry in ['auth.yaml', 'device.yaml','template.yaml']:
@@ -730,22 +777,21 @@ def file_md5(path):
     return result
 
 
-def pause(msg="",time_out='1s',default_input='',error_on_timeout=False):
+def pause(msg="",time_out='3h',error_on_timeout=True,default_input=''):
     """ Displays the message ``msg`` and pauses the test execution and wait for user input
 
-    In case of ``error_on_timeout`` is False(default), the keyword will return
-    with ``default_input`` and the test will be continued wihout error.
-    Otherwise, the keyword will raise an error and stop.
+    In case of ``error_on_timeout`` is True(default), the keyword will raise an
+    error when timeout occurs. Otherwise, it will continue the test.
 
-    If the variable ``${RENAT_BATCH}`` was defined, the keyword will print out
+    *Notes:* If the variable ``${RENAT_BATCH}`` was defined, the keyword will print out
     the message and keeps running without pausing.
 
     Examples:
-    | Common.`Pause` | Waiting... | 10s | default | error_on_timeout=${TRUE} |
+    | Common.`Pause` | Waiting... | 10s | error_on_timeout=${TRUE} | default input | 
     | Common.`Pause` | Waiting... | 10s | 
     """
 
-    BuiltIn().log("Pause and wait for user input")
+    BuiltIn().log("Pause and wait `%s` for user input" % time_out)
     BuiltIn().log_to_console(msg)
     input = None
     wait = DateTime.convert_time(time_out)
@@ -824,8 +870,8 @@ def _wait_thread(*stuff):
 def count_keyword_line(keyword,*pattern_list):
     """ Count the number of lines contains the ``keyword``
 
-    *Notes:* Keyword is matched partially. For example, ``error`` or ``errorXXX`
-    will be matched by ``error` keyword.
+    *Notes:* Keyword is matched partially. For example, ``error`` or
+    ``errorXXX`` will be matched by ``error`` keyword.
     """
     counter = 0
     for pattern in pattern_list:
@@ -1054,6 +1100,29 @@ def cleanup_result(ignore=u'^(log.html|output.xml|report.html)$'):
     BuiltIn().log("Deleted %d files in current result folder" % len(candidates))
 
 
+def slack(msg,channel='#automation_dev',user='renat',host=GLOBAL['default']['slack-host']):
+    """ Post a message to Slack
+    """
+
+    BuiltIn().log("Post message to Slack")
+    renat_batch = BuiltIn().get_variable_value('${RENAT_BATCH}')
+    if renat_batch is None:
+        cmd = GLOBAL['default']['slack-cmd']
+        subprocess.call([cmd, msg, channel, user, host])
+        BuiltIn().log("Posted message `%s` to Slack channel `%s`" % (msg,channel))
+    else:
+        BuiltIn().log("Ignored Slack msg in batch mode")
+
+
+def load_plugin():
+    """ Load plugin in renat/plugin folder
+    """
+    for item in glob.glob(get_renat_path() + '/plugin/*.robot'):
+        plugin_name = os.path.basename(item)
+        BuiltIn().import_resource('./plugin/' + plugin_name)
+        BuiltIn().log("Loaded plugin `%s`" % plugin_name)
+    
+
 # set RF global variables and load libraries
 try:
     
@@ -1071,7 +1140,7 @@ try:
 
     # set log level
     BuiltIn().set_log_level(self.GLOBAL['default']['log-level'])
-    
+
 except:
-    log("Error with while trying setting global configuration")
+    log("ERROR: Error happened  while setting global configuration")
 

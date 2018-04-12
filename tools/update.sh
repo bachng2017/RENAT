@@ -1,7 +1,11 @@
 #!/bin/sh
 
 if [[ ! -f chibalab.robot ]] && [[ ! -f lab.robot ]]; then
-  echo "should be applied in a project folder which has chibalab.robot or lab.robot"
+  echo "ERROR: should be applied in a project folder which has chibalab.robot or lab.robot"
+  exit 1
+elif
+  [[ -f main.robot ]]; then
+  echo "ERROR: it looks like you are in a item folder. update.sh should be executed from insides a project folder."
   exit 1
 else
   for i in $(find . -type f -name "chibalab.robot"); do

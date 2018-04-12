@@ -13,10 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
-# $Rev: 822 $
-# $Ver: 0.1.7 $
-# $Author: bachng $
+# $Date: 2018-03-26 14:23:40 +0900 (月, 26  3月 2018) $
+# $Rev: 870 $
+# $Ver: 1.7.1 $
+# $Author: $
 
 """ provides functions for IxNetwork
 
@@ -238,7 +238,7 @@ def change_frame_rate_dynamic(self,value,pattern='.*'):
         - ``value``: value to set. Depend on the current configuration, this
           could be ``percent line rate`` or ``bit per second`` etc.
 
-        - ``pattern`: a regular expression to identify traffic item
+        - ``pattern``: a regular expression to identify traffic item
           name, default is everything ``.*``
     """
 
@@ -305,7 +305,7 @@ def change_frame_size(self,type,value,pattern='.*'):
         - ``type``: could be ``fixed size``, ``increment_from``,``increment_step`` or
         ``increment_to`` 
         - ``value``: value to set
-        - ``traffic_pattern`: a regular expression to identify traffic item
+        - ``traffic_pattern``: a regular expression to identify traffic item
           name, default is everything ``.*``
     """
     cli = self._clients[self._cur_name]
@@ -404,7 +404,7 @@ def set_traffic_item(self,*items,**kwargs):
     
    
 def set_all_traffic_item(self,enabled=True):
-    """ Enables/Disables all traffic items at once
+    """ Enables/Disables *all* traffic items at once
     """
 
     cli = self._clients[self._cur_name]
@@ -544,39 +544,43 @@ def get_test_result(self,view,prefix="stat_"):
     time.sleep(5) # wait for 5 second
     is_done = ix.isDone(result_id) 
     if is_done == "true": 
-        # set page size to 2048(max)
+        # set page size to 500 rows(max)
         ix.setAttribute(view+'/page','-pageSize',500)
         ix.commit()
 
-        # still this only support 1 page result
-        # use below the get the total pages and moving b/t pages
-        # ix.getAttribute(view+'/page','-totalRows')
-        # ix.setAttribute(view+'/page','-currentPage', 2)
-        # ix.commit()
-
-
         cap = ix.getAttribute(view+'/page', '-columnCaptions')
         if type(cap) is not list: cap = _fix_data(cap)
-        # row = ix.getAttribute(view+'/page', '-rowValues')
-        row = ix.getAttribute(view+'/page', '-pageValues')
-        if row == '::ixNet::OK':
-            row = ix.getAttribute(view+'/page', '-rowValues')
-            
-        if type(row) is not list: row = _fix_data(row)
+
+        # prepare CSV file
         file_name = view.split(':')[-1].strip('"') + '.csv'
         file_name = file_name.replace('-','')
         file_name = file_name.replace(' ','_')
         file_name = file_name.replace('__','_')
         file_name = prefix + file_name
 
-        # open result file for write
+        
+        total_page = int(ix.getAttribute(view+'/page','-totalPages'))
+
+        # open result file for write and preparing cap titles
         file_path = result_path + '/' + file_name
         f = open(file_path,'w+')
         w  = csv.writer(f, lineterminator='\n')
         w.writerow(cap)
-        for i in range(len(row)):
-            for j in range(len(row[i])):
-                w.writerow(row[i][j])
+
+        for page in range(total_page):
+            ix.setAttribute(view+'/page','-currentPage',page+1)
+            ix.commit()
+
+            row = ix.getAttribute(view+'/page', '-pageValues')
+            if row == '::ixNet::OK':
+                row = ix.getAttribute(view+'/page', '-rowValues')
+            
+            if type(row) is not list: row = _fix_data(row)
+
+            for i in range(len(row)):
+                for j in range(len(row[i])):
+                    w.writerow(row[i][j])
+
         f.close()
     BuiltIn().log("Got test data for view `%s`" % view) 
 
@@ -680,13 +684,16 @@ def set_bgp_items(self,port_index,neighbor_index,route_range_index,is_enable):
 
     Parameters:
     - ``port_index``: index of the port 
-    - ``neighbor_index``: index of the neighbor or `*` 
-    - ``route_range_index``: index of the route range or `*'
+    - ``neighbor_index``: index of the neighbor or ``*`` 
+    - ``route_range_index``: index of the route range or ``*``
     - ``is_enable``: ${TRUE} or ${FALSE}
 
     Note
 
     Examples:
+    | Tester.`Set BGP Items`  |   0  |  *  |   *  |   ${FALSE} |
+    | Tester.`Set BGP Items`  |   0  |  *  |   *  |   ${TRUE}  |
+
     """
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
@@ -726,8 +733,8 @@ def set_capture_port(self,data_mode=True,control_mode=True,port_index=0):
 saves data packet
 
     Examples:
-    | Tester.`Set Capture` | 0 |
-    | Tester.`Set Capture` | control_mode=${TRUE} | 0 | 1 |
+    | Tester.`Set Capture Port` | 0 |
+    | Tester.`Set Capture Port` | control_mode=${TRUE} | 0 | 1 |
 
     """
 
@@ -939,8 +946,8 @@ def add_port(self,force=True,time_out='2m',learn_time='2m'):
 def add_quicktest(self,name,test_type=u'rfc2544throughput',tx_mode=u'interleaved',clear_all=True):
     """ Create a new Quicktest with default value
 
-    Type could be one of following: ``rfc2544throughput``,``rfc2544frameLoss``,``rfc2544back2back``
-    Use Tester.`Load Config` to load a customized quicktest
+    Type could be one of following: ``rfc2544throughput``, ``rfc2544frameLoss``,
+    ``rfc2544back2back``. Use Tester.`Load Config` to load a customized quicktest
 
     When ``clear_all`` is True, any existed quicktests will be cleared.
 
@@ -1203,22 +1210,19 @@ def ping(self,dst_ip,src_port_index=0,src_intf_index=0):
     """ Ping from Ixia to ``dst_ip``
 
     The keyword return the output string as it is. The return could be
-    | Port <portName>: ping failed: port not assigned
-    | Response received from <sourceIp>/unknown . Sequence Number <sequenceNumber>
-    | Ping request to <destinationIp>/unknown ip failed: <GenericPingError>/<error>: <genericError>unknown reason
-    | Error: Couldn't find any source interface for Send Ping to <destinationIp> on <portName> Id <id>
-
-Error: Couldn't find any source IP for Send Ping to <destinationIp> on
-<portName> Id <id>
-
+    | - Port <portName>: ping failed: port not assigned
+    | - Response received from <sourceIp>/unknown . Sequence Number <sequenceNumber>
+    | - Ping request to <destinationIp>/unknown ip failed: <GenericPingError>/<error>: <genericError>unknown reason
+    | - Error: Couldn't find any source interface for Send Ping to <destinationIp> on <portName> Id <id>
+    | - Error: Couldn't find any source IP for Send Ping to <destinationIp> on <portName> Id <id>
 
     Parameters:
     - src_port_index: index of Ixia port (starts from 0)
     - src_intf_index: index of interface insides the port (starts from 0)
 
     Examples:
-    | Tester.Ping  | 1.1.1.1 | 0 | 0 |
-    | Tester.Ping  | 1.1.1.1 |
+    | Tester.`Ping`  | 1.1.1.1 | 0 | 0 |
+    | Tester.`Ping`  | 1.1.1.1 |
     """
 
     BuiltIn().log("Ping IP address `%s`" % dst_ip)
