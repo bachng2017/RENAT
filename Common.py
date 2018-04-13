@@ -14,7 +14,7 @@
 #  limitations under the License.
 
 # $Rev: 901 $
-# $Ver: 1.7.1 $
+# $Ver: 0.1.8 $
 # $Date: 2018-04-10 19:44:08 +0900 (火, 10  4月 2018) $
 # $Author: $
 
@@ -205,7 +205,7 @@ the test and remove the node from its active node list.
 
 """
 
-ROBOT_LIBRARY_VERSION = 'RENAT 1.7.1'
+ROBOT_LIBRARY_VERSION = 'RENAT 0.1.8'
 
 import os
 import glob,fnmatch

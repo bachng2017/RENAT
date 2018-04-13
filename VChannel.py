@@ -14,7 +14,7 @@
 #  limitations under the License.
 
 # $Rev: 861 $
-# $Ver: 1.7.1 $
+# $Ver: 0.1.8 $
 # $Date: 2018-03-24 20:42:36 +0900 (土, 24  3月 2018) $
 # $Author: $
 

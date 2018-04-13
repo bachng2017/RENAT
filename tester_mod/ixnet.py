@@ -15,7 +15,7 @@
 
 # $Date: 2018-03-26 14:23:40 +0900 (月, 26  3月 2018) $
 # $Rev: 870 $
-# $Ver: 1.7.1 $
+# $Ver: 0.1.8 $
 # $Author: $
 
 """ provides functions for IxNetwork

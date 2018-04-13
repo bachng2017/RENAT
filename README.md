@@ -213,6 +213,7 @@ sample
 └── setpath.bashrc
 ``` 
 ### 2. Create a sample test item
+Follow the steps to create a simple test case (Notes: an example has been prepared in $RENAT_PATH/sample/item01 using following instructions)
 ```
 $ cd sample
 $ $RENAT_PATH/tools/item.sh item01
