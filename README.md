@@ -197,7 +197,7 @@ RENAT_PATH=/home/user/work/renat
 ```
 
 ## Usages
-Below example assumes that you've already have a test router running JunOS.
+Folling sample assumes that you've already have a test router running JunOS named `vmx11`
 
 ### 1. Create a sample project
 ```
