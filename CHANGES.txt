@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 882 $
-# $Ver: 0.1.8 $
-# $Date: 2018-04-04 00:53:15 +0900 (水, 04  4月 2018) $
+# $Rev: 919 $
+# $Ver: 0.1.8g $
+# $Date: 2018-04-19 10:43:15 +0900 (Thu, 19 Apr 2018) $
 # $Author: $
 
 RENAT(Robotframework Extension for Network Automation Testing)
@@ -23,6 +23,8 @@ RENAT(Robotframework Extension for Network Automation Testing)
 == What's new ==
 
 === 1.7 ===
+- added plugin mechanism to add user keywords
+- added G4NTM mod to OpticalSwitch module
 - added QuickTest support to IxNet module
 - added check mode to Cmd keyword
 - fixed bugs in several modules

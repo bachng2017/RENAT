@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Date: 2018-03-29 09:18:48 +0900 (木, 29  3月 2018) $
+# $Date: 2018-03-29 09:18:48 +0900 (Thu, 29 Mar 2018) $
 # $Rev: 881 $
 # $Author: $
 # usage: ./runsh [-n <num>] <other robot argument>

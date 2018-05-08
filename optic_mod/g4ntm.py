@@ -14,8 +14,8 @@
 #  limitations under the License.
 
 # $Rev: 898 $
-# $Ver: 0.1.8 $
-# $Date: 2018-04-10 15:33:53 +0900 (火, 10  4月 2018) $
+# $Ver: 0.1.8g $
+# $Date: 2018-04-10 15:33:53 +0900 (Tue, 10 Apr 2018) $
 # $Author: $
 
 """ A library provides control for Telescent Network Topology Management (NTM)

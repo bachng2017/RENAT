@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-03-25 18:11:28 +0900 (日, 25  3月 2018) $
-# $Rev: 864 $
-# $Ver: 0.1.8 $
+# $Date: 2018-05-08 17:21:12 +0900 (Tue, 08 May 2018) $
+# $Rev: 928 $
+# $Ver: 0.1.8g $
 # $Author: $
 
 import datetime
@@ -56,11 +56,11 @@ class Logger(object):
         | Logger.`Switch` | vmx11 |
         """
         self._vchannel.switch(name) 
-        buffer = self._vchannel.read()
-        channel = self._vchannel.get_current_channel()
-        channel['logger'].write(buffer)
-        channel['logger'].flush()
-#        self._vchannel.write(self._vchannel.read())
+    #    buffer = self._vchannel.read()
+    #    channel = self._vchannel.get_current_channel()
+    #    channel['logger'].write(buffer)
+    #    channel['logger'].flush()
+    #    self._vchannel.write(self._vchannel.read())
 
 
     def log(self,msg,with_time=False,mark="***"):

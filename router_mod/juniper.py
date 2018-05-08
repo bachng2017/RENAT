@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 828 $
-# $Ver: 0.1.8 $
-# $Date: 2018-03-20 09:41:00 +0900 (火, 20  3月 2018) $
+# $Rev: 927 $
+# $Ver: 0.1.8g $
+# $Date: 2018-05-03 18:30:20 +0900 (Thu, 03 May 2018) $
 # $Author: $
 
 """ Provides keywords for Juniper platform
@@ -299,8 +299,7 @@ def get_file(self,src_file,dst_file=''):
 
 def get_config(self,dst_name=''):
     """ Gets the current configuration file of the router to current ``result``
-    folder. Wait for ``str_timeout`` to finish the download, default
-    ``str_timeout`` is 10 seconds. Increases this value if the config file is large.   
+    folder.
 
     Default ``dst_name`` is ``juniper.conf.gz``
     """

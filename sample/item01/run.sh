@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# $Date: 2018-03-29 09:18:48 +0900 (木, 29  3月 2018) $
-# $Rev: 881 $
+# $Date: 2018-05-08 21:00:46 +0900 (Tue, 08 May 2018) $
+# $Rev: 934 $
 # $Author: $
 # usage: ./runsh [-n <num>] <other robot argument>
 
@@ -148,6 +148,7 @@ TIME2=$(date +"%s")
 
 ### update run database
 MSG="$PWD/$PROG $@"
+sqlite3 /home/robot/run.sqlite3 "UPDATE run_table SET count = count + 1 WHERE name='$USER'"
 if [ -z ${RENAT_BATCH} ]; then
     logger -p local5.info -t "renat[$USER]" $TIME1 $TIME2 $RESULT "$MSG"
 fi

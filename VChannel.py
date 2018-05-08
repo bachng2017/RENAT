@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 861 $
-# $Ver: 0.1.8 $
-# $Date: 2018-03-24 20:42:36 +0900 (土, 24  3月 2018) $
+# $Rev: 933 $
+# $Ver: 0.1.8g $
+# $Date: 2018-05-08 20:17:58 +0900 (Tue, 08 May 2018) $
 # $Author: $
 
 import os,re
@@ -445,7 +445,11 @@ class VChannel(object):
         Examples:
         | VChannel.`Switch` | vmx12 | 
         """
-    
+  
+        # clear buffer before switch 
+        old_name = self._current_name
+        self.read()
+ 
         if name in self._channels: 
             channel_info = self._channels[name]
             self._current_name = name
@@ -472,11 +476,11 @@ class VChannel(object):
         channel = self._channels[self._current_name]
         old_log_file = channel['log_file']
 
+        # flush buffer before change the log file
         channel['logger'].flush()
         channel['logger'].close()
     
         result_path = Common.get_result_path() 
-        # channel['logger'] = codecs.open(Common.LOCAL['default']['result_folder'] + '/' + log_file,mode,'utf-8') 
         channel['logger'] = codecs.open(result_path+'/'+log_file,mode,'utf-8') 
         channel['log_file'] = log_file
 
@@ -547,7 +551,7 @@ class VChannel(object):
         return result
 
 
-    def write(self,str_cmd,str_wait='1s',start_screen_mode=False):
+    def write(self,str_cmd,str_wait='0s',start_screen_mode=False):
         """ Sends ``str_cmd`` to the target node and return after ``str_wait`` time. 
 
         If ``start_screen_mode`` is ``True``, the channel will be shifted to ``Screen
@@ -569,6 +573,9 @@ class VChannel(object):
         Special input likes Ctrl-C etc. could be used with global variable ${CTRL-<char>}
 
         Returns the output after writing the command the the channel.
+
+        When `str_wait` is not `0s`, the keyword read and return the output
+        after waiting `str_wait`. Otherwise, the keyword return with no output.
    
         *Notes:*  This is a non-blocking command.
 
@@ -630,6 +637,10 @@ class VChannel(object):
 
         access      = channel['access-type']
         cur_prompt  = channel['prompt']
+
+        # in case something left in the buffer
+        output  = channel['connection'].read()
+        self.log(output)
 
         channel['connection'].write(str_cmd)
         self.log(str_cmd + Common.newline)
@@ -693,7 +704,7 @@ class VChannel(object):
         """
         channel = self._channels[self._current_name]
 
-        output = self.write(cmd)
+        output = self.write(cmd,'5s')
         if not question in output:
             raise Exception("Unexpected output: %s" % output)
 
@@ -745,44 +756,47 @@ class VChannel(object):
 
 
     def close(self):
-        """ Closes current connection and reset the channel name 
+        """ Closes current connection and returns the active channel name 
         """
         channels = self.get_channels()
         old_name = self._current_name
 
-        # ouput = channels[self.old_name]['connection'].read() 
-        # self.log(output)
-        self.read()
-
-        result =  channels[self._current_name]['connection'].close_connection() 
+        # close
+        channels[self._current_name]['connection'].switch_connection(self._current_name)
+        channels[self._current_name]['connection'].close_connection() 
         del(channels[self._current_name])
 
+        # choose another active channel
         if len(channels) == 0:
             self._current_name     = ""
             self._current_id       = 0
             self._max_id           = 0
+
+            self._telnet.close_all_connections()    
+            self._ssh.close_all_connections()    
             self._telnet           = None
             self._ssh              = None
         else:
-            self._current_name     = channels[0].current_name 
-            self._current_id       = channels[0].current_id
-            self._max_id           = channels[0].max_id
+            first_key = channels.keys()[0]
+            self._current_name     = channels[first_key]['name'] 
+            self._current_id       = channels[first_key]['id']
 
         BuiltIn().log("Closed the connection for channel '%s'" % (old_name))
-    
-        return result
+        return self._current_name
+
 
     def close_all(self):
         """ Closes all current sessions and flush out all log files. 
 
         Current node name was reset to ``None``
         """
-        for name in self._channels:
-            self.switch(name)
-            output = self.read() 
+        # for name in self._channels:
+        while len(self._channels) > 0:
+            self.close()
+            # output = self.read() 
 
-        self._telnet.close_all_connections()    
-        self._ssh.close_all_connections()    
+        # self._telnet.close_all_connections()    
+        # self._ssh.close_all_connections()    
 
         self._current_id = 0
         self._max_id = 0

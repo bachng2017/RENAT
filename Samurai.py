@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-03-24 11:37:45 +0900 (土, 24  3月 2018) $
+# $Date: 2018-03-24 11:37:45 +0900 (Sat, 24 Mar 2018) $
 # $Rev: 859 $
-# $Ver: 0.1.8 $
+# $Ver: 0.1.8g $
 # $Author: $
 
 import os,time,re

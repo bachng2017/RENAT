@@ -61,7 +61,7 @@ $ python --version
 ```
 $ yum install epel-release
 $ yum install gettext gcc net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python27-tkinter xorg-x11-server-Xvfb
-$ pip install numpy pyte PyYAML openpyxl Jinja2 pandas paramiko lxml requests pdfkit
+$ pip install numpy pyte PyYAML openpyxl Jinja2 pandas paramiko lxml requests 
 $ pip install netsnmp-py==0.3 
 ```
 
@@ -197,7 +197,7 @@ RENAT_PATH=/home/user/work/renat
 ```
 
 ## Usages
-Folling sample assumes that you've already have a test router running JunOS named `vmx11`
+Below example assumes that you've already have a test router running JunOS.
 
 ### 1. Create a sample project
 ```
@@ -213,7 +213,6 @@ sample
 └── setpath.bashrc
 ``` 
 ### 2. Create a sample test item
-Follow the steps to create a simple test case (Notes: an example has been prepared in $RENAT_PATH/sample/item01 using following instructions)
 ```
 $ cd sample
 $ $RENAT_PATH/tools/item.sh item01

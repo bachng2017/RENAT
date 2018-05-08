@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-03-26 14:23:40 +0900 (月, 26  3月 2018) $
+# $Date: 2018-03-26 14:23:40 +0900 (Mon, 26 Mar 2018) $
 # $Rev: 870 $
-# $Ver: 0.1.8 $
+# $Ver: 0.1.8g $
 # $Author: $
 
 """ provides functions for IxNetwork

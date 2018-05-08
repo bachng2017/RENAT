@@ -34,14 +34,14 @@ else
 
   RUN_FILE=$RENAT_PATH/tools/template/item/run.sh
   for entry in $(find . -type d -name config); do
-    if [[ -f $entry/../run.sh ]]; then
+    if [[ -f $entry/../main.robot ]]; then
        diff $RUN_FILE  $entry/../run.sh
        cp -f $RUN_FILE $entry/../run.sh
        echo "updated $entry/../run.sh"
+       ln -sf ../lab.robot $entry/../lab.robot
+       echo "updated lab.robot"
+       echo "---"
     fi
-    ln -sf ../lab.robot $entry/../lab.robot
-    echo "updated lab.robot"
-    echo "---"
   done
 
   find . -name "main.robot" -exec sed -i 's/chibalab.robot/lab.robot/' {} \;

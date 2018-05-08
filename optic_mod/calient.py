@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 900 $
-# $Ver: 0.1.8 $
-# $Date: 2018-04-10 17:02:41 +0900 (火, 10  4月 2018) $
+# $Rev: 919 $
+# $Ver: 0.1.8g $
+# $Date: 2018-04-19 10:43:15 +0900 (Thu, 19 Apr 2018) $
 # $Author: $
 
 
@@ -79,7 +79,7 @@ def _read_map(self):
     BuiltIn().log("        Use `%s` for cable x-connect" % Common.newest_calient)
 
     _folder = os.path.dirname(__file__)
-    _calient_file = _folder + "/../tmp/calient.xlsx"
+    _calient_file = _folder + "/../tmp/calient.xlsm"
 
     wb = openpyxl.load_workbook(_calient_file,data_only=True)
     for sheet in wb.worksheets:

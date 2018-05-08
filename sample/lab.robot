@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-# $Date: 2018-04-10 17:02:41 +0900 (火, 10  4月 2018) $
-# $Rev: 900 $
-# $Ver: $
+# $Date: 2018-04-19 19:58:09 +0900 (Thu, 19 Apr 2018) $
+# $Rev: 921 $
+# $Ver: 0.1.8g $
 # $Author: $
 
 *** Variables ***
 # folder and script for polling process on Apollo
-${WORKING_FOLDER}           /home/${USER}/work
+${WORKING_FOLDER}           /home/${USER}/work 
 ${POLLING_SCRIPT}           tools/Polling.rb -i 5
 
 *** Setting ***
@@ -92,6 +92,8 @@ Lab Setup
     Create Directory        ${WORKING_FOLDER}   
 
     Change Mod              ${RESULT_FOLDER}    0755
+
+    Set Library Search Order    Common
 
     ${renat_ver}=           RENAT Version
     Set Suite MetaData      RENAT Ver                   ${renat_ver}

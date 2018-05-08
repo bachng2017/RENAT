@@ -1,0 +1,64 @@
+# $Rev: 0.1.7 $
+# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
+# $Author: bachng $
+
+device:
+    # Testers
+    ixnet02_8009:
+        type: ixnet
+        description: TCL server
+        ip: 10.128.4.22
+        port: 8009
+    ixnet03_8009:
+        type: ixnet
+        description: TCL server (VM)
+        ip: 10.128.4.23
+        port: 8009
+    # BB naming rule - Routers
+    mx480-51:
+        type: juniper
+        description: mx480-51
+        ip: 10.128.30.51
+    apollo:
+       type: ssh-host
+       description: main server
+       ip: 10.128.3.101
+    rtermis:
+        type: ssh-host
+        description: second server
+        ip: 10.128.3.102
+    # VMX
+    vmx11:
+        type: juniper
+        description: vmx11
+        ip: 10.128.64.11
+    vmx12:
+        type: juniper
+        description: vmx12
+        ip: 10.128.64.12
+    vmx13:
+        type: juniper
+        description: vmx13
+        ip: 10.128.64.13
+    vmx14:
+        type: juniper
+        description: vmx14
+        ip: 10.128.64.14
+    # Calient Optical Switch
+    calient01:
+        type: calient
+        description: 10G optical switch
+        ip: 10.128.30.76
+        ip: 10.128.4.62
+    # alcatel
+    alcatel-18-35:
+        type: alcatel
+        description: 7750 SR-7
+        ip: 10.128.18.35
+    # cisco
+    cisco-18-12:
+        type: cisco_asr
+        description: Cisco ASR
+        ip: 10.128.18.12
+
+
