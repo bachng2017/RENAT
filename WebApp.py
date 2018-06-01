@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-03-20 00:33:18 +0900 (Tue, 20 Mar 2018) $
-# $Rev: 822 $
-# $Ver: 0.1.8g $
+# $Date: 2018-05-28 16:29:06 +0900 (Mon, 28 May 2018) $
+# $Rev: 994 $
+# $Ver: 0.1.8g1 $
 # $Author: $
 
 import os,time,re
@@ -32,20 +32,46 @@ class WebApp(object):
     The library utilize `Selenium2Library` and adds more functions to control
     Samurai application easily.
 
-    The `WebApp` uses the configuration in ``local.yaml`` in ``webapp`` section:
+    The `WebApp` uses the configuration in ``local.yaml`` in ``webapp`` section.
+    The webapp device has following format:
+| <test node name>:
+|     device:     <device name>
+|     proxy:
+|         http:       <proxy for http>    
+|         https:      <proxy for http>    
+|         ssl:        <proxy for http>    
+    Where ``<device name>`` is defined in master ``device.yaml``, ``proxy``
+    section could be optional.
+
+    Samples:
 | ...
 | webapp:
 |     samurai-1:
 |         device: samurai-b
-|         profile: samurai.profile
+|         proxy:
+|             http:   10.128.8.210:8080
+|             ssl:    10.128.8.210:8080
+|             socks:  10.128.8.210:8080
 |     arbor-1:
 |         device: arbor-sp-a
-|         profile: samurai.profile
+|         proxy:
+|             http:   10.128.8.210:8080
+|             ssl:    10.128.8.210:8080
+|             socks:  10.128.8.210:8080
 | ...
 
-    `Selenium2Library` keywords still could be used along with this library.
+    `Selenium2Library` keywords still could be used along with this library like
+    this:
+    | Click Link |                         //a[contains(.,'ユーザ設定')] |
+    | Sleep      |                         2s |
+    | Click Link |                        Home設定 |
+    | Sleep |                             2s |
+    | Samurai.Capture Screenshot |
+
     See [http://robotframework.org/Selenium2Library/Selenium2Library.html|Selenium2Library] for more details.
 
+
+    The module `Samurai` and `Arbor` based on this module.
     See [./Arbor.html|Arbor], [./Samurai.html|Samurai] for details about keywords of each application.
     """
 
@@ -56,6 +82,7 @@ class WebApp(object):
     def __init__(self):
         self._browsers              = {}
         self._current_name          = None
+        self._current_app           = None
         self._type                  = None
         try:
             self._driver = BuiltIn().get_library_instance('Selenium2Library')
@@ -64,27 +91,6 @@ class WebApp(object):
             Common.err("RENAT is not running")
 
 
-    def connect_all(self):
-        """ Connects to all applications defined in ``local.yaml``
-    
-        The name of the connection will be the same of the `webapp` name
-        """
-    
-        num = 0
-        if 'webapp' in Common.LOCAL and Common.LOCAL['webapp']:
-            for entry in Common.LOCAL['webapp']: 
-                device = Common.LOCAL['webapp'][entry]['device']
-                device_info = Common.GLOBAL['device'][device]
-                type = device_info['type']  # type is `samurai` or `arbor_sp`
-
-                if type != self._type: continue
-                num += 1 
-                self.connect(entry,entry)
-            BuiltIn().log("Connected to %d applications" % num)
-        else:
-            BuiltIn().log("No application to connect")
-    
-    
     def set_capture_format(self,format):
         """ Sets the format for the screen capture file
 
@@ -129,7 +135,7 @@ class WebApp(object):
         | Samurai.`Capture Screenshot`  |   extra=_list | # samurai_0000000002_`list`.png |
         | Arbor.`Capture Screenshot`    |               | # arbor_0000000001.png |
         | Arbor.`Capture Screenshot`    |   extra=_xxx  | # arbor_0000000001_`xxx`.png |
-        | Samurai.`Capture Screenshot`  |   file_name=1111.png | # 1111.png |
+        | Samurai.`Capture Screenshot`  |   filename=1111.png | # 1111.png |
         """
         self.switch(self._current_name) 
         name = self._current_name
@@ -144,4 +150,4 @@ class WebApp(object):
         self._driver.capture_page_screenshot(capture_name)
         BuiltIn().log("Captured the current screenshot to file `%s`" % capture_name) 
 
-    
+   

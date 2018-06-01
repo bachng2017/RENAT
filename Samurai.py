@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-03-24 11:37:45 +0900 (Sat, 24 Mar 2018) $
-# $Rev: 859 $
-# $Ver: 0.1.8g $
+# $Date: 2018-05-31 11:30:17 +0900 (Thu, 31 May 2018) $
+# $Rev: 1010 $
+# $Ver: 0.1.8g1 $
 # $Author: $
 
 import os,time,re
@@ -33,13 +33,11 @@ class Samurai(WebApp):
     """ A library provides functions to control Samurai application
 
     The library utilize `Selenium2Library` and adds more functions to control
-    Samurai application easily. Without other furthur mentions, all of the concepts 
-    of ``user``, ``user group`` are Samurai concepts.
-
-    By default, RENAT will try to connecto all Samurai nodes defined in active
-    ``local.yaml`` at the beginning of the test and disconnect from them at the
-    end of the test automatically. Usually user does not need to use ``Connect
-    All`` and ``Close`` explicitly.
+    Samurai application easily. Without other furthur mentions, all of the concepts
+    of ``user``, ``user group`` are Samurai concepts. By default, RENAT will try to
+    connec to all Samurai nodes defined in active ``local.yaml`` at the beginning of
+    the test and disconnect from them at the end of the test automatically. Usually
+    user does not need to use ``Connect All`` and ``Close`` explicitly.
 
     Currently, this module supposed that Samurai is used in Japanese locale.
     When Samurai module has error, it tried to make the last snapshot in
@@ -49,7 +47,9 @@ class Samurai(WebApp):
     Some keywords of [./Samurai.html|Samurai] is using ``xpath`` to identify
     elements. See `Selenium2Library` for more details about xpath.  
 
-    See [./WebApp.html|WebApp] for common keywords of web applications.
+    See [./WebApp.html|WebApp] for common keywords of web applications and how
+    to configure the ``local.yaml`` file.
+
 
     `Selenium2Library` keywords still could be used together within this library.
     See [http://robotframework.org/Selenium2Library/Selenium2Library.html|Selenium2Library] for more details.
@@ -62,6 +62,26 @@ class Samurai(WebApp):
     def __init__(self):
         super(Samurai,self).__init__()
         self._type = 'samurai'
+
+
+    def connect_all(self):
+        """ Connects to all applications defined in ``local.yaml``
+
+        The name of the connection will be the same of the `webapp` name
+        """
+
+        num = 0
+        if 'webapp' in Common.LOCAL and Common.LOCAL['webapp']:
+            for entry in Common.LOCAL['webapp']:
+                device = Common.LOCAL['webapp'][entry]['device']
+                type = Common.GLOBAL['device'][device]['type']
+                if type.startswith('samurai'):
+                    num += 1
+                    self.connect(entry,entry)
+                    BuiltIn().log("Connected to %d applications" % num)
+        else:
+            BuiltIn().log("WARNING: No application to connect")
+
 
 
     def connect(self,app,name):
@@ -90,11 +110,13 @@ class Samurai(WebApp):
 
         # collect information about the application
         app_info = Common.LOCAL['webapp'][app]
-        if 'login_url' in app_info :      login_url       = app_info['login_url']
-        if 'browser' in app_info:         browser         = app_info['browser']
-        if 'profile_dir' in app_info:     
+        if 'login_url' in app_info and app_info['login_url']:      
+            login_url = app_info['login_url']
+        if 'browser' in app_info and app_info['browser']:         
+            browser  = app_info['browser']
+        if 'profile_dir' in app_info and app_info['profile_dir']:     
             ff_profile_dir  = os.getcwd() + 'config/' + app_info['profile_dir']
-        if 'proxy' in app_info:
+        if 'proxy' in app_info and app_info['proxy']:
             proxy = Proxy()
             proxy.proxy_type = ProxyType.MANUAL
             if 'http' in app_info['proxy']:
@@ -200,17 +222,29 @@ class Samurai(WebApp):
         BuiltIn().log("Closed all Samurai applications")
     
     
-    def left_menu(self,menu):
+    def left_menu(self,menu,locator=None, ignore_first_element=True):
         """ Chooses the left panel menu by its displayed name
 
-        Return a list of 1st meaningful column
-        Example:
+        When ``locater`` is not null, the keyword will return a list of text
+        attribute of all elements specified by the ``locator``. ``locator``
+        could be a xpath or a predefined string.
+
+        ``locator`` predefined strings are: ``MITIGATE_REALTIME``,
+        ``MITIGATE_LIST``, ``DETECT_LIST``
+
+        For example, a xpath ``//div[@id='infoareain2']/*//td[1]/a`` means the list of
+        `link` of all elements in a 1st column of a table insides a ``div`` with
+        id ``infoareain2``.
+        
+        Examples:
         | Samurai.`Left Menu` | Traffic |
         | Samurai.`Left Menu` | Detection |
         | Samurai.`Left Menu` | ポリシー管理 |
+        | @{LIST}= | Samurai.`Left Menu` | Active Mitigation | //div[@id='infoareain2']/*//td[1]/a |
         """
         
         self.switch(self._current_name) 
+        self._driver.select_window('MAIN')
 
         target = self._driver.get_webelement("xpath=//div[@class='submenu' and contains(.,'%s')]" % menu)
         id      = target.get_attribute('id')
@@ -219,9 +253,29 @@ class Samurai(WebApp):
             self._driver.execute_javascript("toggle_disp('%s','mitigation')" % id)
         self._driver.click_link(menu)
         self._driver.wait_until_element_is_visible("id=my_contents")
-
+        # self._driver.wait_until_page_contains_element("infoareain")
         # get item list (the 1st meaningful column)
-        item_list = map(lambda x:x.text,self._driver.get_webelements("//tbody[@class='yui-dt-data']/*/td[3]/div[@class='yui-dt-liner']")) 
+
+        item_list = []
+        if locator:
+            if locator == 'MITIGATE_LIST':
+                xpath = "//div[@id='infoareain2']/*//td[1]/a"
+            elif locator == 'MITIGATE_REALTIME':
+                xpath = "//div[@id='infoareain']/*//td[1]/a"
+            elif locator == 'DETECT_LIST':
+                xpath = "//div[@id='infoareain']/*//td[1]/a"
+            else:
+                xpath = locator
+            try:
+                item_list = map(lambda x:x.text,self._driver.get_webelements(xpath))
+            except Exception:
+                pass 
+        
+        if ignore_first_element and len(item_list) > 0:
+            BuiltIn().log("    Removed the 1st element in the list")
+            item_list = item_list[1:]
+        else:
+            BuiltIn().log("    Found zero elements")
 
         BuiltIn().log("Chose menu `%s`" % menu)
         return item_list
@@ -273,17 +327,17 @@ class Samurai(WebApp):
             raise("Selected device is `%s` which does not contain `%s`" % (applied_device,device))
        
         self._driver.input_text("name=comment",comment)
-        time.sleep(5)
+        # time.sleep(5)
 
         # execute
         self._driver.click_button(u"//input[@value='Mitigation 実行']")
-        time.sleep(5)
+        # time.sleep(5)
         id = self._driver.get_text("xpath=//*[text()[contains(.,'Mitigation ID')]]")
         search = re.search(".*:(.+) .*$", id)
         result = search.group(1)
         
         self._driver.click_button(u"//input[@value='閉じる']")
-        time.sleep(5)
+        # time.sleep(5)
         self._driver.select_window("title= Active Mitigation") 
         self._driver.reload_page()
         time.sleep(5)
@@ -307,7 +361,7 @@ class Samurai(WebApp):
         self._driver.wait_until_element_is_visible("infoarea")
         self._driver.click_button(u"//input[@onclick='delete_confirm(%s);']" % id)
         self._driver.confirm_action()
-        time.sleep(5)
+        # time.sleep(5)
         self._driver.wait_until_element_is_visible(u"//span[contains(.,'削除を開始しました')]")
 
         BuiltIn().log("Stopped the mitigation")
@@ -926,3 +980,36 @@ _system_admin_.
 
         BuiltIn().logs("Clicked %d items defined by xpath=`%s`" % (len(items),xpath))
         return len(items)
+
+
+    def show_detail_mitigation(self,id):
+        """ Shows detail information of a mitigation
+        """
+        self.left_menu(u"Active Mitigation")
+        self._driver.wait_until_page_contains(u"Active Mitigation")
+        self._driver.click_link('%s' % id)
+        # time.sleep(5)
+        self._driver.select_window(u"title=リアルタイム詳細")
+        self._driver.wait_until_page_contains(u"適用フィルタ情報")
+        
+        BuiltIn().log("Showed detail of mitigation id `%s`" % id)
+
+
+    def close_window():
+        """ Closes the current window
+        """
+        self._driver.close_window()
+        time.sleep(2)
+        BuiltIn().log("Closed the current window")
+
+
+    def select_window(self,title):
+        """ Selects a window by its title
+        """
+        # self.switch(self._current_name)
+        self._driver.select_window(u"title=%s" % title) 
+        self._driver.wait_until_page_contains(title)
+        
+        BuiltIn().log("Selected window `%s`" % title)
+
+

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # $Date: 2018-04-10 17:02:41 +0900 (火, 10  4月 2018) $
 # $Rev: 900 $
-# $Ver: 0.1.8g $
+# $Ver: 0.1.8g1 $
 # $Author: $
 
 *** Variables ***
 # folder and script for polling process on Apollo
-${WORKING_FOLDER}           /mnt/fsv01/21_Users/${USER}/working
+${WORKING_FOLDER}           $HOME}/working
 ${POLLING_SCRIPT}           tools/Polling.rb -i 5
 
 *** Setting ***

@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 901 $
-# $Ver: 0.1.8g $
-# $Date: 2018-04-10 19:44:08 +0900 (Tue, 10 Apr 2018) $
+# $Rev: 1018 $
+# $Ver: 0.1.8g1 $
+# $Date: 2018-06-01 21:37:53 +0900 (Fri, 01 Jun 2018) $
 # $Author: $
 
 """ Common library for RENAT
@@ -43,14 +43,35 @@ test case.
 At the beginning, the module makes a local copy the master files and initialize
 necessary variables.
 
+The RENAT framework utilized the YAML format for its configurations file.
+
 The master files folder is defined by ``renat-master-folder`` in
 ``$RENAT_PATH/config/config.yaml``. Usually, users do not need to modify the
 master files. The most common case is when new device is deployed, the
 ``device.yaml`` need to be update so that device could be used in the test
 cases.
 
-- device.yaml: contains global device information
+=== 1. device.yaml: contains global device information ===
 
+Each device information is store under ``device`` block and has the following
+format:
+
+| <node_name>
+|     type:             <device type>
+|     description:      <any useful description>
+|     ip:               <the IPv4 address of the device
+
+Where <node_name> is the name of the device. It could be the name of a switch,
+router or a web appliance box and should be uniq between the devices.
+<description> is any useful information and <ip> is the IP that RENAT
+uses to access the device.
+
+<type> is important because it will be used as the ky of the ``access_template``
+in template file. Usually users do not need to invent a new type but should use
+the existed type. When a new platform need to be supported, a new type will be
+introduced with the correspon template and authentication information.
+
+Samples:
 | device:
 |     apollo:
 |         type: ssh-host
@@ -70,32 +91,29 @@ cases.
 |         ip: 10.128.64.12
     
 
+=== 2. template.yaml: contains device template information ===
 
-- auth.yaml: contains authentication information
+The template file contains information about how to access to the device and how
+it should polling information ( SNMP only for now). Each template has the
+following format:
 
-| auth:
-|     plain-text:
-|         default:
-|             user: user
-|             pass: nttXXX
-|         flets:
-|             user: user
-|             pass: IpcoXXXX
-|         arbor:
-|             user: admin
-|             pass: nttXXX
-| 
-|     public-key: # for Public Key authentication
-|         default:
-|             user: robot
-|             key: /home/user/.ssh/robot_id_rsa
-|         test:
-|             user: jenkins
-|             key:  /var/lib/jenkins/.ssh/id_rsa
+<type>:
+    access:         <ssh or telnet>
+    auth:           <plaint-text or public-key>
+    profile:        <authentication profile name>
+    prompt:         <a regular expression for the PROMPT of the CLI device> (optional)
+    login_prompt:   <a login PROMPT for CLI device> (optional)
+    password_prompt:<a PROMPT for asking password of CLI device> (optional)   
+    append:         <a pharase to append automatically for every CLI command
+that executes> on this device (optional>
+    init:           <an array of command that will be executed automatically
+after a sucessful login of CLI device> (optional) 
 
+*Note*: Becareful about the prompt field. Usually RENAT will wait until it could
+see the prompt in its output. A wrong prompt will halt the system until it is
+timed out.
 
-- template.yaml: contains devvice template information
-
+Samples:
 
 | access-template:
 |     ssh-host:
@@ -127,7 +145,46 @@ cases.
 |        cisco:
 |             mib: ./mib-Cisco.json
 |             community: public
-|             poller: renat
+
+
+=== 3. auth.yaml: contains authentication information ===
+
+The file contains authentication information that system uses when access to a
+device. Each authencation type has follwing format:
+
+| plain-text
+|    <profile> 
+|        user:       <user name>
+|        password:   <password> 
+or
+| public-key:
+|    <profile>:
+|        user:       <user name>
+|        key:        <public key path>
+
+Where <profile> is the name of the authentication profile specificed in the
+``access template`` of the device
+
+Sample:
+| auth:
+|     plain-text:
+|         default:
+|             user: user
+|             pass: nttXXX
+|         flets:
+|             user: user
+|             pass: IpcoXXXX
+|         arbor:
+|             user: admin
+|             pass: nttXXX
+| 
+|     public-key: # for Public Key authentication
+|         default:
+|             user: robot
+|             key: /home/user/.ssh/robot_id_rsa
+|         test:
+|             user: jenkins
+|             key:  /var/lib/jenkins/.ssh/id_rsa
 
 
 == Local Configuration ==
@@ -141,14 +198,27 @@ case without having the same ``local.yaml`` for each test case (*Note:* this
 feature is enabled from RENAT 0.1.4). The ``local.yaml`` that is really used for
 the test is called ``active local.yaml``.
 
-When user used the wizard ``case.sh`` to create a new test case, they have the
+When user used the wizard ``item.sh`` to create a new test case, they have the
 ability to crete new ``local.yaml`` or not. ``local.yaml`` could be edited and
 inserted new information later to hold more informations for the test case.
 
 When a test is run, it will display its current active ``local.yaml``
 
-    - <testcase>/config/local.yaml: contains local data for a test case
+The local configuration file of each test item is stored in the ``config``
+folder of the item as ``local.yaml`
 
+Usually the ``local.yaml`` has following parts:
+- CLI node information: started by ``node`` keyword
+- WEB node information: started by ``webapp`` keyword
+- Tester device information: started by ``tester`` keyword
+- Default information: automatically created and started by ``default`` keyword
+- And other neccessary information for the test by yaml format 
+
+
+
+Sample:
+
+| # CLI node
 | node:
 |     vmx11:
 |         device: vmx11
@@ -159,13 +229,24 @@ When a test is run, it will display its current active ``local.yaml``
 |     apollo:
 |         device: vmx11
 |         snmp_polling: yes
-| 
+|
+| # web application information
+| webapp:
+|     arbor-sp-a:
+|         device: arbor-sp-a
+|         proxy:
+|             http:   10.128.8.210:8080
+|             ssl:    10.128.8.210:8080
+|             socks:  10.128.8.210:8080
+|
+| # Tester information
 | tester:
 |     tester01:
 |         type: ixnet
 |         ip: 10.128.32.70
 |         config: vmx_20161129.ixncfg
-| 
+|
+| # Other user information| 
 | port-mapping:
 |     uplink01:
 |         device: vmx11
@@ -173,7 +254,8 @@ When a test is run, it will display its current active ``local.yaml``
 |     downlink01:
 |         device: vmx12
 |         port: ge-0/0/2
-| 
+|
+| # Default information 
 | default:
 |     ignore_dead_node: yes
 |     terminal:
@@ -205,7 +287,7 @@ the test and remove the node from its active node list.
 
 """
 
-ROBOT_LIBRARY_VERSION = 'RENAT 0.1.8g'
+ROBOT_LIBRARY_VERSION = 'RENAT 0.1.8g1'
 
 import os
 import glob,fnmatch
@@ -342,10 +424,6 @@ for entry in ['auth.yaml', 'device.yaml','template.yaml']:
         file_content = f.read()
         GLOBAL.update(yaml.load(os.path.expandvars(file_content)))
 
-# with open(_tmp_folder + '/auth.yaml') as f:
-#    str_auth = f.read()
-#    GLOBAL.update(yaml.load(os.path.expandvars(str_auth)))
-
 
 ### local setting
 ### trace all config folder in the path
@@ -358,11 +436,17 @@ for entry in os.getcwd().split('/'):
     check_path  = access_path + '/config/local.yaml'
     if os.path.exists(check_path):
         local_config_path = check_path   
-BuiltIn().log_to_console("Current local.yaml: " + local_config_path)
-with open(local_config_path) as f:
-    LOCAL.update(yaml.load(f))
+
+if local_config_path == '':
+    BuiltIn().log_to_console("WARN: Could not find the local config file")
+else:    
+    with open(local_config_path) as f:
+        LOCAL.update(yaml.load(f))
+    BuiltIn().log_to_console("Current local.yaml: " + local_config_path)
 
 USER = os.path.expandvars("$USER")
+HOME = os.path.expandvars("$HOME")
+
 if 'node' in LOCAL:     NODE    = LOCAL['node']
 if 'webaapp' in LOCAL:  WEBAPP = LOCAL['webapp']
 
@@ -466,7 +550,7 @@ def node_with_attr(attr_name,value):
 
 
 def node_with_tag(*tag_list):
-    """ Returns list of ``node`` from ``local.yaml`` that has *ALL* tags defined by ``tag_list``
+    """ Returns list of ``node`` or ``webapp`` from ``local.yaml`` that has *ALL* tags defined by ``tag_list``
     
     Tag was defined like this in local.yaml
 |    vmx11:
@@ -482,13 +566,17 @@ def node_with_tag(*tag_list):
 
     result  = []
     s0 = Set(tag_list)
-    if not LOCAL['node']: return result
-    for node in LOCAL['node']:
-        if 'tag' in LOCAL['node'][node]:
-            s1 = Set(LOCAL['node'][node]['tag'])
-            if s0.issubset(s1): result.append(node)
-        else:
-            BuiltIn().log("    Node `%s` has no `tag` key, check your `local.yaml`" % node) 
+    if 'node' in LOCAL and LOCAL['node']:
+        for item in LOCAL['node']:
+            if 'tag' in LOCAL['node'][item]:
+                s1 = Set(LOCAL['node'][item]['tag'])
+                if s0.issubset(s1): result.append(item)
+    if 'webapp' in LOCAL and LOCAL['webapp']:
+        for item in LOCAL['webapp']:
+            if 'tag' in LOCAL['webapp'][item]:
+                s1 = Set(LOCAL['webapp'][item]['tag'])
+                if s0.issubset(s1): result.append(item)
+
     BuiltIn().log("Found %d nodes have the tags(%s)" % (len(result),str(tag_list)))       
     return result
 
@@ -1121,7 +1209,24 @@ def load_plugin():
         plugin_name = os.path.basename(item)
         BuiltIn().import_resource('./plugin/' + plugin_name)
         BuiltIn().log("Loaded plugin `%s`" % plugin_name)
+
+   
+def explicit_run():
+    """ skip the test case if global_variable RUN_ME is not defined
+
+    Sample scenario:
+    | 00. Cabling |
+    | Common.`Explicit Run` |
+    | Log To Console        |          cabling... |
     
+    ``run.sh`` will bypass ``00. Cabling`` by default. In other to run this test
+    case `${FORCE}` needs declared globally ``run.sh -X -v FORCE``
+    
+    """
+    var = BuiltIn().get_variable_value('${FORCE}')
+    if var != '':
+        BuiltIn().pass_execution('Bypassed this step')
+ 
 
 # set RF global variables and load libraries
 try:
@@ -1130,6 +1235,7 @@ try:
     BuiltIn().set_global_variable('${GLOBAL}',GLOBAL)
     BuiltIn().set_global_variable('${LOCAL}',LOCAL)
     BuiltIn().set_global_variable('${USER}',USER)
+    BuiltIn().set_global_variable('${HOME}',HOME)
     BuiltIn().set_global_variable('${NODE}', NODE)
     BuiltIn().set_global_variable('${WEBAPP}', WEBAPP)
     BuiltIn().set_global_variable('${START_TIME}', START_TIME)

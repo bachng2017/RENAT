@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-03-26 14:23:40 +0900 (Mon, 26 Mar 2018) $
-# $Rev: 870 $
-# $Ver: 0.1.8g $
+# $Date: 2018-06-01 09:31:58 +0900 (Fri, 01 Jun 2018) $
+# $Rev: 1015 $
+# $Ver: 0.1.8g1 $
 # $Author: $
 
 """ provides functions for IxNetwork
@@ -92,10 +92,10 @@ def load_traffic(self,wait_time='2m',wait_time2='2m',apply=True,protocol=True,fo
     str = "***WARNING: `Load Traffic` is deprecated. Use `Load Config` instead ***"
     BuiltIn().log(str)
     BuiltIn().log_to_console(str)
-    self.load_config(wait_time='2m',wait_time2='2m',apply=True,protocol=True,force=True,tx_mode=u'interleaved')
+    self.load_config(wait_time='2m',wait_time2='2m',apply=True,protocol=True,force=True)
 
 
-def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,protocol=True,force=True,tx_mode=u'interleaved'):
+def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,protocol=True,force=True):
     """ loads traffic configuration, applies and start protocol if necessary.
 
     The config file name was defined in the ``local.yaml` which is a Ixia
@@ -109,11 +109,29 @@ def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,pr
     - ``apply``: applies traffic when ``True`` otherwise 
     - ``protocol``: starts all protocols when ``True`` otherwise 
     - ``force``: force to reclaim the ports when ``True`` otherwise
-    - ``tx_mode``: `sequential` or `interleaved`(default)
     - ``wait_time``: wait time after applying protocols
     - ``wait_time2``: maximum wait time befor all ports become available. In
     common case, this is calculated automatically so user does not need to
     change this value.
+
+    More information about ports could be define in ``real_port`` section like
+    this:
+| # tester information
+| tester:
+| 
+|     tester:
+|         device: ixnet03_8009
+|         config: bgp.ixncfg
+|         real-port:
+|             -   chassis:    10.128.4.41
+|                 card:       4
+|                 port:       7
+|                 media:      fiber
+|                 tx_mode:    interleaved
+
+    Configurable port parameters ares:
+    - ``tx_mode``: `sequential` or `interleaved`(default)
+    - ``media`` : `copper` or `fiber` ( *Note*: no default value)
 
     See [./Common.html|Common] for more details about the yaml configuration files.
     """
@@ -126,9 +144,6 @@ def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,pr
     if config_name == '':
         config_name = Common.LOCAL['tester'][self._cur_name]['config']
     
-    # reset config
-    # ix.execute('newConfig')
-
     # load config
     config_path = Common.get_item_config_path() + '/' + config_name
     ix.execute('loadConfig',ix.readFrom(config_path))
@@ -136,10 +151,10 @@ def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,pr
     BuiltIn().log("Loaded config `%s`" % config_path)
 
     real_port_data = []
-    if 'real_port' in Common.LOCAL['tester'][self._cur_name]:
-        real_port_data = Common.LOCAL['tester'][self._cur_name]['real_port']
-
-        if real_port_data and len(real_port_data) != 0: # no need to remap orts
+    if 'real-port' in Common.LOCAL['tester'][self._cur_name]:
+        real_port_data = Common.LOCAL['tester'][self._cur_name]['real-port']
+        BuiltIn().log("     Found remap port data")
+        if real_port_data and len(real_port_data) != 0: # no need to remap ports
             # remap ports 
             vports = ix.getList(ix.getRoot(),'vport')
             real_ports = []
@@ -166,9 +181,16 @@ def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,pr
             if is_done != "true" :
                 raise Exception("ERROR: Error while remapping ports. The chassis IP might be wrong")
 
-            # txmode
-            for port in vports:
-                ix.setAttribute(port,'-txMode',tx_mode.encode('ascii','ignore'))
+            # extra setting for port
+            for data,port in zip(real_port_data,vports):
+                if 'media' in data:
+                    media = data['media']
+                    ix.setAttribute(port + '/l1Config/ethernet','-media',media)
+                if 'tx_mode' in real_port_data:
+                    tx_mode = data['tx_mode']
+                else:
+                    tx_mode = 'interleaved'
+                ix.setAttribute(port,'-txMode',tx_mode)
 
             result = ix.commit()
             if result != '::ixNet::OK' :
@@ -214,14 +236,18 @@ def start_protocol(self,wait_time='1m'):
     BuiltIn().log("Started all protocols")
 
 
-def apply_traffic(self):
+def apply_traffic(self,refresh=True):
     """ Applies the current traffic configuration
 
+    ``refresh``: Refreshed the learned information before apply the traffic or not
     *Note:* This is a blocking command
     """
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
-    
+   
+    #
+    ix.setAttribute(ix.getRoot()+'traffic','-refreshLearnedInfoBeforeApply',refresh)
+ 
     # apply traffic
     ix.execute('apply',ix.getRoot()+'traffic')
     
@@ -920,7 +946,8 @@ def add_port(self,force=True,time_out='2m',learn_time='2m'):
 
     vports = ix.getList(ix.getRoot(),'vport')
 
-    # adding Ether proocol to port
+    # adding Ether protocol to port
+    # how about other type ?
     for data,port in zip(port_data,vports):
         if 'tx_mode' in data: tx_mode = data['tx_mode']
         else: tx_mode = 'interleaved'
@@ -931,6 +958,7 @@ def add_port(self,force=True,time_out='2m',learn_time='2m'):
         ix.setAttribute(ip,'-ip',data['ip'])
         ix.setAttribute(ip,'-maskWidth',data['mask'])
         ix.setAttribute(ip,'-gateway',data['gw'])
+
 
     result = ix.commit()
     if result != '::ixNet::OK' :
@@ -1238,3 +1266,19 @@ def ping(self,dst_ip,src_port_index=0,src_intf_index=0):
     output = ix.execute("sendPing",intf,dst_ip)
     BuiltIn().log("Pinged `%s` with result `%s`" % (dst_ip,output))
     return output
+
+
+def regenerate(self):
+    """ Regenerates *all* flow of current traffic items
+    """
+
+    BuiltIn().log("Regenerate flows for current traffic items")
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+
+    traffic_items = ix.getList(ix.getRoot()+'traffic','trafficItem')
+
+    for item in traffic_items:
+        ix.execute('generate', item)
+    
+    BuiltIn().log("Regenerate flows for %d traffic items" % len(traffic_items))

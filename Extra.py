@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-04-19 10:43:15 +0900 (Thu, 19 Apr 2018) $
-# $Rev: 919 $
-# $Ver: 0.1.8g $
+# $Date: 2018-05-28 21:16:29 +0900 (Mon, 28 May 2018) $
+# $Rev: 995 $
+# $Ver: 0.1.8g1 $
 # $Author: $
 
 import os
@@ -50,5 +50,3 @@ class Extra():
             for lib in Common.GLOBAL['extra-lib']:
                 BuiltIn().run_keyword(lib+'.Close All')
     
-    def test(self): 
-        pass

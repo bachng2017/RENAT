@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 927 $
-# $Ver: 0.1.8g $
-# $Date: 2018-05-03 18:30:20 +0900 (Thu, 03 May 2018) $
+# $Rev: 979 $
+# $Ver: 0.1.8g1 $
+# $Date: 2018-05-25 11:14:45 +0900 (Fri, 25 May 2018) $
 # $Author: $
 
 """ Provides keywords for Juniper platform
@@ -212,7 +212,7 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(
 
     output = self._vchannel.cmd(cmd,prompt="(yes/no|password:)")
     if "yes/no" in output:
-        output = self._vchannel.cmd("yes")
+        output = self._vchannel.cmd("yes",prompt='password:')
     if "password:" in output:
         output = self._vchannel.cmd(password)
 
@@ -278,12 +278,10 @@ def get_file(self,src_file,dst_file=''):
         dest_path   = os.getcwd() + '/' + Common.get_result_folder() + '/' + dst_file
 
     cmd = "file copy %s robot@%s://%s" % (src_file,server,tmp_path)
-    # output = self._vchannel.write(cmd, str_timeout)
-    # output = self._vchannel.read() 
-    output = self._vchannel.cmd(cmd,prompt="(yes/no|password:)")
+    output = self._vchannel.cmd(cmd,prompt="(yes/no\)\?|password:)")
 
     if "yes/no" in output:
-        output = self._vchannel.cmd("yes")
+        output = self._vchannel.cmd("yes",prompt='password:')
     if "password:" in output:
         output = self._vchannel.cmd(password)
     if "error" in output:

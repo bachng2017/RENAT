@@ -13,14 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 933 $
-# $Ver: 0.1.8g $
-# $Date: 2018-05-08 20:17:58 +0900 (Tue, 08 May 2018) $
+# $Rev: 1010 $
+# $Ver: 0.1.8g1 $
+# $Date: 2018-05-31 11:30:17 +0900 (Thu, 31 May 2018) $
 # $Author: $
 
-import os,re
-import sys
+import os,re,sys
 import yaml
+import jinja2,difflib
 import pyte
 import codecs
 import time
@@ -106,8 +106,9 @@ class VChannel(object):
         self._telnet = Telnet()
         self._ssh = SSHLibrary.SSHLibrary()
         self._current_id = 0
-        self._current_name = ""
+        self._current_name = None
         self._max_id = 0
+        self._snap_buffer = {}
         self._channels = {}
 
 
@@ -231,6 +232,10 @@ class VChannel(object):
         _access_tmpl    = Common.GLOBAL['access-template'][_type] 
         _access         = _access_tmpl['access']
         _auth_type      = _access_tmpl['auth']
+        if 'proxy_cmd' in _access_tmpl:
+            _proxy_cmd      = _access_tmpl['proxy_cmd']
+        else:
+            _proxy_cmd      = None
         _profile        = _access_tmpl['profile']
         _prompt         = _access_tmpl['prompt'] + '$' # automatically append <dollar> to the prompt from yaml config 
         _auth           = Common.GLOBAL['auth'][_auth_type][_profile]
@@ -255,17 +260,17 @@ class VChannel(object):
     
             channel_info = {}
             ### TELNET 
+            ### _login_prompt could be None but not the _password_prompt
     	    if _access == 'telnet':
                 s = str(w) + "x" + str(h)
                 local_id = self._telnet.open_connection(_ip,
                                                         alias=name,terminal_type='vt100', window_size=s,
                                                         prompt=_prompt,prompt_is_regexp=True,timeout=_timeout)
                 if _login_prompt is not None:
-                    out = self._telnet.login(_auth['user'],_auth['pass'],
-                                        login_prompt=_login_prompt,password_prompt=_password_prompt)
+                    out = self._telnet.login(_auth['user'],_auth['pass'], login_prompt=_login_prompt,password_prompt=_password_prompt)
                 else:
                     out = self._telnet.read_until(_password_prompt)
-                    self.write(_auth['pass'])
+                    self._telnet.write(_auth['pass'])
     
                 # allocate new channel id
                 id = self._max_id + 1
@@ -282,7 +287,15 @@ class VChannel(object):
                 out = ""
                 local_id = self._ssh.open_connection(_ip,alias=name,term_type='vt100',width=w,height=h,timeout=_timeout)
                 if _auth_type == 'plain-text':
-                    out = self._ssh.login(_auth['user'],_auth['pass'])
+                    if _proxy_cmd:
+                        user        = os.environ.get('USER')
+                        home_folder = os.environ.get('HOME')
+                        port = 22
+                        _cmd = _proxy_cmd.replace('%h',_ip).replace('%p',str(port)).replace('%u',user).replace('~',home_folder)
+                    else:
+                        _cmd = None
+                    out = self._ssh.login(_auth['user'],_auth['pass'],proxy_cmd=_cmd)
+                    # out = self._ssh.login(_auth['user'],_auth['pass'],False)
                 if _auth_type == 'public-key':
                     out = self._ssh.login_with_public_key(_auth['user'],_auth['key'])
     
@@ -312,6 +325,7 @@ class VChannel(object):
             channel_info['mode']        = mode
             channel_info['timeout']     = _timeout
             channel_info['auth']        = _auth
+            channel_info['ip']          = _ip
             channel_info['separator']   = ""
        
             # extra 
@@ -445,7 +459,6 @@ class VChannel(object):
         Examples:
         | VChannel.`Switch` | vmx12 | 
         """
-  
         # clear buffer before switch 
         old_name = self._current_name
         self.read()
@@ -459,7 +472,7 @@ class VChannel(object):
 
             channel_info['connection'].switch_connection(channel_info['local_id'])
 
-            BuiltIn().log("Switched current channel to `%s`" % name)
+            BuiltIn().log("Switched current channel to `%s(%s)`" % (name,channel_info['ip']))
             return channel_info['id'], channel_info['local_id']
         else:
             err_msg = "ERROR: Could not find `%s` in current channels" % name
@@ -498,7 +511,6 @@ class VChannel(object):
         for i in range(max_retry):
             try:
                 return f(*args)
-            # except Exception as e:
             except (EOFError,KeyError) as e:
                 BuiltIn().log("    Exception(%s): %s" % (str(type(e)),str(e)))
                 # BuiltIn().log(traceback.format_exc())
@@ -589,9 +601,12 @@ class VChannel(object):
         # self.read()
 
         wait = DateTime.convert_time(str_wait)
+
         channel = self._channels[self._current_name]
-        if channel['screen']: screen_mode = True
-        else: screen_mode = False
+        if channel['screen']: 
+            screen_mode = True
+        else: 
+            screen_mode = False
         
         if start_screen_mode:
             self.start_screen_mode()
@@ -638,13 +653,14 @@ class VChannel(object):
         access      = channel['access-type']
         cur_prompt  = channel['prompt']
 
+
         # in case something left in the buffer
         output  = channel['connection'].read()
         self.log(output)
-
+        
         channel['connection'].write(str_cmd)
         self.log(str_cmd + Common.newline)
-        
+       
         if str_prompt == '' :    
             output  = channel['connection'].read_until_regexp(cur_prompt)
         else:
@@ -672,7 +688,7 @@ class VChannel(object):
 #        return result
 
 
-    def cmd(self,command,prompt='',match_err='\r\n(unknown command.|syntax error, expecting <command>.)\r\n'):
+    def cmd(self,command='',prompt='',match_err='\r\n(unknown command.|syntax error, expecting <command>.)\r\n'):
         """Executes a ``command`` and wait until for the prompt. 
   
         This is a blocking keyword. Execution of the test case will be postponed until the prompt appears.
@@ -816,4 +832,156 @@ class VChannel(object):
                 channel['logger'].flush()
   
         self.switch(current_name)
-    
+
+   
+    def get_ip(self):
+        """ Returns the IP address of current node
+        Examples:
+            | ${router_ip}= | Router.`Get IP` |
+        """
+        name    = self._cur_name
+        node    = Common.LOCAL['node'][name]
+        dev     = node['device']
+        ip      = Common.GLOBAL['device'][dev]['ip']
+
+        BuiltIn().log("Got IP address of current node: %s" % (ip))
+        return  ip  
+
+    def exec_file(self,file_name,vars='',comment='# ',step=False,str_error='syntax,rror'):
+        """ Executes commands listed in ``file_name``
+        Lines started with ``comment`` character is considered as comments
+
+        ``file_name`` is a file located inside the ``config`` folder of the
+        test case.
+
+        This command file could be written in Jinja2 format. Default usable
+        variables are ``LOCAL`` and ``GLOBAL`` which are identical to
+        ``Common.LOCAL`` and
+        ``Common.GLOBAL``. More variables could be supplied to the template by
+        ``vars``.
+
+        ``vars`` has the format: ``var1=value1,var2=value2``
+
+        If ``step`` is ``True``, after very command the output is check agains
+        an error list. And if a match is found, execution will be stopped. Error
+        list is define by ``str_err``, that contains multi regular expression
+        separated by a comma. Default value of ``str_err`` is `error`
+
+        A sample for command list with Jinja2 template:
+        | show interface {{ LOCAL['extra']['line1'] }}
+        | show interface {{ LOCAL['extra']['line2'] }}
+        |
+        | {% for i in range(2) %}
+        | show interface et-0/0/{{ i }}
+        | {% endfor %}
+
+        Examples:
+        | Router.`Exec File`   | cmd.lst |
+        | Router.`Exec File`   | step=${TRUE} | str_error=syntax,error |
+
+
+        *Note:* Comment in the middle of the line is not supported
+        For example if ``comment`` is "# "
+        | # this is comment line <-- this line will be ignored
+        | ## this is not an comment line, and will be enterd to the router cli,
+        but the router might ignore this
+        """
+
+        # load and evaluate jinja2 template
+        folder = os.getcwd() + "/config/"
+        loader=jinja2.Environment(loader=jinja2.FileSystemLoader(folder)).get_template(file_name)
+        render_var = {'LOCAL':Common.LOCAL,'GLOBAL':Common.GLOBAL}
+        for pair in vars.split(','):
+            info = pair.split("=")
+            if len(info) == 2:
+                render_var.update({info[0].strip():info[1].strip()})
+
+        command_str = loader.render(render_var)
+
+        # execute the commands
+        for line in command_str.split("\n"):
+            if line.startswith(comment): continue
+            str_cmd = line.rstrip()
+            if str_cmd == '': continue # ignore null line
+            output = self.cmd(str_cmd)
+
+            if not step: continue
+            for error in str_error.split(','):
+                if re.search(error,output,re.MULTILINE):
+                    raise Exception("Stopped because matched error after executing `%s`" % str_cmd)
+
+        BuiltIn().log("Executed commands in file %s" % file_name)
+
+
+    def cmd_and_wait_for(self,command,keyword,interval='30s',max_num=10,error_with_max_num=True):
+        """ Execute a command and expect ``keyword`` occurs in the output.
+        If not wait for ``interval`` and repeat the process again
+
+        After ``max_num``, if ``error_with_max_num`` is ``True`` then the
+        keyword will fail. Ortherwise the test continues.
+        """
+
+        num = 1
+        BuiltIn().log("Execute command `%s` and wait for `%s`" % (command,keyword))
+        while num <= max_num:
+            BuiltIn().log("    %d: command is `%s`" % (num,command))
+            output = self.cmd(command)
+            if keyword in output:
+                BuiltIn().log("Found keyword `%s` and stopped the loop" % keyword)
+                break;
+            else:
+                num = num + 1
+                time.sleep(DateTime.convert_time(interval))
+                BuiltIn().log_to_console('.','STDOUT',True)
+        if error_with_max_num and num > max_num:
+            msg = "ERROR: Could not found keyword `%s`" % keyword
+            BuiltIn().log(msg)
+            raise Exception(msg)
+
+        BuiltIn().log("Executed command `%s` and waited for keyword `%s`" % (command,keyword))
+
+
+
+    def snap(self, name, *cmd_list):
+        """ Remembers the result of a list of command defined by ``cmd_list``
+
+        Use this keyword with `Snap Diff` to get the difference between the
+        command's result.
+        The a new snapshot will overrride the previous result.
+
+        Each snap is identified by its ``name``
+        """
+        buffer = ""
+        for cmd in cmd_list:
+            buffer += cmd + "\n"
+            buffer += self.cmd(cmd)
+        self._snap_buffer[name] = {}
+        self._snap_buffer[name]['cmd_list'] = cmd_list
+        self._snap_buffer[name]['buffer'] = buffer
+
+        BuiltIn().log("Took snapshot `%s`" % name)
+
+
+    def snap_diff(self,name):
+        """ Executes the comman that have been executed before by ``name``
+        snapshot and return the difference.
+
+        Difference is in ``context diff`` format
+        """
+
+        if not self._snap_buffer[name]: return False
+        cmd_list    = self._snap_buffer[name]['cmd_list']
+        old_buffer  = self._snap_buffer[name]['buffer']
+
+        buffer = ""
+        for cmd in cmd_list:
+            buffer += cmd + "\n"
+            buffer += self.cmd(cmd)
+
+        diff = difflib.context_diff(old_buffer.split("\n"),buffer.split("\n"),fromfile=name+":before",tofile=name+":current")
+        result = "\n".join(diff)
+
+        BuiltIn().log(result)
+        BuiltIn().log("Took snapshot `%s` and showed the difference" % name)
+
+        return result

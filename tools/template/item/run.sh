@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# $Date: 2018-03-29 09:18:48 +0900 (Thu, 29 Mar 2018) $
-# $Rev: 881 $
+# $Date: 2018-05-23 11:35:35 +0900 (Wed, 23 May 2018) $
+# $Rev: 967 $
 # $Author: $
 # usage: ./runsh [-n <num>] <other robot argument>
 
@@ -29,9 +29,12 @@ usage () {
     echo "  -d, --dir FOLDER        make default result forder to FOLDER"
     echo "  -X                      stop immediately if a step fails (default is not set)"
     echo "  -v VAR:VALUE            define a global RF variable ${VAR} with value VALUE"
-    echo "  -v CLEAN                execute CleanUp Result keyword before in Setup step"
     echo "  -e TAG                  ignore steps tagged with TAG"
     echo "  -i TAG                  execute only steps tagged with TAG"
+    echo ""
+    echo "Predefinded global variables:"
+    echo "  -v CLEAN                execute CleanUp Result keyword before in Setup step"
+    echo "  -v FORCE                run case started by Run Explicit"
 }
 
 # apply the resource

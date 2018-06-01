@@ -2,7 +2,7 @@
 
 # $Date: 2018-03-25 18:06:17 +0900 (Sun, 25 Mar 2018) $
 # $Rev: 863 $
-# $Ver: 0.1.8g $
+# $Ver: 0.1.8g1 $
 # $Author: $
 # suite run script
 # runs all test cases in sub folders if it has `run.sh` and does not has `.ignore` file
