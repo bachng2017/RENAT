@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-# $Date: 2018-04-10 17:02:41 +0900 (火, 10  4月 2018) $
-# $Rev: 900 $
-# $Ver: 0.1.8g1 $
+# $Date: 2018-05-31 11:58:54 +0900 (Thu, 31 May 2018) $
+# $Rev: 1011 $
+# $Ver: $
 # $Author: $
 
 *** Variables ***
-# folder and script for polling process on Apollo
-${WORKING_FOLDER}           $HOME}/working
+# folder and script for polling process on a center server
+${WORKING_FOLDER}           ${HOME}/working
 ${POLLING_SCRIPT}           tools/Polling.rb -i 5
 
 *** Setting ***
@@ -15,8 +15,9 @@ Resource                    ${RENAT_PATH}/config/extra.robot
 *** Keywords ***
 
 Collect Log From File Server
-    [Documentation]         moves *.csv files to result folder
-    Move Files              ${WORKING_FOLDER}/*.csv     ${RESULT_FOLDER} 
+    [Documentation]         moves *.csv files to result folder on local operating system
+    Run                     [ -f ${WORKING_FOLDER}/${MYID}_CSVList.txt ] && while read i; do mv $i; done < ${WORKING_FOLDER}/${MYID}_CSVList.txt
+    Run                     [ -f ${WORKING_FOLDER}/${MYID}_CSVList.txt ] && rm -f ${WORKING_FOLDER}/${MYID}_CSVList.txt
 
 SNMP Polling Start For Host
     [Documentation]         starts polling for a specific host ``host``
@@ -24,8 +25,9 @@ SNMP Polling Start For Host
     Set Test Variable       ${device}       ${LOCAL['node'][u'${host}']['device']}
     Set Test Variable       ${ip}           ${GLOBAL['device']['${device}']['ip']}
     ${mibfile} =            MIB For Node    ${host}
-    VChannel.Cmd            ${POLLING_SCRIPT} -m ${mibfile} -t ${ip} > ${filename_prefix}${host}.csv &
+    VChannel.Cmd            ${POLLING_SCRIPT} -m ${mibfile} -t ${ip} > ${MYID}_${filename_prefix}${host}.csv &
     VChannel.Cmd            echo $! >> ${MYID}_Polling.txt
+    VChannel.Cmd            echo ${WORKING_FOLDER}/${MYID}_${filename_prefix}${host}.csv ${RESULT_FOLDER}/${filename_prefix}${host}.csv >> ${WORKING_FOLDER}/${MYID}_CSVList.txt
 
 
 SNMP Polling Start
@@ -35,6 +37,7 @@ SNMP Polling Start
     VChannel.Cmd            cd ${WORKING_FOLDER}
     VChannel.Cmd            [ -s ${WORKING_FOLDER}/${MYID}_Polling.txt ] && kill -9 $(cat ${WORKING_FOLDER}/${MYID}_Polling.txt)
     VChannel.Cmd            [ -f ${WORKING_FOLDER}/${MYID}_Polling.txt ] && rm -f ${WORKING_FOLDER}/${MYID}_Polling.txt
+    VChannel.Cmd            [ -f ${WORKING_FOLDER}/${MYID}_CSVList.txt ] && rm -f ${WORKING_FOLDER}/${MYID}_CSVList.txt
     :FOR    ${entry}   IN  @{NODE}
     \   Run Keyword If      ${NODE[u'${entry}']['snmp-polling']}        SNMP Polling Start For Host     ${entry}    ${filename_prefix}
 
@@ -47,17 +50,17 @@ SNMP Polling Stop
     VChannel.Cmd            [ -f ${WORKING_FOLDER}/${MYID}_Polling.txt ] && rm -f ${WORKING_FOLDER}/${MYID}_Polling.txt
 
 Follow Remote Log Start
-    [Documentation]         start remote log from `host` for nodes that has ``follow-remote-log`` flag 
+    [Documentation]         start remote log from `host` for nodes that has ``follow-remote-log`` flag
     [Arguments]             ${termname}
     VChannel.Switch         ${termname}
     VChannel.Cmd            cd /var/log
     VChannel.Cmd            [ -s ${WORKING_FOLDER}/${MYID}_TAIL.txt ] && kill -9 $(cat ${WORKING_FOLDER}/${MYID}_TAIL.txt)
     VChannel.Cmd            [ -f ${WORKING_FOLDER}/${MYID}_TAIL.txt ] && rm -f ${WORKING_FOLDER}/${MYID}_TAIL.txt
-    @{nodes}=               Common.Node With Attr  follow-remote-log  ${TRUE} 
+    @{nodes}=               Common.Node With Attr  follow-remote-log  ${TRUE}
     ${file_list}=           Set Variable    ${EMPTY}
     :FOR    ${node}  IN  @{nodes}
-    \   ${dev}=         Set Variable    ${LOCAL['node'][u'${node}']['device']} 
-    \   ${ip}=          Set Variable    ${GLOBAL['device']['${dev}']['ip']} 
+    \   ${dev}=         Set Variable    ${LOCAL['node'][u'${node}']['device']}
+    \   ${ip}=          Set Variable    ${GLOBAL['device']['${dev}']['ip']}
     \   ${file_list}=   Set Variable    ${file_list} syslog-net/${ip}.log snmptrap-net/${ip}.log
     Run Keyword If	'${file_list}' != ''	VChannel.Write	tail -n 0 -F ${file_list} &
     Sleep               2s
@@ -67,8 +70,8 @@ Follow Remote Log Stop
     [Documentation]         stop and clean up process started by `Follow Remote Log Start`
     [Arguments]             ${termname}
     VChannel.Switch         ${termname}
-    VChannel.Write          [ -s ${WORKING_FOLDER}/${MYID}_TAIL.txt ] && kill -9 $(cat ${WORKING_FOLDER}/${MYID}_TAIL.txt)	2s
-    VChannel.Write          [ -f ${WORKING_FOLDER}/${MYID}_TAIL.txt ] && rm -f ${WORKING_FOLDER}/${MYID}_TAIL.txt 		2s
+    VChannel.Cmd            [ -s ${WORKING_FOLDER}/${MYID}_TAIL.txt ] && kill -9 $(cat ${WORKING_FOLDER}/${MYID}_TAIL.txt)
+    VChannel.Cmd            [ -f ${WORKING_FOLDER}/${MYID}_TAIL.txt ] && rm -f ${WORKING_FOLDER}/${MYID}_TAIL.txt
 
 
 Follow Syslog And Trap Start
@@ -87,16 +90,18 @@ Follow Syslog And Trap Stop
 
 Lab Setup
     [Documentation]         initial setup for all test cases
-    Create Directory        tmp 
+    Create Directory        tmp
     Change Mod              tmp                 0775
-    Create Directory        ${WORKING_FOLDER}   
+    Create Directory        ${WORKING_FOLDER}
 
     Change Mod              ${RESULT_FOLDER}    0755
+
+    Set Library Search Order    Common
 
     ${renat_ver}=           RENAT Version
     Set Suite MetaData      RENAT Ver                   ${renat_ver}
     ${README}=              Get File Without Error     ./readme.txt
-    Set Suite MetaData      README                      ${README} 
+    Set Suite MetaData      README                      ${README}
     BuiltIn.Log To Console  RENAT Ver:: ${renat_ver}
     BuiltIn.Log To Console  ------------------------------------------------------------------------------
     BuiltIn.Log To Console  README:
@@ -106,7 +111,7 @@ Lab Setup
     ${HAS_CLEAN}=           Get Variable Value  ${CLEAN}
     Run Keyword If          "${HAS_CLEAN}"!="None"             CleanUp Result
 
-    VChannel.Connect All 
+    VChannel.Connect All
 
     # initialize extra libraries
     Extra.Connect All
@@ -133,11 +138,11 @@ Lab Teardown
     Logger.Log All          TESTING FINISH   ${TRUE}     ===
     Collect Log from File Server
 
-    # Cleanup extra libraries    
+    # Cleanup extra libraries
     Extra.Close All
 
-    VChannel.Close All 
-    Close All Browsers 
+    VChannel.Close All
+    Close All Browsers
     BuiltIn.Log To Console  99. Lab Teardown
     BuiltIn.Log To Console  ------------------------------------------------------------------------------
 

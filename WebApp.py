@@ -15,7 +15,7 @@
 
 # $Date: 2018-05-28 16:29:06 +0900 (Mon, 28 May 2018) $
 # $Rev: 994 $
-# $Ver: 0.1.8g1 $
+# $Ver: $
 # $Author: $
 
 import os,time,re

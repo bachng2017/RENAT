@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  Copyright 2018 NTT Communications
+#  Copyright 2017 NTT Communications
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 #  limitations under the License.
 
 # $Rev: 919 $
-# $Ver: 0.1.8g1 $
+# $Ver: $
 # $Date: 2018-04-19 10:43:15 +0900 (Thu, 19 Apr 2018) $
 # $Author: $
 

@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-03-20 00:33:18 +0900 (Tue, 20 Mar 2018) $
-# $Rev: 822 $
-# $Ver: 0.1.8g1 $
+# $Date: 2018-06-18 16:57:51 +0900 (Mon, 18 Jun 2018) $
+# $Rev: 1038 $
+# $Ver: $
 # $Author: $
 
 """ provides functions for IxLoad
@@ -149,6 +149,7 @@ def collect_data(self,prefix='',more_file='',ignore_not_found=True):
     tasks.join()
     _check_result(results,'ixload::collect_data')
     BuiltIn().log("Copied result data to local result folder")
+
 
 def get_test_report(self,prefix=''):
     """ Get the test report(PDF) and put it into the active result folder

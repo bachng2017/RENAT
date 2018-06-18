@@ -15,7 +15,7 @@
 
 # $Date: 2018-03-24 20:42:36 +0900 (Sat, 24 Mar 2018) $
 # $Rev: 861 $
-# $Ver: 0.1.8g1 $
+# $Ver: $
 # $Author: $
 
 import sys

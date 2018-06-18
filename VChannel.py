@@ -14,7 +14,7 @@
 #  limitations under the License.
 
 # $Rev: 1010 $
-# $Ver: 0.1.8g1 $
+# $Ver: $
 # $Date: 2018-05-31 11:30:17 +0900 (Thu, 31 May 2018) $
 # $Author: $
 

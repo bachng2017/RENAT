@@ -15,7 +15,7 @@
 
 # $Date: 2018-05-08 17:21:12 +0900 (Tue, 08 May 2018) $
 # $Rev: 928 $
-# $Ver: 0.1.8g1 $
+# $Ver: $
 # $Author: $
 
 import datetime

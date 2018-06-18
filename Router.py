@@ -13,15 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-05-29 06:43:24 +0900 (Tue, 29 May 2018) $
-# $Rev: 1001 $
-# $Ver: 0.1.8g1 $
+# $Date: 2018-06-18 16:57:51 +0900 (Mon, 18 Jun 2018) $
+# $Rev: 1038 $
+# $Ver: $
 # $Author: $
 
 import netsnmp
 import time
-import sys
-import os
+import sys,os,glob
 import re
 import csv
 import json
@@ -84,17 +83,27 @@ class Router(object):
    
             # sync the nanme with current VChannel instance 
             self._cur_name = self._vchannel._current_name
-          
-            # using juniper as a base module for creating dynamic methods
-            mod         = import_module('router_mod.juniper')
-            cmd_list    = inspect.getmembers(mod, inspect.isfunction)
-            for cmd,data in cmd_list:
-                if not cmd.startswith('_'):
-                    def gen_xrun(cmd):
-                        def _xrun(self,*args,**kwargs):
-                            return self.xrun(cmd,*args,**kwargs)
-                        return _xrun
-                    setattr(self,cmd,MethodType(gen_xrun(cmd),self))
+         
+            #
+            mod_list = glob.glob(Common.get_renat_path() + '/router_mod/*.py')
+            keyword_list = []
+            for item in mod_list:
+                # BuiltIn().log_to_console(item)
+                if item.startswith('_'): continue
+                mod_name = os.path.basename(item).replace('.py','')
+                # BuiltIn().log_to_console(mod_name)
+                mod  = import_module('router_mod.' + mod_name)
+        
+                cmd_list    = inspect.getmembers(mod, inspect.isfunction)
+                for cmd,data in cmd_list:
+                    if not cmd.startswith('_') and cmd not in keyword_list:
+                        keyword_list.append(cmd)
+                        # BuiltIn().log_to_console('   ' + cmd)
+                        def gen_xrun(cmd):
+                            def _xrun(self,*args,**kwargs):
+                                return self.xrun(cmd,*args,**kwargs)
+                            return _xrun
+                        setattr(self,cmd,MethodType(gen_xrun(cmd),self))
 
 
             
@@ -116,25 +125,25 @@ class Router(object):
         This keyword will then actually calling the correspond keyword for the
         device type. 
         """ 
-
-        # channel = self._vchannel.get_channel(self._cur_name)
         channel = self.get_current_channel()
         node    = channel['node']
         type_list    = channel['type'].split('_')
         mod_name = ''
         type_list_length = len(type_list)
+
+        mod_cmd = cmd.lower().replace(' ','_')
+                 
+        # go from detail mod to common mode
         for i in range(0,type_list_length):
             mod_name = '_'.join(type_list[0:type_list_length-i])
             try:
                 mod  = import_module('router_mod.'+ mod_name)
-                break
+                if hasattr(mod,mod_cmd):
+                    break
             except ImportError:
                 BuiltIn().log("   Could not find `%s`, try another one" % mod_name)
 
-        BuiltIn().log("    using `%s` mode for command %s" %  (mod_name,cmd))
-
-        mod_cmd = cmd.lower().replace(' ','_')
-
+        BuiltIn().log("    using `%s` mod for command `%s`" %  (mod_name,cmd))
         result = getattr(mod,mod_cmd)(self,*args,**kwargs)
     
         return result

@@ -2,7 +2,7 @@
 
 # $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
 # $Rev: 0.1.6 $
-# $Ver: 0.1.8g1 $
+# $Ver: $
 # $Author: bachng $
 # usage: ./runsh [-n <num>] <other robot argument>
 

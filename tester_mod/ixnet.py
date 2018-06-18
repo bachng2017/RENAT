@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-06-01 09:31:58 +0900 (Fri, 01 Jun 2018) $
-# $Rev: 1015 $
-# $Ver: 0.1.8g1 $
+# $Date: 2018-06-18 09:36:40 +0900 (Mon, 18 Jun 2018) $
+# $Rev: 1033 $
+# $Ver: $
 # $Author: $
 
 """ provides functions for IxNetwork
@@ -64,26 +64,29 @@ def wait_until_connected(self,timeout_str='5m'):
     ix  = cli['connection']
     count = 0
     port_ok = False
+    vport_list  = ix.getList(ix.getRoot(),'vport')
 
-    while not port_ok and count < timeout:
-        try :
-            BuiltIn().log("    checking port status ...")
-            vport_list  = ix.getList(ix.getRoot(),'vport')
-            port_ok     = len(vport_list) > 0
-
-            for port in vport_list:
-                state   = ix.getAttribute(port,'-isConnected')
-                port_ok = port_ok and (state == 'true')
-
-        except IxNetwork.IxNetError as err:
-            port_ok = False
-            BuiltIn().log("err type %s" % type(err))
-            BuiltIn().log(err)
+    if len(vport_list) == 0:
+        port_ok = True
+        BuiltIn().log("WARN: no port is configured")
+    else:
+        while (not port_ok) and (count < timeout):
+            try :
+                port_ok = True
+                BuiltIn().log("    checking %d port status ..." % len(vport_list))
+                for port in vport_list:
+                    state   = ix.getAttribute(port,'-isConnected')
+                    port_ok = port_ok and (state == 'true')
+    
+            except IxNetwork.IxNetError as err:
+                port_ok = False
+                BuiltIn().log("err type %s" % type(err))
+                BuiltIn().log(err)
+                raise Exception("ERROR: errors found on ixnetwork ports")
+            time.sleep(5)
+            count = count + 5 
+        if (count >= timeout):
             raise Exception("ERROR: errors found on ixnetwork ports")
-        time.sleep(5)
-        count = count + 5 
-    if (count >= timeout):
-        raise Exception("ERROR: errors found on ixnetwork ports")
 
     BuiltIn().log("Finished checking ports, state is %s (%d seconds elapsed)" % (port_ok,count))        
     return port_ok
@@ -95,7 +98,7 @@ def load_traffic(self,wait_time='2m',wait_time2='2m',apply=True,protocol=True,fo
     self.load_config(wait_time='2m',wait_time2='2m',apply=True,protocol=True,force=True)
 
 
-def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,protocol=True,force=True):
+def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,protocol=True,force=True,wait_time3='30s'):
     """ loads traffic configuration, applies and start protocol if necessary.
 
     The config file name was defined in the ``local.yaml` which is a Ixia
@@ -113,6 +116,7 @@ def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,pr
     - ``wait_time2``: maximum wait time befor all ports become available. In
     common case, this is calculated automatically so user does not need to
     change this value.
+    - ``wait_time3``: default waiting time after config file is loaded (30s)
 
     More information about ports could be define in ``real_port`` section like
     this:
@@ -138,6 +142,7 @@ def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,pr
 
     wait    = DateTime.convert_time(wait_time)
     wait2   = DateTime.convert_time(wait_time2)
+    wait3   = DateTime.convert_time(wait_time3)
 
     cli     = self._clients[self._cur_name]
     ix      = cli['connection']
@@ -216,6 +221,9 @@ def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,pr
         if result != '::ixNet::OK' :
             raise Exception("ERROR: Error while applying traffic: " + result)    
         BuiltIn().log("Applied traffic")
+
+    #
+    time.sleep(wait3)
 
 
 def start_protocol(self,wait_time='1m'):
@@ -1220,6 +1228,7 @@ def get_quicktest_result(self,test_index=u'-1',prefix='',enable_all=True):
 
     BuiltIn().log("Got %d result files for the Quicktest" % count)
 
+
 def should_be_pingable(self,dst_ip,src_port_index=0,src_intf_index=0):
     """ Ping from Ixia and raise an error if ping fails
     
@@ -1282,3 +1291,134 @@ def regenerate(self):
         ix.execute('generate', item)
     
     BuiltIn().log("Regenerate flows for %d traffic items" % len(traffic_items))
+
+
+
+def start_test_composer(self,script_name=u'Main_Procedure',run_num=u'1',wait_for_test=True,parameter=u'',wait=u'10s'):
+    """ Run a test composer script.
+
+    The test composer script should be included in an Ixia Network configuration
+    file and loaded properly with `Load Config`
+
+    Parameters:
+    - ``script_name`` is the name of the script to run. Default value is ``Main_Procedure``.    
+    - ``wait_for_test``: if ``${TRUE}`` then wait until the script finishes.
+    - ``parameter``: parameter that is passed to the script. Parameter could be
+      in 2 formats: ``{{VAR1 VALUE1} {VAR2 VALUE2}}`` or simply as ``VALUE1 VALUE2``. 
+    The script must prepare `VAR1` and `VAR2` properly by `Test
+    parameter`. See Ixia Network anout composer script for more details.
+    - ``wait``: wait time before go to next keyword 
+
+    Examples:
+    | Tester.`Start Test Composer` | parameter=XXX YYY |
+    | Tester.`Get Test Composer Result` | result_file=script1.log |
+    | Tester.`Start Test Composer` | parameter={{VAR1 AAA} {VAR2 BBB}} |
+    | Tester.`Get Test Composer Result` | result_file=script1.log |
+
+    """
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+  
+    composer_runner = None
+    sched = None
+
+    BuiltIn().log("Start a test composer script")
+    quicktest_list = ix.getList(ix.getRoot() + 'quickTest','eventScheduler')
+
+    if len(quicktest_list) > 0:
+        for item in quicktest_list:
+            name = ix.getAttribute(item,'-name')
+            if name == 'composer_runner':
+                BuiltIn().log("    Found an existed composer_runner test")
+                composer_runner = item
+                sched = ix.getList(composer_runner,'eventScheduler')[0]
+                break
+  
+    # create new quicktest item if it is neccessary 
+    if composer_runner is None: 
+        composer_runner = ix.add(ix.getRoot() + '/quickTest','eventScheduler')
+        ix.setAttribute(composer_runner,'-name','composer_runner')
+        sched = ix.add(composer_runner,'eventScheduler')
+        name = script_name.encode('ascii','ignore')
+        ix.setMultiAttribute(sched,'-enabled','true','-itemId',name,'-itemName',name)
+
+    # setting parameter
+    # ix.setAttribute(composer_runner,'-inputParameters',parameter.encode('ascii','ignore'))
+    ix.setAttribute(sched,'-parameters',parameter.encode('ascii','ignore'))
+    
+    config = ix.getList(composer_runner,'testConfig')
+    ix.setAttribute(config[0],'-numTrials',int(run_num))
+    ix.setAttribute(config[0],'-protocolItem',[])
+    ix.commit()
+    composer_runner = ix.remapIds(composer_runner)[0]
+
+    # start the script
+    ix.execute('start', composer_runner)
+    if wait_for_test:
+        BuiltIn().log("    Wait until the script finishes")
+        ix.execute('waitForTest', composer_runner)
+     
+    time.sleep(DateTime.convert_time(wait))
+    BuiltIn().log("Started a test compose script")
+    
+
+
+def stop_test_composer(self,wait='10s'):
+    """ Stop a running composer 
+
+    Do nothing when a test composer has already stopped or no composer has been
+    prepared.
+    """ 
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+  
+    composer_runner = None
+    
+    BuiltIn().log("Stop a test composer script")
+    quicktest_list = ix.getList(ix.getRoot() + 'quickTest','eventScheduler')
+
+    if len(quicktest_list) > 0:
+        for item in quicktest_list:
+            name = ix.getAttribute(item,'-name')
+            if name == 'composer_runner':
+                composer_runner = item
+                break
+
+    if composer_runner:
+        ix.execute('stop', composer_runner)
+        time.sleep(DateTime.convert_time(wait))
+        BuiltIn().log("Stopped the current composer script")
+    else:
+        BuiltIn().log("No running composer is found")
+
+
+def get_test_composer_result(self,result_file=u'composer.log'):
+    """ Get the result of test composer script
+    """
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+
+    BuiltIn().log("Get test composer result")
+    composer_runner = None
+    
+    quicktest_list = ix.getList(ix.getRoot() + 'quickTest','eventScheduler')
+    if len(quicktest_list) > 0:
+        for item in quicktest_list:
+            name = ix.getAttribute(item,'-name')
+            if name == 'composer_runner':
+                composer_runner = item
+                break
+
+    if composer_runner:
+        result_path = ix.getAttribute(composer_runner+'/results','-resultPath')
+        src_path = result_path + '\logFile.txt'
+        dst_path = Common.get_result_path() + '/' + result_file.encode('ascii','ignore')
+        BuiltIn().log("    result src: %s" % src_path)
+        BuiltIn().log("    result dst: %s" % dst_path)
+        ix.execute('copyFile',ix.readFrom(src_path,'-ixNetRelative'),ix.writeTo(dst_path))
+         
+        BuiltIn().log("Got log file from %s" % result_path)
+    else:
+        BuiltIn().log("No composer runner found")
+ 
+
