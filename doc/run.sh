@@ -14,6 +14,7 @@ python -m robot.libdoc $RENAT_PATH/router_mod/cisco.py html/router_mod_cisco.htm
 python -m robot.libdoc $RENAT_PATH/router_mod/gr.py html/router_mod_gr.html
 python -m robot.libdoc $RENAT_PATH/tester_mod/ixnet.py html/tester_mod_ixnet.html
 python -m robot.libdoc $RENAT_PATH/tester_mod/ixload.py html/tester_mod_ixload.html
+python -m robot.libdoc $RENAT_PATH/tester_mod/ixbps.py html/tester_mod_ixbps.html
 python -m robot.libdoc $RENAT_PATH/optic_mod/calient.py html/optic_mod_calient.html
 python -m robot.libdoc $RENAT_PATH/optic_mod/g4ntm.py html/optic_mod_g4ntm.html
 python -m robot.libdoc $RENAT_PATH/WebApp.py html/WebApp.html
@@ -22,6 +23,8 @@ python -m robot.libdoc $RENAT_PATH/Arbor.py html/Arbor.html
 python -m robot.libdoc -F REST -n RENAT ./index.py html/index.html
 # python -m robot.libdoc $RENAT_PATH/CHANGES.txt html/Changes.html
 
+chmod -R 0664 html/*.html
+rm -f $PUBLISH_DOC/*.html
 cp html/*.html $PUBLISH_DOC 
 cp $RENAT_PATH/CHANGES.txt $PUBLISH_DOC 
 
@@ -36,5 +39,6 @@ done
 LIST=$(cat list.txt | sed 's/$/.pdf/'|  paste -s -d' ')
 cd pdf
 /usr/bin/pdfjoin -o renat.pdf $LIST 
+rm -f $PUBLISH_DOC/*.pdf
 cp renat.pdf $PUBLISH_DOC
 

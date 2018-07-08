@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-05-28 16:29:06 +0900 (Mon, 28 May 2018) $
-# $Rev: 994 $
+# $Date: 2018-07-02 21:30:24 +0900 (Mon, 02 Jul 2018) $
+# $Rev: 1067 $
 # $Ver: $
 # $Author: $
 
@@ -84,11 +84,21 @@ class WebApp(object):
         self._current_name          = None
         self._current_app           = None
         self._type                  = None
+        self._ajax_wait             = 2
         try:
             self._driver = BuiltIn().get_library_instance('Selenium2Library')
 
         except RobotNotRunningError as e:
-            Common.err("RENAT is not running")
+            Common.err("WARN: RENAT is not running")
+
+    
+    def set_ajax_wait(self,wait_time='2s'):
+        """ Set the ajax wait time
+        """
+        old_value = self._ajax_wait
+        self._ajax_wait = DateTime.convert_time(wait_time)
+        BuiltIn().log("Set the ajax wait_time to `%d` seconds")
+        return old_value
 
 
     def set_capture_format(self,format):

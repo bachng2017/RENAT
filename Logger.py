@@ -44,7 +44,7 @@ class Logger(object):
             if self._vchannel is None:
                 raise Exception("Could not find an instance of VChannel. Need import VChannel first")
         except RobotNotRunningError as e:
-            Common.err("ERROR: RENAT is not running")
+            Common.err("WARN: RENAT is not running")
 
 
     def switch(self,name):

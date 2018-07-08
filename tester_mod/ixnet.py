@@ -13,12 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-06-18 09:36:40 +0900 (Mon, 18 Jun 2018) $
-# $Rev: 1033 $
+# $Date: 2018-07-03 22:39:21 +0900 (Tue, 03 Jul 2018) $
+# $Rev: 1074 $
 # $Ver: $
 # $Author: $
 
 """ provides functions for IxNetwork
+
+To use IxNetwork module, a IxNetwork TCL server should be started properly.
 
 RENAT will connect to the App server and control the test ports. Test files and
 result will be insde the RENAT server.

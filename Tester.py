@@ -13,13 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-03-24 20:42:36 +0900 (Sat, 24 Mar 2018) $
-# $Rev: 861 $
+# $Date: 2018-06-29 13:42:42 +0900 (Fri, 29 Jun 2018) $
+# $Rev: 1053 $
 # $Ver: $
 # $Author: $
 
 import sys
-import os
+import os,glob
 import re
 import csv
 import inspect
@@ -28,6 +28,7 @@ import time
 import Common
 import IxNetwork
 import SubIxLoad
+import BpsRobotLibrary
 from datetime import datetime
 from robot.libraries.BuiltIn import BuiltIn
 import robot.libraries.DateTime as DateTime
@@ -102,24 +103,34 @@ module.
 
         self._clients   = {}
         self._cur_name  = ""
+        self._test_id = None
 
         try:
             BuiltIn().get_library_instance('VChannel')
 
-            # using ixnet as a base mod for method name
-            mod         = import_module('tester_mod.ixnet')
-            cmd_list = inspect.getmembers(mod, inspect.isfunction)
-    
-            for cmd,data in cmd_list:
-                if not cmd.startswith('_'):
-                    def gen_xrun(cmd):
-                        def _xrun(self,*args,**kwargs):
-                            return self._xrun(cmd,*args,**kwargs)
-                        return _xrun
-                    setattr(self,cmd,MethodType(gen_xrun(cmd),self))
+            mod_list = glob.glob(Common.get_renat_path() + '/tester_mod/*.py')
+            keyword_list = []
+            for item in mod_list:
+                # BuiltIn().log_to_console(item)
+                if item.startswith('_'): continue
+                mod_name = os.path.basename(item).replace('.py','')
+                # BuiltIn().log_to_console(mod_name)
+                mod  = import_module('tester_mod.' + mod_name)
+
+                cmd_list    = inspect.getmembers(mod, inspect.isfunction)
+                for cmd,data in cmd_list:
+                    if not cmd.startswith('_') and cmd not in keyword_list:
+                        keyword_list.append(cmd)
+                        # BuiltIn().log_to_console('   ' + cmd)
+                        def gen_xrun(cmd):
+                            def _xrun(self,*args,**kwargs):
+                                return self._xrun(cmd,*args,**kwargs)
+                            return _xrun
+                        setattr(self,cmd,MethodType(gen_xrun(cmd),self))
 
         except RobotNotRunningError as e:
-            Common.err("RENAT is not running") 
+            Common.err("WARN: RENAT is not running") 
+
 
     def switch(self,name):
         """ Switchs the current tester to ``name``
@@ -144,12 +155,14 @@ module.
         client['type']  = type
         client['ip']    = ip
         client['desc']  = desc
-   
+  
+        ### IxNetwork
         if type == 'ixnet':
             ix = IxNetwork.IxNet()
             client['port']    = port
             ix.connect(ip,'-port',port,'-version','7.41')
             client['connection'] = ix
+        ### IxLoad
         elif type == 'ixload':
             tmp = os.getcwd().split('/')
             # win_folder = "D:/RENAT/RESULTS/%s_%s" % (tmp[-2],tmp[-1])
@@ -168,7 +181,12 @@ module.
             tasks.put(['ixload::connect',ip])
             tasks.join()
             results.get()
-
+        ### Breaking point
+        elif type == 'ixbps': 
+            ix = BpsRobotLibrary.BpsRobotLibrary()
+            auth = Common.GLOBAL['auth']['plain-text'][type]
+            ix.login(chassis=ip,username=auth['user'],password=auth['pass'])
+            client['connection'] = ix   
         else:
             raise Exception("ERROR: wrong module type")
     

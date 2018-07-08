@@ -13,14 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-03-20 00:33:18 +0900 (Tue, 20 Mar 2018) $
-# $Rev: 822 $
+# $Date: 2018-07-03 22:39:21 +0900 (Tue, 03 Jul 2018) $
+# $Rev: 1074 $
 # $Ver: $
 # $Author: $
 
 import os,sys,shutil
 import IxLoad
 import Common
+from robot.libraries.BuiltIn import BuiltIn
 from datetime import datetime
 from multiprocessing import Process,Queue
 
@@ -39,15 +40,23 @@ class SubIxLoad(Process):
         self.task_queue     = task_queue
         self.result_queue   = result_queue
         self.elapsed = None
-        self.random = Common.random_name('_tmp%5d','0','99999')
+        self.random = Common.random_name('_tmp%05d','0','99999')
 
-    def connect(self,ip):
+
+    def connect(self,ip,verbose=False):
         self.ix = IxLoad.IxLoad()
         self.ix.connect(ip)
 
-        logger      = self.ix.new("ixLogger","Ixload-RENAT",1)
-        log_engine  = logger.getEngine()
-        log_engine.setLevels(self.ix.ixLogger.kLevelDebug,self.ix.ixLogger.kLevelInfo)
+        # logger prepare
+        self.logger      = self.ix.new("ixLogger","Ixload-RENAT",1)
+        self.log_engine  = self.logger.getEngine()
+        # 1st is File level and 2nd is console Level
+        if verbose:
+            self.log_engine.setLevels(self.ix.ixLogger.kLevelDebug,self.ix.ixLogger.kLevelInfo)
+        else:
+            self.log_engine.setLevels(self.ix.ixLogger.kLevelDebug,self.ix.ixLogger.kLevelError)
+        # self.log_engine.setFile(self._ixload_tmp_dir()+'/'+Common.get_myid(),4,2048,1)
+        self.log_engine.setFile(self._ixload_tmp_dir()+'/'+ self._ixload_tmp_dir(),1,256,1)
 
         self.result_queue.put(["ixload::ok"])
         self.task_queue.task_done()
@@ -78,40 +87,45 @@ class SubIxLoad(Process):
         config path.
         """
 
-        ixload_tmp_dir = self._ixload_tmp_dir()
-
-        config_src = Common.get_item_config_path() + '/' + config_name
-        config_dst = ixload_tmp_dir + '_' + config_name
-        IxLoad._TclEval("::IxLoad sendFileCopy %s %s" % (config_src,config_dst))
-
-        
-        self.controller = self.ix.new("ixTestController",outputDir=1)
-        self.controller.setResultDir(ixload_tmp_dir)
-        self.repository = self.ix.new("ixRepository",name=config_dst)
-
-        test_name = self.repository.testList[0].cget('name')
-        test = self.repository.testList.getItem(test_name)
-        port_num = 0
-        num = int(test.clientCommunityList.indexCount())
-        for i in range(num):
-            port_num = port_num + int(test.clientCommunityList[i].network.portList.indexCount())
-        num = int(test.serverCommunityList.indexCount())
-        for i in range(num):
-            port_num = port_num + int(test.serverCommunityList[i].network.portList.indexCount())
+        try:
+            ixload_tmp_dir = self._ixload_tmp_dir()
     
-        if len(port_list) == 0:
-            self.result_queue.put(["ixload::ok"])
-        elif port_num != len(port_list):
-            self.result_queue.put(["ixload::err","Wrong port number"])
-        else:
+            config_src = Common.get_item_config_path() + '/' + config_name
+            config_dst = ixload_tmp_dir + '_' + config_name
+            log = "IxLoad send file `%s` to `%s`" % (config_src,config_dst)
+
+            IxLoad._TclEval("::IxLoad sendFileCopy %s %s" % (config_src,config_dst))
+    
+            
+            self.controller = self.ix.new("ixTestController",outputDir=1)
+            self.controller.setResultDir(ixload_tmp_dir)
+            self.repository = self.ix.new("ixRepository",name=config_dst)
+    
+            test_name = self.repository.testList[0].cget('name')
+            test = self.repository.testList.getItem(test_name)
+            port_num = 0
             num = int(test.clientCommunityList.indexCount())
-            for i in range(num): test.clientCommunityList[i].network.portList.clear()
-
+            for i in range(num):
+                port_num = port_num + int(test.clientCommunityList[i].network.portList.indexCount())
             num = int(test.serverCommunityList.indexCount())
-            for i in range(num): test.serverCommunityList[i].network.portList.clear()
-
-            test.setPorts(port_list)
-            self.result_queue.put(["ixload::ok",ixload_tmp_dir])
+            for i in range(num):
+                port_num = port_num + int(test.serverCommunityList[i].network.portList.indexCount())
+        
+            if len(port_list) == 0:
+                self.result_queue.put(["ixload::ok"])
+            elif port_num != len(port_list):
+                self.result_queue.put(["ixload::err","Wrong port number"])
+            else:
+                num = int(test.clientCommunityList.indexCount())
+                for i in range(num): test.clientCommunityList[i].network.portList.clear()
+    
+                num = int(test.serverCommunityList.indexCount())
+                for i in range(num): test.serverCommunityList[i].network.portList.clear()
+    
+                test.setPorts(port_list)
+                self.result_queue.put(["ixload::ok",ixload_tmp_dir,log])
+        except Exception as err:
+            self.result_queue.put(err)
 
         self.task_queue.task_done()
 
@@ -196,13 +210,16 @@ class SubIxLoad(Process):
 
 
     def stop_traffic(self):
-        IxLoad._TclEval("set ::test_cont 0")
-    
-        self.controller.stopRun()
-        if self.elapsed is None:
-            stop = datetime.now()
-            self.elapsed = (stop - self.run_start).total_seconds()
-        self.result_queue.put(["ixload::ok",self.elapsed])
+        try:
+            IxLoad._TclEval("set ::test_cont 0")
+         
+            self.controller.stopRun()
+            if self.elapsed is None:
+                stop = datetime.now()
+                self.elapsed = (stop - self.run_start).total_seconds()
+            self.result_queue.put(["ixload::ok",self.elapsed])
+        except Exception as err:
+            self.result_queue.put(err)
         self.task_queue.task_done()
 
 
@@ -227,15 +244,25 @@ class SubIxLoad(Process):
             self.result_queue.put(["ixload::ok"])
         except Exception as err:
             self.result_queue.put(err)
-        self.result_queue.put(["ixload::ok"])
         self.task_queue.task_done()
         
     
     def disconnect(self):
-        self.ix.delete(self.repository)
-        self.ix.delete(self.controller)
-        self.ix.disconnect()
-        self.result_queue.put(["ixload::ok"])
+        # get log
+        try: 
+            if self.log_engine:
+                # self.log_engine.setFile(self._ixload_tmp_dir()+'/'+Common.get_myid(),4,2048,1)
+                # remote_logfile = "C:/Progra~1/IxLoad/Client/tclext/remoteScriptingService/" + self.log_engine.getFileName()
+                remote_logfile = self.log_engine.getFileName()
+                local_logfile = Common.get_result_path() + '/ixload.log'
+                self.ix.retrieveFileCopy(remote_logfile, local_logfile)
+
+            self.ix.delete(self.repository)
+            self.ix.delete(self.controller)
+            self.ix.disconnect()
+            self.result_queue.put(["ixload::ok",remote_logfile])
+        except Exception as err:
+            self.result_queue.put(err)
         self.task_queue.task_done()
 
          
@@ -262,7 +289,7 @@ class SubIxLoad(Process):
                 else:
                     raise Exception()
 
-            except Exception, e:
+            except Exception as e:
                 self.result_queue.put(e)
                 self.task_queue.task_done()
         return

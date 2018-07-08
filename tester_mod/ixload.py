@@ -13,12 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-06-18 16:57:51 +0900 (Mon, 18 Jun 2018) $
-# $Rev: 1038 $
+# $Date: 2018-07-03 22:39:21 +0900 (Tue, 03 Jul 2018) $
+# $Rev: 1074 $
 # $Ver: $
 # $Author: $
 
 """ provides functions for IxLoad
+
+To use IxLoad module, a IxLoad TCL server should be started properly.
 
 RENAT runs a virtual IxLoad client locally in the background that connects to a
 Windows App server. Keywords from test case will send control messages to the

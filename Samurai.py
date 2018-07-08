@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-05-31 11:30:17 +0900 (Thu, 31 May 2018) $
-# $Rev: 1010 $
+# $Date: 2018-07-06 10:08:43 +0900 (Fri, 06 Jul 2018) $
+# $Rev: 1088 $
 # $Ver: $
 # $Author: $
 
@@ -43,6 +43,8 @@ class Samurai(WebApp):
     When Samurai module has error, it tried to make the last snapshot in
     ``result/selenium-screenshot-x.png``. Checking this capture will help to
     understand the reason of the error.
+
+    Currently the module support Samurai 09/14/16
 
     Some keywords of [./Samurai.html|Samurai] is using ``xpath`` to identify
     elements. See `Selenium2Library` for more details about xpath.  
@@ -346,7 +348,7 @@ class Samurai(WebApp):
         return (result,applied_device)
  
     
-    def stop_mitigation(self,id):
+    def stop_mitigation(self,id,stop_when_error=True):
         """ Stops a mitigation by its ID
 
             Example:
@@ -354,18 +356,23 @@ class Samurai(WebApp):
         """
 
         self.switch(self._current_name)
+        self.left_menu(u"Active Mitigation")
+        self._driver.wait_until_page_contains(u"Active Mitigation")
 
-        self._driver.select_window("title= Active Mitigation") 
-        self._driver.reload_page()
+        try:
+            self._driver.select_window("title= Active Mitigation") 
+            self._driver.reload_page()
+            self._driver.wait_until_element_is_visible("infoarea")
+            self._driver.click_button(u"//input[@onclick='delete_confirm(%s);']" % id)
+            self._driver.confirm_action()
+            self._driver.wait_until_element_is_visible(u"//span[contains(.,'削除を開始しました')]")
+            BuiltIn().log("Stopped the mitigation id=%s" % id)
+        except Exception as err:
+            if stop_when_error:
+                raise err
+            else:
+                BuiltIn().log_to_console("WARN: failed to stop mitgation %s but continue" % id)
 
-        self._driver.wait_until_element_is_visible("infoarea")
-        self._driver.click_button(u"//input[@onclick='delete_confirm(%s);']" % id)
-        self._driver.confirm_action()
-        # time.sleep(5)
-        self._driver.wait_until_element_is_visible(u"//span[contains(.,'削除を開始しました')]")
-
-        BuiltIn().log("Stopped the mitigation")
-  
     
     def add_user(self,group,**user_info): 
         """ Adds user to the current group
@@ -464,19 +471,74 @@ _system_admin_.
         return item_map
 
 
+
+#     def click_buttons_in_table(self,xpath,xpath2,*item_list):
+#         """ Clicks buttons in Samurai table by xpath
+#         
+#         ``xpath`` points to the column that used as key and ``xpath2`` is the
+#         relative xpath contains the button column.
+# 
+#         ``item_list`` is a list of item that need to check. Item in the list
+#         could be a regular expresion with the format ``reg=<regular
+#         expression``.
+# 
+#         The keyword is called with assuming that the table is already visible.
+# 
+#         Returns the tupple of all items and selected items
+# 
+#         *Note:* Non-width-space (\u200b) will be take care by the keyword.
+#     
+#         *Note:* if the first item_list is `*` then the keywork will try to click
+#         a link named `すべてを選択`.
+#         """
+# 
+#         BuiltIn().log("Trying to click %d buttons in the table" % len(item_list))
+# 
+#         item_map  = self.make_item_map(xpath)
+#         if item_list[0] == '*':
+#             self._driver.click_link(u"すべてを選択")
+#             count = len(item_map)
+#             result_map = item_map
+#         else:  
+#             key_list = [] 
+#             for item in item_list:
+#                 if item.startswith('reg='):
+#                     pattern = item.split('=')[1]
+#                     re_match = re.compile(pattern)
+#                     key_list += [k for k in item_map if re_match.match(k)] 
+#                 else:
+#                     key_list.append(item)
+# 
+#             result_map = {} 
+#             for k in key_list:
+#                 if k in item_map: 
+#                     BuiltIn().log("    Found item `%s`" % k)
+#                     result_map[k] = item_map[k]
+#         count = len(result_map)
+#         # if count == 0:
+#         #    raise Exception("ERROR: Could not found any item in the table")
+#         for item in result_map:
+#              = result_map[item].find_element_by_xpath(xpath2) 
+#             self._driver.click_element(checkbox)
+# 
+#         BuiltIn().log("Selected %d/%d items in the table" % (len(result_map),len(item_map)))
+
+
+
     def select_items_in_table(self,xpath,xpath2,*item_list):
         """ Checks items in Samurai table by xpath
         
         ``xpath`` points to the column that used as key and ``xpath2`` is the
-        relative xpath contains the checkbox column.
+        relative xpath contains the target column.
 
         ``item_list`` is a list of item that need to check. Item in the list
         could be a regular expresion with the format ``reg=<regular
-        expression``.
+        expression>``.
 
         The keyword is called with assuming that the table is already visible.
 
         Returns the tupple of all items and selected items
+
 
         *Note:* Non-width-space (\u200b) will be take care by the keyword.
     
@@ -486,35 +548,70 @@ _system_admin_.
 
         BuiltIn().log("Trying to select %d items from table" % len(item_list))
 
+        # prepare 
+        count = 0
+        result_map = {} 
+        action_map = {}
         item_map  = self.make_item_map(xpath)
-        if item_list[0] == '*':
+       
+        tmp = item_list[0].split(',') 
+        if tmp[0] == '*':
             self._driver.click_link(u"すべてを選択")
             count = len(item_map)
             result_map = item_map
+            for key in result_map:
+                action_map[key] = tmp[1]
         else:  
             key_list = [] 
+            action_list = []
             for item in item_list:
-                if item.startswith('reg='):
-                    pattern = item.split('=')[1]
-                    re_match = re.compile(pattern)
-                    key_list += [k for k in item_map if re_match.match(k)] 
+                tmp = item.split(':')
+                if len(tmp) < 2: 
+                    action = 'click'
                 else:
-                    key_list.append(item)
+                    action = tmp[1]
+                if tmp[0].startswith('reg='):
+                    pattern = tmp[0].split('=')[1]
+                    re_match = re.compile(pattern)
+                    for k in item_map:
+                        if re_match.match(k):
+                            key_list.append(k)
+                            action_list.append(action)
+                else:
+                    key_list.append(tmp[0])
+                    action_list.append(action)
 
-            result_map = {} 
-            for k in key_list:
+            for k,action in zip(key_list,action_list):
                 if k in item_map: 
-                    BuiltIn().log("    Found item `%s`" % k)
+                    BuiltIn().log("    Found item %s:%s" % (k,action))
                     result_map[k] = item_map[k]
+                    action_map[k] = action
+                    
         count = len(result_map)
-        # if count == 0:
-        #    raise Exception("ERROR: Could not found any item in the table")
-        for item in result_map:
-            checkbox = result_map[item].find_element_by_xpath(xpath2) 
-            self._driver.click_element(checkbox)
 
-        BuiltIn().log("Selected %d/%d items in the table" % (len(result_map),len(item_map)))
+        # 
+        for item in result_map:
+            target = result_map[item].find_element_by_xpath(xpath2) 
+            action = action_map[item]
+            if action == 'click':       
+                self._driver.click_element(target)
+                BuiltIn().log("    Clicked the item")
+            if action == 'check':       
+                if not target.is_selected():
+                    self._driver.click_element(target)
+                    BuiltIn().log("    Checked the item")
+                else:
+                    BuiltIn().log("    Item is already checked")
+            if action == 'uncheck':       
+                if target.is_selected():
+                    self._driver.click_element(target)
+                    BuiltIn().log("    Unchecked the item")
+                else:
+                    BuiltIn().log("    Item is already unchecked")
+
+        BuiltIn().log("Set %d/%d items in the table" % (len(result_map),len(item_map)))
         return (item_map,result_map)
+
 
 
     def show_policy_basic(self,policy_name):
@@ -526,7 +623,7 @@ _system_admin_.
 
         self.left_menu(u"ポリシー管理")
         self._driver.input_text("filter",policy_name)
-        time.sleep(2)
+        time.sleep(self._ajax_wait)
         item_map = self.make_item_map("//tr/td[3]/div")
         item = item_map[policy_name]
         button = item.find_element_by_xpath("../../td/div/input[@title='編集']")
@@ -545,7 +642,7 @@ _system_admin_.
         self.left_menu(u"ポリシー管理")
         self._driver.wait_until_page_contains_element("//input[@id='filter']")
         self._driver.input_text("filter",policy_name)
-        time.sleep(2)
+        time.sleep(self._ajax_wait)
         item_map = self.make_item_map("//tr/td[3]/div")
         item = item_map[policy_name]
         button = item.find_element_by_xpath("../../td/div/input[@title='編集']")
@@ -571,7 +668,7 @@ _system_admin_.
         self.left_menu(u"ポリシー管理")
         self._driver.wait_until_page_contains_element("//input[@id='filter']")
         self._driver.input_text("filter",policy_name)
-        time.sleep(2)
+        time.sleep(self._ajax_wait)
         item_map = self.make_item_map("//tr/td[3]/div")
         item = item_map[policy_name]
         button = item.find_element_by_xpath("../../td/div/input[@title='編集']")
@@ -601,7 +698,7 @@ _system_admin_.
         self.left_menu(u"ポリシー管理")
         self._driver.wait_until_page_contains_element("//input[@id='filter']")
         self._driver.input_text("filter",policy_name)
-        time.sleep(2)
+        time.sleep(self._ajax_wait)
         item_map = self.make_item_map("//tr/td[3]/div")
         item = item_map[policy_name]
         button = item.find_element_by_xpath("../../td/div/input[@title='編集']")
@@ -623,8 +720,10 @@ _system_admin_.
 
         policy_name = policy['name']
 
+        # basic
         changing = False
         if any(x in policy for x in ['basic_cidr_list','basic_option_filter','basic_direction']):
+            BuiltIn().log("### Basic setting ###")
             changing = True
             self.show_policy_basic(policy_name)
         if 'basic_cidr_list' in policy:
@@ -632,22 +731,40 @@ _system_admin_.
             self._driver.input_text("detection_cidr", '\n'.join(cidr_list))
         if 'basic_option_filter' in policy:
             self._driver.input_text("option_filter", policy['basic_option_filter'])
+            time.sleep(self._ajax_wait)
         if 'basic_direction' in policy:
-            self._driver.select_from_list_by_label("direction", policy['basic_direction'])
+                if policy['basic_direction'].lower() in ['incoming', 'in'] :
+                    basic_direction = 'Incoming'
+                else:
+                    basic_direction = 'Outgoing'
+                self._driver.select_from_list_by_label("direction",basic_direction)
         if changing:
             self._driver.click_button("submitbutton")
             self._driver.wait_until_page_contains(u"ポリシー情報を変更しました")
 
+        # mitigation
         changing = False
-        if any(x in policy for x in ['mitigation_zone_prefix','mitigation_thr_bps','mitigation_thr_pps']):
-            changing = True
-            self.show_policy_mitigation(policy_name)
+        self.show_policy_mitigation(policy_name)
         if 'mitigation_zone_prefix' in policy:
+            changing = True
             self._driver.input_text("prefix0",policy['zone_prefix'])
         if 'mitigation_thr_bps' in policy:
+            changing = True
             self._driver.input_text("thr_bps",policy['mitigation_thr_bps'])
         if 'mitigation_thr_pps' in policy:
+            changing = True
             self._driver.input_text("thr_pps",policy['mitigation_thr_pps'])
+        if 'mitigation_mo_enabled' in policy:
+            changing = True
+            if policy['mitigation_mo_enabled']:
+                mitigation_mo_enabled = 'true'
+            else:
+                mitigation_mo_enabled = 'false'
+            self._driver.select_radio_button("arbor_mo_enable",mitigation_mo_enabled)
+        if 'mitigation_device_list' in policy:
+            changing = True
+            device_list = [x.strip() for x in policy['mitigation_device_list'].split(',')]
+            table_map,selected_table_map = self.select_items_in_table('//tr/td[2]','../td[1]', *device_list)
         if changing:
             self._driver.click_button("submitbutton")
             self._driver.wait_until_page_contains(u"Mitigation情報を変更しました")
@@ -691,16 +808,23 @@ _system_admin_.
         | basic_cidr_list | list of CIDR separate by comma | | |
         | basic_option_filter | optinal filter | | |
         | basic_direction | direction of the traffic (``incoming`` or ``outgoing``) | | _Incoming_ |
-        | traffic_enabled | Enable traffic monitoring or not | yes | _${True}_ or _${False}_ | 
-        | detection_enabled | Enable detection or not | yes | _${True}_ or _${False}_ |
+        | traffic_enabled | Enable traffic monitoring or not | yes | _${TRUE}_ or _${FALSE}_ | 
+        | detection_enabled | Enable detection or not | yes | _${TRUE}_ or _${FALSE}_ |
+        | mitigation_enabled | Enable Mitigation or not | yes | _${TRUE}_ or _${FALSE}_ |
         | mitigation_zone_name | Name of the zone for mitigation | | _zone001_ |
         | mitigation_zone_prefix | Prefixes that could mitigate | | _1.1.1.1/32_ |
         | mitigation_thr_bps | Upper limit (bps) | | _800,000,000_ | 
         | mitigation_thr_pps | Upper limit (pps) | | _54,000,000_ |
-        | mitigation_mo_enabled | Using Arbor TMS MO or not | yes | _${True}_ or _${False}_ |
+        | mitigation_auto_enabled | Enable automitgation or not | | _${TRUE}_ or _${FALSE}_ |
+        | mitigation_auto_level | Automitgation level  | | 0:overLow 1:overMedium 2:High |
+        | mitigation_auto_time | Automitigation detect attack time (min) | | default is 15 |
+        | mitigation_mo_enabled | Using Arbor TMS MO or not | yes | _${TRUE}_ or _${FALSE}_ |
+        | mitigation_auto_stop_enabled | Enable automitgation stop or not | | _${TRUE}_ or _${FALSE}_ |
+        | mitigation_auto_stop_level | Automitgation level  | | 0:overLow  2:High |
+        | mitigation_auto_stop_time | Automitigation stop detect attack time (min) | | default is 15 |
         | mitigation_device_list | Devices used for TMS, separated by comma | | _ArborSP-A_ |
         | mitigation_mo_name     | MO name, separated by comma | | _OCN12(ALU)_LOOSE_ |
-        | mitigation_comm_list   | commna separated peer/community list | yes | _1.10(180.0.1.10)/2914:666,1.11(180.0.1.11)/2914:777_ |
+        | mitigation_comm_list   | commna separated peer/community list |   | _1.10(180.0.1.10)/2914:666,1.11(180.0.1.11)/2914:777_ |
         | nw_monitor_gre1 | 1st GRE address for NW monitor |  | _210.0.1.1_ |
         | nw_monitor_gre2 | 2nd GRE address for NW monitor |  | _210.0.1.1_ |
         | nw_monitor_ce1  | 1st CE address for NW monitor  |  | _210.0.1.2_ |
@@ -736,6 +860,7 @@ _system_admin_.
         mitigation_mo_enabled   = 'false'
 
         # basic 
+        BuiltIn().log("### Basic setting ###")
         self._driver.click_button(u"//input[@value='ポリシーの追加']")
         self._driver.input_text("policy_name", policy['name'])
         if 'basic_alias' in policy: 
@@ -757,31 +882,35 @@ _system_admin_.
             self._driver.input_text("detection_cidr", '\n'.join(cidr_list))
         if 'basic_option_filter' in policy: 
             self._driver.input_text("option_filter", policy['basic_option_filter'])
-        if 'basic_direction' in policy:
-            if policy['basic_direction'] == 'incomming':
-                basic_direction = 'Incomming'
-            else:
-                basic_direction = 'Outgoing'
-            self._driver.select_from_list_by_label("direction", basic_direction) 
+            time.sleep(self._ajax_wait)
+
+        basic_direction = 'Outgoing'
+        if 'basic_direction' in policy and policy['basic_direction'].lower() in ['incoming', 'in'] :
+                basic_direction = 'Incoming'
+        self._driver.select_from_list_by_label("direction", basic_direction) 
         self._driver.click_button("submitbutton")
         self._driver.wait_until_page_contains(u"ポリシーを追加しました。")
         self._driver.click_button(u"//button[.='進む']") 
 
         # traffic setting
+        BuiltIn().log("### Traffic setting ###")
         if policy['traffic_enabled']:   traffic_enabled = 'true'
         if traffic_enabled == 'true':
             self._driver.select_radio_button("traffic_enabled",traffic_enabled) 
         self._driver.click_button(u"//button[.='次へ']")
 
         # detection setting
-        if policy['detection_enabled']: detection_enabled = 'true'
-        if detection_enabled == 'true':
-            self._driver.select_radio_button("misuse_enabled_flag",detection_enabled) 
+        BuiltIn().log("### Detection setting ###")
+        detection_enabled = 'false'
+        if 'detection_enabled' in policy and policy['detection_enabled']:
+                detection_enabled = 'true'
+        self._driver.select_radio_button("misuse_enabled_flag",detection_enabled) 
         self._driver.click_button(u"//button[.='次へ']")
 
         # mitigation
         if policy['mitigation_enabled']: mitigation_enabled = 'true'
         if mitigation_enabled == 'true':
+            BuiltIn().log("### Mitigation setting ###")
             self._driver.click_button("zoneaddbutton")
             self._driver.input_text("zonename0",policy['mitigation_zone_name'])
             self._driver.input_text("prefix0",policy['mitigation_zone_prefix'])
@@ -794,20 +923,58 @@ _system_admin_.
                 self._driver.input_text("thr_bps",policy['mitigation_thr_bps'])
             if 'mitigation_thr_pps' in policy :
                 self._driver.input_text("thr_pps",policy['mitigation_thr_pps'])
+
+            mitigation_auto_enabled = 'false'
+            if 'mitigation_auto_enabled' in policy and policy['mitigation_auto_enabled']:
+                    mitigation_auto_enabled = 'true'
+            self._driver.select_radio_button("auto_enable",mitigation_auto_enabled)
+
+            mitigation_auto_level = "1" # default
+            if 'mitigation_auto_level' in policy:
+                if policy['mitigation_auto_level'].lower() in ['0','low']:
+                    mitigation_auto_level = '0'
+                if policy['mitigation_auto_level'].lower() in ['2','high']:
+                    mitigation_auto_level = '2'
+            self._driver.select_radio_button("attack_lv",mitigation_auto_level)
+
+            mitigation_auto_time = "15"
+            if "mitigation_auto_time" in policy:
+                mitigation_auto_time = policy['mitigation_auto_time']
+            self._driver.input_text("attack_ln",mitigation_auto_time)
+
+            mitigation_auto_stop_enabled = 'false'
+            if 'mitigation_auto_stop_enabled' in policy and policy['mitigation_auto_stop_enabled']:
+                    mitigation_auto_stop_enabled = 'true'
+            self._driver.select_radio_button("auto_stop",mitigation_auto_stop_enabled)
+
+            mitigation_auto_stop_level = "2" # default
+            if 'mitigation_auto_stop_level' in policy:
+                if policy['mitigation_auto_stop_level'].lower() in ['0','low']:
+                    mitigation_auto_stop_level = '0'
+            self._driver.select_radio_button("stop_lv",mitigation_auto_stop_level)
+
+            mitigation_auto_stop_time = "15"
+            if "mitigation_auto_stop_time" in policy:
+                mitigation_auto_stop_time = policy['mitigation_auto_stop_time']
+            self._driver.input_text("stop_ln",mitigation_auto_stop_time)
         
-            for entry in [x.strip() for x in policy['mitigation_comm_list'].split(',')]:
-                (peer,comm) = [x.strip() for x in entry.split('/')]
-                if peer in table_map:
-                    item = table_map[peer] 
-                    check =         item.find_element_by_xpath("../td[1]")
-                    comm_input =    item.find_element_by_xpath("../td[3]/input")
-                    self._driver.select_checkbox(check)
-                    self._driver.input_text(comm_input,comm) 
+       
+            if 'mitigation_comm_list' in policy: 
+                BuiltIn().log("### Diversion Community setting ###")
+                for entry in [x.strip() for x in policy['mitigation_comm_list'].split(',')]:
+                    (peer,comm) = [x.strip() for x in entry.split('/')]
+                    if peer in table_map:
+                        item = table_map[peer] 
+                        check =         item.find_element_by_xpath("../td[1]")
+                        comm_input =    item.find_element_by_xpath("../td[3]/input")
+                        self._driver.select_checkbox(check)
+                        self._driver.input_text(comm_input,comm) 
         self._driver.click_button(u"//button[.='次へ']")
       
         # MO
         # When peers have been configured, there are no places to set community
         if mitigation_mo_enabled == 'true':
+            BuiltIn().log("### MO setting ###")
             self._driver.wait_until_page_contains_element(u"//b[.='TMS Managed Object設定']")
             mo_name = policy['mitigation_mo_name']
             # not all device information is expanded yet
@@ -823,6 +990,7 @@ _system_admin_.
             self._driver.click_button(u"//button[.='次へ']")
 
         # Add more setting for Samurai16
+        BuiltIn().log("### Monitoring setting ###")
         nw_monitor = int(self._driver.get_matching_xpath_count(u"//div[contains(.,'NW 監視設定')]"))
         if nw_monitor > 0:
             if ('nw_monitor_gre1' in policy) or ('nw_monitor_gre2' in policy):
@@ -841,6 +1009,7 @@ _system_admin_.
             self._driver.click_button(u"//button[.='次へ']")
 
         # Event
+        BuiltIn().log("### Event setting ###")
         if 'event_name' in policy:
             self._driver.wait_until_page_contains_element(u"//input[@value='メール通知の追加']")
             self._driver.click_button(u"//input[@value='メール通知の追加']")
@@ -850,6 +1019,7 @@ _system_admin_.
             self._driver.wait_until_page_contains(u"メール通知設定を追加しました")
 
         # View setting
+        BuiltIn().log("### View setting ###")
         view_group_list = [x.strip() for x in policy['view_group'].split(',')]
         self.change_policy_view_group(policy['name'],*view_group_list)
 
@@ -870,6 +1040,7 @@ _system_admin_.
 
         self.left_menu(u"ポリシー管理")
         self._driver.input_text("filter",name)
+        time.sleep(self._ajax_wait)
         item_map = self.make_item_map("//tr/td[3]/div")
         item = item_map[name]
         button = item.find_element_by_xpath("../../td/div/input[@title='編集']")
@@ -877,7 +1048,7 @@ _system_admin_.
 
         # view ( not check the case when there are multi groups over 1 page)
         self._driver.click_element(u"//span[normalize-space(.)='閲覧設定']")
-        # 
+        #
         self._driver.wait_until_page_contains_element("//tr/td[2]")
 
         item_map,result_map = self.select_items_in_table("//tr/td[2]","../td[1]",*group_name)
@@ -988,7 +1159,6 @@ _system_admin_.
         self.left_menu(u"Active Mitigation")
         self._driver.wait_until_page_contains(u"Active Mitigation")
         self._driver.click_link('%s' % id)
-        # time.sleep(5)
         self._driver.select_window(u"title=リアルタイム詳細")
         self._driver.wait_until_page_contains(u"適用フィルタ情報")
         
@@ -1013,3 +1183,60 @@ _system_admin_.
         BuiltIn().log("Selected window `%s`" % title)
 
 
+    def get_mitigation_list(self,status=u'実行中'):
+        """ Gets current mitigation list
+
+        Return current active mitgation name, ID and the number of them
+
+        Example:
+        | ${MITI}  ${IDS}  ${NUM}=   |     Samurai.`Get Mitigation List` |
+        """
+        result = []
+        result_ids = []
+        self.left_menu(u"Active Mitigation")
+        time.sleep(2)
+        try:
+            item_list = self._driver.get_webelements("//div[@id='infoareain']//tr/td[2]") 
+            for item in item_list:
+                item_status = item.find_element_by_xpath(u'../td[5]').text
+                # BuiltIn().log_to_console(item_status)
+                if item.text != u'ポリシー' and item_status == status:
+                    result.append(item.text)
+                    result_ids.append(item.find_element_by_xpath(u'../td[1]').text)
+
+            BuiltIn().log("Got %d active mitigations has status %s" % (len(result),status))
+        except Exception as err: 
+            BuiltIn().log("No active mitigations found")
+        return result,result_ids,len(result)
+
+    
+    def edit_mitigation_controller(self,controller,**config):
+        """ Change the setting of the mitigation control
+    
+        - ``control``: name of the mitigation controller
+        - ``config``: configuration need to be changed. Currently only
+          ``tms_group`` is configurable with the following format:
+            ``groupname1:action1,groupname2:action2``. ``groupname`` is
+            currently set TMS group name and action could be `click`,`check` or `uncheck`.
+
+
+        Example:
+        | Samurai.`Edit Mitigation Controller` |  controller=vSP-A | tms_group=Logical0_SOCN_IPv4:uncheck |
+             
+        """
+        self.left_menu(u"Mitigation Device管理") 
+        self._driver.wait_until_page_contains_element("//div[@id='dataTable']")
+        edit_button = self._driver.get_webelement(u"//tr/td/div[.='%s']/../../td[2]/div/input[@name='change']" % controller)
+        self._driver.click_button(edit_button)
+        time.sleep(2)
+        self._driver.wait_until_page_contains_element("//button[@id='submitbutton']")
+        if 'tms_group' in config:
+            tmp = config['tms_group'].split(':')
+            check_box = self._driver.get_webelement(u"//tr/td[.='%s']/../td[1]//input" % tmp[0])
+            if (tmp[1] == 'check' and not check_box.is_selected()) or (tmp[1] == 'uncheck' and check_box.is_selected()):
+                self._driver.click_element(check_box)
+                
+            
+        self._driver.click_button("submitbutton")
+        self._driver.wait_until_page_contains(u"Mitigationデバイス情報を変更しました")
+            

@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# $Date: 2018-05-23 11:35:35 +0900 (Wed, 23 May 2018) $
-# $Rev: 967 $
+# $Date: 2018-07-06 00:23:45 +0900 (Fri, 06 Jul 2018) $
+# $Rev: 1081 $
 # $Author: $
 # usage: ./runsh [-n <num>] <other robot argument>
 
@@ -137,7 +137,7 @@ process() {
             if [ $INDEX -gt 1 ]; then
                 RESULT_FOLDER="result_$INDEX"
             fi
-            robot $PARAM -d ${RESULT_FOLDER} -v MYID:$MYID -v RESULT_FOLDER:$RESULT_FOLDER -v RENAT_PATH:$RENAT_PATH main.robot
+            robot $PARAM -d ${RESULT_FOLDER} -v MYID:$MYID -v RESULT_FOLDER:$RESULT_FOLDER -v RENAT_PATH:$RENAT_PATH -K off main.robot
             CODE=$?
             RESULT=$(expr $RESULT + $CODE)
             echo
@@ -151,7 +151,7 @@ TIME2=$(date +"%s")
 
 ### update run database
 MSG="$PWD/$PROG $@"
-sqlite3 /home/robot/run.sqlite3 "UPDATE run_table SET count = count + 1 WHERE name='$USER'"
+# sqlite3 /home/robot/run.sqlite3 "UPDATE run_table SET count = count + 1 WHERE name='$USER'"
 if [ -z ${RENAT_BATCH} ]; then
     logger -p local5.info -t "renat[$USER]" $TIME1 $TIME2 $RESULT "$MSG"
 fi

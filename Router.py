@@ -105,11 +105,8 @@ class Router(object):
                             return _xrun
                         setattr(self,cmd,MethodType(gen_xrun(cmd),self))
 
-
-            
-
         except RobotNotRunningError as e:
-            Common.err("RENAT is not running")
+            Common.err("WARN: RENAT is not running")
     
 
 

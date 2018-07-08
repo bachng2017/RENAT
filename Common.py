@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1018 $
+# $Rev: 1059 $
 # $Ver: $
-# $Date: 2018-06-01 21:37:53 +0900 (Fri, 01 Jun 2018) $
+# $Date: 2018-06-30 21:33:42 +0900 (Sat, 30 Jun 2018) $
 # $Author: $
 
 """ Common library for RENAT
@@ -34,7 +34,7 @@ library  included from any test case.
 = Configuration file =
 
 == Global configuration ==
-There are 2 kinds of configuration files. The global configuration files (aka
+There are 2 important configuration files. The global configuration files (aka
 master files) include device information, authentication etc that are used for
 all the test cases in the suite. The local configuration file ``local.yaml``
 includes information about nodes, tester ports etc. that are used in a specific
@@ -1227,6 +1227,9 @@ def explicit_run():
     if var != '':
         BuiltIn().pass_execution('Bypassed this step')
  
+
+def get_myid():
+    return BuiltIn().get_variable_value('${MYID}')
 
 # set RF global variables and load libraries
 try:
