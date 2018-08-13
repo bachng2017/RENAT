@@ -331,6 +331,8 @@ Report:  /home/user/work/renat/sample/item01/result/report.html
 
 In case you has configured a web server, access `./result/log.html` or `./result/report.html` for more details about the result.
 
+When running with --debug options likes `./run.sh --debug debug.txt`, the system creates detail debug information in the file `result/debug.txt`. Use this to see in details or bug report. Please make sure your passwords are removed before submit the files.
+
 ## More Examples
 - See [item02](./sample/item02/main.robot) for sample about `Exec File` keyword
 - See [item03](./sample/item03/main.robot) for sample about BGP Best Path Selection testing for a JunOS router
@@ -339,6 +341,8 @@ In case you has configured a web server, access `./result/log.html` or `./result
 See [manual](https://bachng2017.github.io/RENAT/doc/index.html) for more details about RENAT keywords and its modules.
 
 ## Copying And Copyrights
+Copyright 2018 NTT Communications
+
 This project is licensed under the Apache v2.0 license. For more detail see [license](./LICENSE)
 
 ## Thanks
