@@ -6,3 +6,6 @@ Sample
     [Arguments]         ${ARG}
 
     Log To Console      Sample keyword with a argument ${ARG}
+    Log To Console      Current Folder is ${CURDIR}
+    Log To Console      Item folder is ${EXECDIR}
+

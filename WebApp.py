@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-07-02 21:30:24 +0900 (Mon, 02 Jul 2018) $
-# $Rev: 1067 $
+# $Date: 2018-07-17 09:49:23 +0900 (Tue, 17 Jul 2018) $
+# $Rev: 1107 $
 # $Ver: $
 # $Author: $
 
@@ -23,7 +23,7 @@ import Common
 from robot.libraries.BuiltIn import BuiltIn
 from robot.libraries.BuiltIn import RobotNotRunningError
 from Selenium2Library import Selenium2Library
-
+import robot.libraries.DateTime as DateTime
 
 class WebApp(object):
     """ A library provides common keywords for web applications (aka Samurai,

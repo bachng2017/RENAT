@@ -1,7 +1,7 @@
 default:
     robot-server: 127.0.0.1
     robot-password: password
-    renat-master-folder: $RENAT_PATH
+    renat-master-folder: $RENAT_PATH/config
     calient-master-path: 
     ntm-master-path: 
     ixload-tmp-remote: C:/tmp

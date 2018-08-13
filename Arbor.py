@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-05-31 12:59:24 +0900 (Thu, 31 May 2018) $
-# $Rev: 1012 $
+# $Date: 2018-08-01 21:54:31 +0900 (Wed, 01 Aug 2018) $
+# $Rev: 1161 $
 # $Ver: $
 # $Author: $
 
@@ -26,6 +26,7 @@ from robot.libraries.BuiltIn import RobotNotRunningError
 from Selenium2Library import Selenium2Library
 from selenium import webdriver
 from selenium.webdriver.common.proxy import Proxy, ProxyType
+import robot.libraries.DateTime as DateTime
 
 class Arbor(WebApp):
     """ A library provides functions to control Arbor application
@@ -119,25 +120,38 @@ class Arbor(WebApp):
         auth['password']    = Common.GLOBAL['auth']['plain-text'][profile]['pass']
         url = 'https://%s/%s' %  (ip,login_url)
 
-        # open a browser
-        self._driver.open_browser(url,browser,'_arbor_' + name,False,None,profile_dir)
-        self._driver.wait_until_element_is_visible('name=username')
-        
-        # login
-        self._driver.input_text('name=username', auth['username'])
-        self._driver.input_text('name=password', auth['password'])
-        self._driver.click_button('name=Submit')
-        time.sleep(5)
-    
-        self._current_name = name
-        self._current_app  = app
-        browser_info = {}
-        browser_info['capture_counter'] = 0
-        browser_info['capture_format']  = 'arbor_%010d'
-        browser_info['browser']         = browser
-        self._browsers[name] = browser_info
+        ignore_dead_node = Common.get_config_value('ignore-dead-node')
 
-        BuiltIn().log("Connected to `%s` with name `%s`" % (app,name))
+        # open a browser
+        try:
+            self._driver.open_browser(url,browser,'_arbor_' + name,False,None,profile_dir)
+            self._driver.wait_until_element_is_visible('name=username')
+            # login
+            self._driver.input_text('name=username', auth['username'])
+            self._driver.input_text('name=password', auth['password'])
+            self._driver.click_button('name=Submit')
+            time.sleep(5)
+    
+            self._current_name = name
+            self._current_app  = app
+            browser_info = {}
+            browser_info['capture_counter'] = 0
+            browser_info['capture_format']  = 'arbor_%010d'
+            browser_info['browser']         = browser
+            self._browsers[name] = browser_info
+    
+            BuiltIn().log("Connected to `%s` with name `%s`" % (app,name))
+        except Exception as err:
+            if not ignore_dead_node:
+                err_msg = "ERROR: Error occured when connecting to `%s`" % (name)
+                BuiltIn().log(err_msg)
+                raise
+            else:
+                warn_msg = "WARN: Error occured when connect to `%s` but was ignored" % (name)
+
+                BuiltIn().log(warn_msg)
+                BuiltIn().log_to_console(warn_msg)
+                # del Common.LOCAL['node'][name]            
 
 
     def reconnect(self):
@@ -191,19 +205,30 @@ class Arbor(WebApp):
     def close(self):
         """ Closes the current active browser
         """
-    
-        # self.switch(self._current_name) 
+  
+        ignore_dead_node = Common.get_config_value('ignore-dead-node')
 
-        old_name = self._current_name
-        self._driver.close_browser()
-        del(self._browsers[old_name])
-        if len(self._browsers) > 0:
-            self._current_name = self._browsers.keys()[-1]
-        else:
-            self._current_name = None
-    
-        BuiltIn().log("Closed the browser '%s', current acttive browser is `%s`" % (old_name,self._current_name))
-        return old_name
+        try: 
+            old_name = self._current_name
+            self._driver.close_browser()
+            del(self._browsers[old_name])
+            if len(self._browsers) > 0:
+                self._current_name = self._browsers.keys()[-1]
+            else:
+                self._current_name = None
+        
+            BuiltIn().log("Closed the browser '%s', current acttive browser is `%s`" % (old_name,self._current_name))
+            return old_name
+        except Exception as err:
+            if not ignore_dead_node:
+                err_msg = "ERROR: Error occured when connecting to `%s`" % (name)
+                BuiltIn().log(err_msg)
+                raise
+            else:
+                warn_msg = "WARN: Error occured when connect to `%s` but was ignored" % (name)
+
+                BuiltIn().log(warn_msg)
+                BuiltIn().log_to_console(warn_msg)
     
     
     def close_all(self):
@@ -235,7 +260,7 @@ class Arbor(WebApp):
         """ Shows detail information for a mitigation 
         """
         self.switch(self._current_name)
-
+        self.show_all_mitigations() 
         xpath = "//a[contains(.,'%010d')]" % int(id)
         miti_id = "samurai%010d" % int(id)
         self._driver.input_text("search_string_id",miti_id)
@@ -247,14 +272,63 @@ class Arbor(WebApp):
         time.sleep(5)
         BuiltIn().log("Showed details of a mitigation")    
   
- 
+
     def detail_first_mitigation(self):
+        BuiltIn().log_to_console('WARN: This keyword is deprecated. Use `Show Detail First Mitigation` instead')
+        self.show_detail_first_mitigation()
+ 
+    def show_detail_first_mitigation(self):
         """ Shows details about the 1st mitigation on the list
         """
+        self.show_detail_mitigation_with_order(1)
 
+    def show_detail_mitigation_with_order(self,num):
+        """ Shows details about `number` mitigation in the current list
+
+        `number` is counted from 1
+        """
         self.switch(self._current_name)
-        miti_name = self._driver.get_table_cell("xpath=//table[@class='sptable']",2,2)
-        # self._driver.click_link("xpath=//a[.=' %s']" % miti_name)
-        self._driver.click_link(miti_name)
+        self.show_all_mitigations() 
+        # ignore the header line
+        self._driver.click_link("xpath=//table[1]//tr[%s]/td[%s]//a[1]" % (int(num)+1,2))
         time.sleep(5)
-        BuiltIn().log("Displayed detail of 1st mitigation in the list")
+        BuiltIn().log("Displayed detail of `%s` mitigation in the list" % num)
+
+
+    def menu(self,order,wait='2s',capture_all=False,prefix='menu_',suffix='.png'):
+        """ Access to Arbor menu
+
+        Parameters
+        - ``order`` is the list of top menu items separated by '/'
+        - ``wait`` is the wait time after the last item is clicked
+        - if ``capture_all`` is ``True`` then a screenshot is captured for each
+          menu item automtically. In this case, the image file is appended by
+        ``prefix`` and ``suffix``.
+
+        Samples:
+        | Arbor.`Menu`               |          order=Alerts/Ongoing |
+        | Arbor.`Capture Screenshot` | 
+        | Arbor.`Menu`               |          order=Alerts/All Alerts |
+        | Arbor.`Capture Screenshot` |
+        | Arbor.`Menu`               |          order=System/Status/Deployment Status |
+        | Arbor.`Capture Screenshot` |
+        | Arbor.`Menu`               |          order=System/Status/Appliance Status |
+        | Arbor.`Capture Screenshot` |
+        """
+        self.switch(self._current_name)
+        index = 0
+        items = order.split('/')
+        for item in items:
+            BuiltIn().log("    Access to menu item %s" % item)
+            index +=1
+            xpath1 = "xpath=//a[.='%s']" % item
+            xpath2 = "xpath=//a[contains(.,'%s')]" % item
+            self._driver.mouse_over(xpath1)
+            self._driver.wait_until_element_is_visible(xpath2)
+            if index == len(items):
+                self._driver.click_link(xpath1)
+                time.sleep(DateTime.convert_time(wait))
+            if capture_all:
+                capture_name='%s%s%s' % (prefix,item,suffix)
+                self._driver.capture_page_screenshot(capture_name)
+

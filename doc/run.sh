@@ -21,6 +21,7 @@ python -m robot.libdoc $RENAT_PATH/WebApp.py html/WebApp.html
 python -m robot.libdoc $RENAT_PATH/Samurai.py html/Samurai.html
 python -m robot.libdoc $RENAT_PATH/Arbor.py html/Arbor.html
 python -m robot.libdoc -F REST -n RENAT ./index.py html/index.html
+python -m robot.libdoc ./lab_robot.py html/lab_robot.html
 # python -m robot.libdoc $RENAT_PATH/CHANGES.txt html/Changes.html
 
 chmod -R 0664 html/*.html

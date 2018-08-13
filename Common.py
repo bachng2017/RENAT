@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1059 $
+# $Rev: 1166 $
 # $Ver: $
-# $Date: 2018-06-30 21:33:42 +0900 (Sat, 30 Jun 2018) $
+# $Date: 2018-08-03 20:54:40 +0900 (Fri, 03 Aug 2018) $
 # $Author: $
 
 """ Common library for RENAT
@@ -422,6 +422,14 @@ if _ntm_master_path:
 for entry in ['auth.yaml', 'device.yaml','template.yaml']:
     with open(_tmp_folder + '/' + entry) as f:
         file_content = f.read()
+        retry = 0
+        if len(file_content) == 0 and retry < 3:
+            time.sleep(5) 
+            BuiltIn().log_to_console("WARN: could not access file %s. Will retry" % entry)
+            file_content = f.read()
+            retry += 1
+        if retry == 3: 
+            BuiltIn().log_to_console("ERROR: could not get global config correctly")
         GLOBAL.update(yaml.load(os.path.expandvars(file_content)))
 
 
@@ -720,73 +728,125 @@ def csv_select(src_file,dst_file,str_row=':',str_col=':',has_header=None):
     BuiltIn().log("Wrote to CSV file `%s`" % dst_file)
 
 
-def csv_concat(src_pattern, dst_name,has_header=None):
+def csv_concat(src_pattern, dst_name,input_header=None,result_header=True):
     """ Concatinates CSV files vertically
     If the CSV files has header, set ``has_header`` to ``${TRUE}``
    
     Examples:
-    | Commmon.`CSV Merge` | config/data0[3,4].csv |  result/result2.csv | |
-    | Commmon.`CSV Merge` | config/data0[3,4].csv |  result/result2.csv | has_header=${TRUE} |
+    | Commmon.`CSV Concat` | config/data0[3,4].csv |  result/result2.csv | |
+    | Commmon.`CSV Concat` | config/data0[3,4].csv |  result/result2.csv | has_header=${TRUE} |
     """
 
-    file_list = glob.glob(src_pattern)
+    file_list = sorted(glob.glob(src_pattern))
     num = len(file_list)
     if num < 1:
         BuiltIn().log("Could not find any file to concatinate")
         return False
     file = file_list.pop(0) 
-    pd   = pandas.read_csv(file,header=has_header)
+    pd   = pandas.read_csv(file,header=input_header)
     for file in file_list:
-        pd_next = pandas.read_csv(file,header=has_header)
+        pd_next = pandas.read_csv(file,header=input_header)
         pd = pandas.concat([pd, pd_next])  
 
-    pd.to_csv(dst_name,index=None,header=has_header)
+    pd.to_csv(dst_name,index=None,header=result_header)
     BuiltIn().log("Concatinated %d files to %s" % (num,dst_name))
     return True
 
-def csv_merge(src_pattern,dst_name,on_key='0',has_header=None):
-    """ Merges all CSV files horizontally by ``on_key`` key from ``src_pattern``
- 
-    ``on_key`` is the order of key column that is used as key when merging the
-    files. Default is zero.
 
-    When ``has_header`` is not ``None`` (default value), it is the order of the
-    row used to make the column name.
-    Returns ``False`` if only one file was found, no merging happend
+def csv_merge(src_pattern,dst_name,input_header=None,key='0',select_column=':',result_header=True):
+    """ Merges all CSV files ``horizontally`` by ``key`` key from ``src_pattern``
+ 
+    ``input_header`` defines whether the input files has header row or not. If
+    ``input_header`` is ``${NULL}``, the keyword assume that input files have no
+    header and automatically define columns name. When ``input_header`` is not
+    null (default is zero), the row define by ``input_header`` will be used as header
+    and data is counted from the next row.
+
+    ``select_column`` is a string that define the output columns and ``key`` is the
+    column name that used to merge. When ``input_header`` is ``${NULL}``,
+    ``select_column`` and `key` is the index of columns. Otherwise, they are
+    `column name`.
+
+    The result header (column names) is decided by ``result_header`` (`True` or `False`)
+
+    The keyword returns ``False`` if no file is found by the pattern
 
     Examples:
     | Common.`CSV Merge` | config/data0[3,4].csv | result/result2.csv |
-    | Common.`CSV Merge` | config/data0[3,4].csv | result/result2.csv | has_header=${TRUE} |
+    | Common.`CSV Merge` | config/data0[3,4].csv | result/result2.csv | input_header=0 |
+    | Common.`CSV Merge` | src_pattern=${RESULT_FOLDER}/balance*.csv  | input_header=0 |
+    | ...                | dst_name=${RESULT_FOLDER}/result.csv | result_header=${FALSE} |
+    | ...                | key=Stat Name      |      select_column=Valid Frames Rx. |
+    | Common.`CSV Merge` | src_pattern=${RESULT_FOLDER}/balance*.csv  | input_header=${NULL} |
+    | ...                | dst_name=${RESULT_FOLDER}/result.csv | result_header=${FALSE} |
+    | ...                | key=0      |      select_column=5 |
     """
 
-    file_list = glob.glob(src_pattern)
+    file_list = sorted(glob.glob(src_pattern))
     num = len(file_list)
-    int_key = int(on_key)
+
+    if not select_column == ':':
+        columns = '%s,%s' % (key,select_column)
+    else:
+        columns = select_column
     
     if num < 1: 
         BuiltIn().log("File number is less than %d" % (num))
         return False
     elif num < 2:
         f1_name = file_list.pop(0)
-        f1  = pandas.read_csv(f1_name,header=has_header)
-        f1.to_csv(dst_name,index=None,header=has_header)
+        if input_header is None:
+            f1  = pandas.read_csv(f1_name,header=input_header)
+            s = f1.shape
+            result = f1.iloc[:,str2seq(columns,s[1])]
+        else:
+            f1  = pandas.read_csv(f1_name,header=int(input_header))
+            result = f1[columns.split(',')]
+        result.to_csv(dst_name,index=None,header=result_header)
         BuiltIn().log("File number is less than %d, merged anyway" % (num))
         return True 
     else:
         f1_name = file_list.pop(0)
         f2_name = file_list.pop(0)
 
-        f1  = pandas.read_csv(f1_name,header=has_header)
-        f2  = pandas.read_csv(f2_name,header=has_header)
-        m   = pandas.merge(f1,f2,on=int_key)
+        if input_header is None:
+            f1  = pandas.read_csv(f1_name,header=input_header)
+            f2  = pandas.read_csv(f2_name,header=input_header)
+            s = f1.shape
+            result1 = f1.loc[:,str2seq(columns,s[1])]
+            s = f2.shape
+            result2 = f2.loc[:,str2seq(columns,s[1])]
+        else:
+            f1 = pandas.read_csv(f1_name,header=int(input_header))
+            f2 = pandas.read_csv(f2_name,header=int(input_header))
+            result1 = f1[columns.split(',')]
+            result2 = f2[columns.split(',')]
+
+        if input_header is None:
+            m  = pandas.merge(result1,result2,on=int(key))
+        else:
+            m  = pandas.merge(result1,result2,on=key)
+
         for item in file_list:
-            f = pandas.read_csv(item,header=has_header)
-            m = pandas.merge(m,f,on=int_key)
-       
-        m.to_csv(dst_name,index=None,header=has_header)
+            if input_header is None:
+                f = pandas.read_csv(item,header=input_header)
+                s = f.shape
+                result = f.iloc[:,str2seq(columns,s[1])]
+            else:
+                f = pandas.read_csv(item,header=int(input_header))
+                result = f[columns.split(',')]
+            
+            if input_header is None:    
+                m = pandas.merge(m,result,on=int(key))
+            else:
+                m = pandas.merge(m,result,on=key)
+      
+        # write to file without index 
+        m.to_csv(dst_name,index=None,header=result_header)
         BuiltIn().log("Merged %d files to %s" % (num,dst_name))
    
     return True 
+
 
 def merge_files(path_name,file_name):
     """ Merges all the text files defined by ``path_name`` to ``file_name``
@@ -1230,6 +1290,17 @@ def explicit_run():
 
 def get_myid():
     return BuiltIn().get_variable_value('${MYID}')
+
+
+def get_config_value(key,base=u'default'):
+    """ Returns value of a key for renat configuration with this other
+        LOCAL[base][key] > GLOBAL[base][key] > None
+    """
+    if base in LOCAL and key in LOCAL[base]:
+        return LOCAL[base][key]
+    if base in GLOBAL and key in GLOBAL[base]:
+        return GLOBAL[base][key]
+    return None
 
 # set RF global variables and load libraries
 try:

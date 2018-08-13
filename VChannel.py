@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1010 $
+# $Rev: 1140 $
 # $Ver: $
-# $Date: 2018-05-31 11:30:17 +0900 (Thu, 31 May 2018) $
+# $Date: 2018-07-26 18:10:13 +0900 (Thu, 26 Jul 2018) $
 # $Author: $
 
 import os,re,sys
@@ -219,8 +219,7 @@ class VChannel(object):
         """
 
         # ignore or raise alarm when the initial connection has errors
-        ignore_dead_node =  'ignore_dead_node' in Common.LOCAL['default'] and \
-                            Common.LOCAL['default']['ignore_dead_node']
+        ignore_dead_node = Common.get_config_value('ignore-dead-node')
         id = 0
 
         if name in self._channels: 
@@ -253,7 +252,7 @@ class VChannel(object):
         else:
             _password_prompt = 'Password:'
         
-        BuiltIn().log("Opening connection to `%s(%s)`" % (name, _ip))
+        BuiltIn().log("Opening connection to `%s(%s)` by name `%s`" % (node,_ip,name))
         
 
         try:
@@ -425,6 +424,9 @@ class VChannel(object):
         
         """
 
+        # clear buffer
+        self.read()
+
         channel = self._channels[self._current_name]
         if channel['screen']:
             channel['screen'] = None
@@ -461,7 +463,13 @@ class VChannel(object):
         """
         # clear buffer before switch 
         old_name = self._current_name
-        self.read()
+        # self.read()
+
+        # ignore error in case of channel is not there anymore
+        try:
+            self._read()
+        except Exception as err:
+            pass
  
         if name in self._channels: 
             channel_info = self._channels[name]
@@ -511,7 +519,7 @@ class VChannel(object):
         for i in range(max_retry):
             try:
                 return f(*args)
-            except (EOFError,KeyError) as e:
+            except (RuntimeError,EOFError,KeyError) as e:
                 BuiltIn().log("    Exception(%s): %s" % (str(type(e)),str(e)))
                 # BuiltIn().log(traceback.format_exc())
 
@@ -532,6 +540,8 @@ class VChannel(object):
             except Exception as e:
                 err_msg = "ERROR: timeout while processing command. Tunning ``terminal-timeout`` in RENAT config file or check your command"
                 BuiltIn().log(err_msg)
+                BuiltIn().log(type(e))
+                BuiltIn().log(e)
                 raise Exception(err_msg)
 
         err_msg = "    ERROR: failed to execute command `%s`" % f
@@ -586,8 +596,9 @@ class VChannel(object):
 
         Returns the output after writing the command the the channel.
 
-        When `str_wait` is not `0s`, the keyword read and return the output
-        after waiting `str_wait`. Otherwise, the keyword return with no output.
+        When `str_wait` is not `0s`, the keyword ``read`` and ``return the
+        output`` after waiting `str_wait`. Otherwise, the keyword return
+        without any output.
    
         *Notes:*  This is a non-blocking command.
 
@@ -797,7 +808,7 @@ class VChannel(object):
             self._current_name     = channels[first_key]['name'] 
             self._current_id       = channels[first_key]['id']
 
-        BuiltIn().log("Closed the connection for channel '%s'" % (old_name))
+        BuiltIn().log("Closed the connection for channel '%s', current channel is `%s`" % (old_name,self._current_name))
         return self._current_name
 
 

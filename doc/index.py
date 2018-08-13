@@ -27,7 +27,8 @@ Tester_:
 WebApp_:
     Common library for web application, includes 2 child libraries: Samurai_ and Arbor_
 
-|
+LabKeyword_:
+    Common lab keywords
 
 ######
 Others
@@ -58,6 +59,7 @@ Choose each libraries for detail infomration and samples about keywords.
 .. _Samurai:        ./Samurai.html   
 .. _Arbor:          ./Arbor.html   
 .. _Changes:        ./CHANGES.txt  
+.. _LabKeyword:     ./lab_robot.html
 
 """
 ROBOT_LIBRARY_DOC_FORMAT = 'reST'

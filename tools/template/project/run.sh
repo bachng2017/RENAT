@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# $Date: 2018-03-25 18:06:17 +0900 (Sun, 25 Mar 2018) $
-# $Rev: 863 $
+# $Date: 2018-07-24 13:18:36 +0900 (Tue, 24 Jul 2018) $
+# $Rev: 1127 $
 # $Ver: $
 # $Author: $
 # suite run script
@@ -22,6 +22,7 @@ usage() {
     echo "See run.sh in item folder for more about useful options"
     echo "Some useful options:"
     echo "  -h/--help               print this usage"
+    echo "  -p/--parallel           parallelly run the items"
     echo "  -v CLEAN                ccleanup result folder before run the test"
     echo "  -X                      stop immediately if a step fails (default is not set)"
     echo "  -v VAR:VALUE            define a global RF variable ${VAR} with value VALUE"
@@ -46,7 +47,11 @@ process() {
         echo "   .ignore found, ignore this folder"
         cat .ignore 
     elif [ -f ./main.robot ]; then
-        ./run.sh $PARAM
+        if [ "$PARALLEL" == "1" ]; then 
+            ./run.sh $PARAM &
+        else
+            ./run.sh $PARAM
+        fi
         CODE=$?
         RETURN=$(expr $RETURN + $CODE)
         if [ $CODE -eq 0 ]; then
@@ -67,6 +72,10 @@ for OPT in "$@"; do
         '-h'|'--help' )
             usage
             exit 1
+            ;;
+        '-p'|'--parallel' )
+            PARALLEL=1
+            shift 1
             ;;
         *)
             PARAM+=" $1"
