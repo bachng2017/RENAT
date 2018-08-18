@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1140 $
+# $Rev: 1182 $
 # $Ver: $
-# $Date: 2018-07-26 18:10:13 +0900 (Thu, 26 Jul 2018) $
+# $Date: 2018-08-18 21:48:51 +0900 (Sat, 18 Aug 2018) $
 # $Author: $
 
 import os,re,sys
@@ -260,7 +260,7 @@ class VChannel(object):
             channel_info = {}
             ### TELNET 
             ### _login_prompt could be None but not the _password_prompt
-    	    if _access == 'telnet':
+            if _access == 'telnet':
                 s = str(w) + "x" + str(h)
                 local_id = self._telnet.open_connection(_ip,
                                                         alias=name,terminal_type='vt100', window_size=s,

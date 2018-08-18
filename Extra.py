@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-05-28 21:16:29 +0900 (Mon, 28 May 2018) $
-# $Rev: 995 $
+# $Date: 2018-08-18 21:51:52 +0900 (Sat, 18 Aug 2018) $
+# $Rev: 1183 $
 # $Ver: $
 # $Author: $
 
@@ -32,7 +32,7 @@ class Extra():
         try:
             # load extra libraries
             for lib in Common.GLOBAL['extra-lib']:
-		lib_name = lib + '.py'
+                lib_name = lib + '.py'
                 BuiltIn().import_library(os.environ['RENAT_PATH'] + '/'+ lib_name)
                 BuiltIn().log_to_console("Loaded extra library `%s`" % lib)
         

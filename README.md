@@ -61,7 +61,7 @@ $ python --version
 ```
 $ yum install epel-release
 $ yum install gettext gcc net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python27-tkinter xorg-x11-server-Xvfb
-$ pip install numpy pyte PyYAML openpyxl Jinja2 pandas paramiko lxml requests 
+$ pip install numpy pyte PyYAML openpyxl Jinja2 pandas paramiko lxml requests pdfkit
 $ pip install netsnmp-py==0.3 
 ```
 
