@@ -142,9 +142,11 @@ IXIA_HOME=/opt/ixia
 IXIA_VERSION=8.01.0.2
 
 IXL_libs=$IXIA_HOME/ixload/8.01.99.14
+IXN_libs=$IXIA_HOME/ixnet/7.41-EA
 IXOS_libs=$IXIA_HOME/ixload/8.01.99.14/../../ixos-api/8.01.0.2
+BPS_libs=/opt/ixia/bps
 
-PYTHONPATH=$IXL_libs:.:$IXOS_libs:$PYTHONPATH
+PYTHONPATH=.:$IXN_libs/lib/PythonApi:$IXL_libs/lib:$IXOS_libs:$BPS_libs:$PYTHONPATH
 for LIBS in "$IXL_libs $IXOS_libs"
 do
     for FOLDER in `find $LIBS -type f -name pkgIndex.tcl | rev | cut -d/ -f2- | rev`
