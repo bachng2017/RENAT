@@ -90,7 +90,7 @@ $ export RENAT_PATH=~/work/renat
 
 You could put the above on your startup file for convinience like:
 ```
-$ echo "export RENAT_PATH=~/work/renat" >> ~/.bash.rc
+$ echo "export RENAT_PATH=~/work/renat" >> ~/.bashrc
 ```
 
 
