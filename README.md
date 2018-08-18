@@ -90,7 +90,7 @@ $ export RENAT_PATH=~/work/renat
 
 You could put the above on your startup file for convinience like:
 ```
-$ echo "export RENAT_PATH=~/work/renat" >> ~/bash.rc
+$ echo "export RENAT_PATH=~/work/renat" >> ~/.bash.rc
 ```
 
 
@@ -127,11 +127,18 @@ Modifying the `extra-lib` part to enable/disble extra libraries if it is neccess
 You need to access to proper Ixia softwares by your own and following its instruction correctly. The following instructions are just examples.You could by pass this part if you are not intending to use Ixia control modules.
 ```
 $ yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel ld-linux.so.2
-$ ./IxOS6.80.1100.9Linux64.bin (/opt/ixia/ixos/6.80-EA-SP1)
-$ ./IxNetworkTclClient7.41.945.9Linux.bin (/opt/ixia/ixnet/7.41-EA)
 ```
+
+Install Ixia related libraries:
+```
+$ ./IxOS6.80.1100.9Linux64.bin (default install folder is: /opt/ixia/ixos/6.80-EA-SP1)
+$ ./IxNetworkTclClient7.41.945.9Linux.bin (default install folder is: /opt/ixia/ixnet/7.41-EA)
+$ ./IxLoadTclApi8.01.99.14Linux_x64.bin (default install folder is: /opt/ixia/ixload/8.01.99.14)
+```
+
 Sample for startup file ( /etc/profile.d/ixia.sh ) that set necessary variables for Ixia clients
 ```
+IXIA_HOME=/opt/ixia
 IXIA_VERSION=8.01.0.2
 
 IXL_libs=$IXIA_HOME/ixload/8.01.99.14
@@ -176,6 +183,9 @@ The following is a snipset of Apache config file (httpd.conf) to show the user `
     UserDir work
 
 </IfModule>
+<Directory /home/*/work>
+    Options MultiViews Indexes SymLinksIfOwnerMatch IncludesNoExec
+</Directory>
 ```
 
 ### Installation check
