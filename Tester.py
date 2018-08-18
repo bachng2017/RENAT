@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-07-14 20:56:19 +0900 (Sat, 14 Jul 2018) $
-# $Rev: 1093 $
+# $Date: 2018-08-18 23:40:42 +0900 (Sat, 18 Aug 2018) $
+# $Rev: 1185 $
 # $Ver: $
 # $Author: $
 
@@ -26,9 +26,18 @@ import inspect
 import yaml
 import time
 import Common
-import IxNetwork
-import SubIxLoad
-import BpsRobotLibrary
+try:
+    import IxNetwork
+except:
+    pass
+try: 
+    import SubIxLoad
+except:
+    pass
+try:
+    import BpsRobotLibrary
+except:
+    pass
 from datetime import datetime
 from robot.libraries.BuiltIn import BuiltIn
 import robot.libraries.DateTime as DateTime
