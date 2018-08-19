@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1166 $
+# $Rev: 1185 $
 # $Ver: $
-# $Date: 2018-08-03 20:54:40 +0900 (Fri, 03 Aug 2018) $
+# $Date: 2018-08-18 23:40:42 +0900 (Sat, 18 Aug 2018) $
 # $Author: $
 
 """ Common library for RENAT
@@ -307,7 +307,10 @@ import hashlib
 import pandas
 import sys,select
 import subprocess
-from sets import Set
+try:
+    from sets import Set
+except:
+    pass
 import robot.libraries.DateTime as DateTime
 from robot.libraries.BuiltIn import BuiltIn
 from collections import OrderedDict
@@ -573,17 +576,30 @@ def node_with_tag(*tag_list):
     """
 
     result  = []
-    s0 = Set(tag_list)
-    if 'node' in LOCAL and LOCAL['node']:
-        for item in LOCAL['node']:
-            if 'tag' in LOCAL['node'][item]:
-                s1 = Set(LOCAL['node'][item]['tag'])
-                if s0.issubset(s1): result.append(item)
-    if 'webapp' in LOCAL and LOCAL['webapp']:
-        for item in LOCAL['webapp']:
-            if 'tag' in LOCAL['webapp'][item]:
-                s1 = Set(LOCAL['webapp'][item]['tag'])
-                if s0.issubset(s1): result.append(item)
+   
+    if sys.version_info[0] > 2:
+        s0 = set(tag_list)
+        if 'node' in LOCAL and LOCAL['node']:
+            for item in LOCAL['node']:
+                if 'tag' in LOCAL['node'][item]:
+                    s1 = set(LOCAL['node'][item]['tag'])
+                    if s0.issubset(s1): result.append(item)
+        if 'webapp' in LOCAL and LOCAL['webapp']:
+            for item in LOCAL['webapp']:
+                if 'tag' in LOCAL['webapp'][item]:
+                    s1 = set(LOCAL['webapp'][item]['tag'])
+    else: 
+        s0 = Set(tag_list)
+        if 'node' in LOCAL and LOCAL['node']:
+            for item in LOCAL['node']:
+                if 'tag' in LOCAL['node'][item]:
+                    s1 = Set(LOCAL['node'][item]['tag'])
+                    if s0.issubset(s1): result.append(item)
+        if 'webapp' in LOCAL and LOCAL['webapp']:
+            for item in LOCAL['webapp']:
+                if 'tag' in LOCAL['webapp'][item]:
+                    s1 = Set(LOCAL['webapp'][item]['tag'])
+                    if s0.issubset(s1): result.append(item)
 
     BuiltIn().log("Found %d nodes have the tags(%s)" % (len(result),str(tag_list)))       
     return result
@@ -604,14 +620,24 @@ def node_without_tag(*tag_list):
     """
 
     result  = []
-    s0 = Set(tag_list)
-    if not LOCAL['node']: return result
-    for node in LOCAL['node']:
-        if 'tag' in LOCAL['node'][node]:
-            s1 = Set(LOCAL['node'][node]['tag'])
-            if len(s0 & s1) == 0: result.append(node)
-        else:
-            BuiltIn().log("    Node `%s` has no `tag` key, check your `local.yaml`" % node) 
+    if sys.version_info[0] > 2:
+        s0 = set(tag_list)
+        if not LOCAL['node']: return result
+        for node in LOCAL['node']:
+            if 'tag' in LOCAL['node'][node]:
+                s1 = set(LOCAL['node'][node]['tag'])
+                if len(s0 & s1) == 0: result.append(node)
+            else:
+                BuiltIn().log("    Node `%s` has no `tag` key, check your `local.yaml`" % node) 
+    else:
+        s0 = Set(tag_list)
+        if not LOCAL['node']: return result
+        for node in LOCAL['node']:
+            if 'tag' in LOCAL['node'][node]:
+                s1 = Set(LOCAL['node'][node]['tag'])
+                if len(s0 & s1) == 0: result.append(node)
+            else:
+                BuiltIn().log("    Node `%s` has no `tag` key, check your `local.yaml`" % node) 
     BuiltIn().log("Found %d nodes do not include any tags(%s)" % (len(result),str(tag_list)))       
     return result
 
