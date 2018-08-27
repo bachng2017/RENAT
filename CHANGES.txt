@@ -13,19 +13,25 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 972 $
+# $Rev: 1208 $
 # $Ver: $
-# $Date: 2018-05-25 03:34:46 +0900 (Fri, 25 May 2018) $
+# $Date: 2018-08-23 00:00:54 +0900 (Thu, 23 Aug 2018) $
 # $Author: $
 
 RENAT(Robotframework Extension for Network Automation Testing)
 
 == What's new ==
 
+=== 1.9 ===
+- ignored SOCKS setting in WebApp configuration
+- added ftp_proxy in WebApp configuration
+- shifted to SeleniumLibrary (from Selenium2Library)
+- consolidate code to support Python3
+
 === 1.8 ===
 - added support for SSH proxy template
 - added Apresia and Yamaha support
-
+- added Tool module
 
 === 1.7 ===
 - added plugin mechanism to add user keywords

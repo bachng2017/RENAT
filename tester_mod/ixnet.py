@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-07-03 22:39:21 +0900 (Tue, 03 Jul 2018) $
-# $Rev: 1074 $
+# $Date: 2018-08-23 00:00:54 +0900 (Thu, 23 Aug 2018) $
+# $Rev: 1208 $
 # $Ver: $
 # $Author: $
 
@@ -36,7 +36,7 @@ import os
 import re
 import csv
 import yaml
-import time
+import time,traceback
 import Common
 import IxNetwork
 from datetime import datetime
@@ -860,8 +860,8 @@ def stop_and_save_capture(self,prefix='',wait_until_finish=True,monitor_interval
             dst1 = Common.get_result_path() + '/' + prefix + name + '_HW.cap' 
             dst2 = Common.get_result_path() + '/' + prefix + name + '_SW.cap' 
 
-            ix.execute('copyFile',ix.readFrom(src1,'-ixNetRelative'),ix.writeTo(dst1.encode('ascii','ignore')))
-            ix.execute('copyFile',ix.readFrom(src2,'-ixNetRelative'),ix.writeTo(dst2.encode('ascii','ignore')))
+            ix.execute('copyFile',ix.readFrom(src1,'-ixNetRelative'),ix.writeTo(str(dst1)))
+            ix.execute('copyFile',ix.readFrom(src2,'-ixNetRelative'),ix.writeTo(str(dst2)))
             count = count + 2
         
 
@@ -1010,8 +1010,8 @@ def add_quicktest(self,name,test_type=u'rfc2544throughput',tx_mode=u'interleaved
         ix.commit() 
         BuiltIn().log("    cleared all %d existed Quicktest items" % (len(test_list)))
 
-    test = ix.add(ix.getRoot()+'/quickTest',test_type.encode('ascii','ignore'))
-    ix.setMultiAttribute(test,'-name',name.encode('ascii','ignore'),'-mode','newMode')
+    test = ix.add(ix.getRoot()+'/quickTest',str(test_type))
+    ix.setMultiAttribute(test,'-name',str(name),'-mode','newMode')
     result = ix.commit()
     if result != '::ixNet::OK':
         raise Exception("ERROR: could not create new Quicktest")
@@ -1027,16 +1027,16 @@ def add_quicktest(self,name,test_type=u'rfc2544throughput',tx_mode=u'interleaved
     # customize more
     tx_mode='interleaved'
     for port in vports:
-        ix.setAttribute(port,'-txMode',tx_mode.encode('ascii','ignore'))
+        ix.setAttribute(port,'-txMode',str(tx_mode))
     traffic_items = ix.getList(ix.getRoot()+'/traffic','trafficItem')
 
     ix.setAttribute(traffic_items[0],'-trafficType', 'ipv4')
     for item in traffic_items:
-        ix.setAttribute(item,'-transmitMode',tx_mode.encode('ascii','ignore'))
+        ix.setAttribute(item,'-transmitMode',str(tx_mode))
 
     # 1st half will be TX and 2nd half will be RX
     end_point = ix.add(traffic_items[0],'endpointSet')
-    half = len(vports) / 2
+    half = int(len(vports) / 2)
     for i in range(0,half):
         ix.setMultiAttribute(end_point,'-sources',vports[i]+'/protocols','-destinations',vports[half+i]+'/protocols')
 
@@ -1045,7 +1045,7 @@ def add_quicktest(self,name,test_type=u'rfc2544throughput',tx_mode=u'interleaved
     if result != '::ixNet::OK':
         raise Exception("ERROR: could not create new Quicktest") 
     
-    BuiltIn().log("Created a new Quicktest with type `%s` for %d ports " % (type,len(vports))) 
+    BuiltIn().log("Created a new Quicktest with type `%s` for %d ports " % (test_type,len(vports))) 
 
     
 
@@ -1113,7 +1113,7 @@ def get_test_report(self,local_name='ixnet_report.pdf',enable_all=True):
     report_file = result_path + '/report.pdf'
     ix.setMultiAttribute(ix.getRoot()+'/reporter/generate',
         '-outputFormat','pdf',
-        '-outputPath',report_file.encode('ascii','ignore'))
+        '-outputPath',str(report_file))
     ix.commit()
 
     # enable all statistics
@@ -1292,7 +1292,7 @@ def regenerate(self):
     for item in traffic_items:
         ix.execute('generate', item)
     
-    BuiltIn().log("Regenerate flows for %d traffic items" % len(traffic_items))
+    BuiltIn().log("RegenerFinishedate flows for %d traffic items" % len(traffic_items))
 
 
 
@@ -1341,12 +1341,11 @@ def start_test_composer(self,script_name=u'Main_Procedure',run_num=u'1',wait_for
         composer_runner = ix.add(ix.getRoot() + '/quickTest','eventScheduler')
         ix.setAttribute(composer_runner,'-name','composer_runner')
         sched = ix.add(composer_runner,'eventScheduler')
-        name = script_name.encode('ascii','ignore')
+        name = str(script_name)
         ix.setMultiAttribute(sched,'-enabled','true','-itemId',name,'-itemName',name)
 
     # setting parameter
-    # ix.setAttribute(composer_runner,'-inputParameters',parameter.encode('ascii','ignore'))
-    ix.setAttribute(sched,'-parameters',parameter.encode('ascii','ignore'))
+    ix.setAttribute(sched,'-parameters',str(parameter))
     
     config = ix.getList(composer_runner,'testConfig')
     ix.setAttribute(config[0],'-numTrials',int(run_num))
@@ -1361,7 +1360,7 @@ def start_test_composer(self,script_name=u'Main_Procedure',run_num=u'1',wait_for
         ix.execute('waitForTest', composer_runner)
      
     time.sleep(DateTime.convert_time(wait))
-    BuiltIn().log("Started a test compose script")
+    BuiltIn().log("Finished a test compose script")
     
 
 
@@ -1414,7 +1413,7 @@ def get_test_composer_result(self,result_file=u'composer.log'):
     if composer_runner:
         result_path = ix.getAttribute(composer_runner+'/results','-resultPath')
         src_path = result_path + '\logFile.txt'
-        dst_path = Common.get_result_path() + '/' + result_file.encode('ascii','ignore')
+        dst_path = Common.get_result_path() + '/' + str(result_file)
         BuiltIn().log("    result src: %s" % src_path)
         BuiltIn().log("    result dst: %s" % dst_path)
         ix.execute('copyFile',ix.readFrom(src_path,'-ixNetRelative'),ix.writeTo(dst_path))

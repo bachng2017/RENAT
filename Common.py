@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1185 $
+# $Rev: 1243 $
 # $Ver: $
-# $Date: 2018-08-18 23:40:42 +0900 (Sat, 18 Aug 2018) $
+# $Date: 2018-08-28 00:09:52 +0900 (Tue, 28 Aug 2018) $
 # $Author: $
 
 """ Common library for RENAT
@@ -287,7 +287,7 @@ the test and remove the node from its active node list.
 
 """
 
-ROBOT_LIBRARY_VERSION = 'RENAT 0.1.8'
+ROBOT_LIBRARY_VERSION = 'RENAT 0.1.9'
 
 import os
 import glob,fnmatch
@@ -394,28 +394,30 @@ if _folder == '': _folder = '.'
 
 ### load global setting
 with open(_folder + '/config/config.yaml') as f:
-    GLOBAL.update(yaml.load(f))
+    file_content = f.read()
+    # GLOBAL.update(yaml.load(f))
+    GLOBAL.update(yaml.load(os.path.expandvars(file_content)))
 
 ### copy config file from maser to tmp
 ### overwrite the current files
 _tmp_folder = _folder + '/tmp/'
 _renat_master_folder    = GLOBAL['default']['renat-master-folder']
-if _renat_master_folder:
-    _renat_master_folder = os.path.expandvars(_renat_master_folder)
+# if _renat_master_folder:
+#    _renat_master_folder = os.path.expandvars(_renat_master_folder)
 shutil.copy2(_renat_master_folder+'/device.yaml',_tmp_folder)
 shutil.copy2(_renat_master_folder+'/auth.yaml',_tmp_folder)
 shutil.copy2(_renat_master_folder+'/template.yaml',_tmp_folder)
 
 _calient_master_path    = GLOBAL['default']['calient-master-path']
-if _calient_master_path:
-    _calient_master_path = os.path.expandvars(_calient_master_path)
+# if _calient_master_path:
+#    _calient_master_path = os.path.expandvars(_calient_master_path)
 if _calient_master_path:
     newest_calient = max(glob.iglob(_calient_master_path))
     shutil.copy2(newest_calient,_tmp_folder + "/calient.xlsm")
 
 _ntm_master_path        = GLOBAL['default']['ntm-master-path']
-if _ntm_master_path:
-    _ntm_master_path = os.path.expandvars(_ntm_master_path)
+# if _ntm_master_path:
+#    _ntm_master_path = os.path.expandvars(_ntm_master_path)
 if _ntm_master_path:
     newest_ntm = max(glob.iglob(_ntm_master_path))
     shutil.copy2(newest_ntm,_tmp_folder + "/g4ntm.xlsm")
@@ -582,12 +584,18 @@ def node_with_tag(*tag_list):
         if 'node' in LOCAL and LOCAL['node']:
             for item in LOCAL['node']:
                 if 'tag' in LOCAL['node'][item]:
-                    s1 = set(LOCAL['node'][item]['tag'])
+                    if LOCAL['node'][item]['tag']:
+                        s1 = set(LOCAL['node'][item]['tag'])
+                    else:
+                        s1 = set()
                     if s0.issubset(s1): result.append(item)
         if 'webapp' in LOCAL and LOCAL['webapp']:
             for item in LOCAL['webapp']:
                 if 'tag' in LOCAL['webapp'][item]:
-                    s1 = set(LOCAL['webapp'][item]['tag'])
+                    if LOCAL['webapp'][item]['tag']:
+                        s1 = set(LOCAL['webapp'][item]['tag'])
+                    else:
+                        s1 = set()
     else: 
         s0 = Set(tag_list)
         if 'node' in LOCAL and LOCAL['node']:
@@ -625,7 +633,10 @@ def node_without_tag(*tag_list):
         if not LOCAL['node']: return result
         for node in LOCAL['node']:
             if 'tag' in LOCAL['node'][node]:
-                s1 = set(LOCAL['node'][node]['tag'])
+                if LOCAL['node'][node]['tag']:
+                    s1 = set(LOCAL['node'][node]['tag'])
+                else:
+                    s1 = set()
                 if len(s0 & s1) == 0: result.append(node)
             else:
                 BuiltIn().log("    Node `%s` has no `tag` key, check your `local.yaml`" % node) 
@@ -711,15 +722,17 @@ def str2seq(str_index,size):
         | `Str2Seq` | 0:5:2 | 5 | # (0,2,4) |
     """
     if ':' in str_index:
-        tmp = map(lambda x: 0 if x=='' else int(x),str_index.split(':'))
+        # tmp = map(lambda x: 0 if x=='' else int(x),str_index.split(':'))
+        tmp = [ int(x) if x!='' else 0 for x in str_index.split(':') ]
         if len(tmp) > 3:
             return None
         else:
-            result = range(*tmp)
+            result = range(*list(tmp))
             if len(result) == 0: result = range(size)
             return result
     else:
-        return map(int,str_index.split(','))
+        # return list(map(int,str_index.split(',')))
+        return [ int(x) for x in str_index.split(',') ]
     return None
 
 
@@ -1274,7 +1287,7 @@ def cleanup_result(ignore=u'^(log.html|output.xml|report.html)$'):
     BuiltIn().log("Deleted %d files in current result folder" % len(candidates))
 
 
-def slack(msg,channel='#automation_dev',user='renat',host=GLOBAL['default']['slack-host']):
+def slack(msg,channel='#automation_dev',user='renat',host=GLOBAL['default']['slack-proxy']):
     """ Post a message to Slack
     """
 

@@ -59,15 +59,15 @@ $ python --version
 
 ### Other necessary packages
 ```
-$ yum install epel-release
-$ yum install gettext gcc net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python27-tkinter xorg-x11-server-Xvfb
-$ pip install numpy pyte PyYAML openpyxl Jinja2 pandas paramiko lxml requests 
-$ pip install netsnmp-py==0.3 
+yum install -y epel-release
+yum install gettext gcc net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python27-tkinter xorg-x11-server-Xvfb
+pip install numpy pyte PyYAML openpyxl Jinja2 pandas paramiko lxml requests pdfkit
+pip install netsnmp-py==0.3 
 ```
 
 ### Robot Framwork packages
 ```
-$ pip install robotframework robotframework-selenium2library robotframework-sshlibrary
+$ pip install robotframework robotframework-seleniumlibrary robotframework-selenium2library robotframework-sshlibrary
 ```
 For more information about Robotframework and installation, check http://robotframework.org/
 
@@ -98,8 +98,8 @@ $ echo "export RENAT_PATH=~/work/renat" >> ~/.bashrc
 ##### RENAT account
 Create a common `robot` account on the RENAT server. This account will be used for collect and set configuration between the test routers and the RENAT server. Following are sample configuration
 ```
-$ useradd renat -g tech
-$ passwd  renat
+$ useradd robot -g tech
+$ passwd  robot
 ```
 Edit the global configuration of RENAT `config/config.yaml` to suite your environment.
 Usually only the `robot-server` and `robot-password` are need to be modified.
@@ -142,9 +142,11 @@ IXIA_HOME=/opt/ixia
 IXIA_VERSION=8.01.0.2
 
 IXL_libs=$IXIA_HOME/ixload/8.01.99.14
+IXN_libs=$IXIA_HOME/ixnet/7.41-EA
 IXOS_libs=$IXIA_HOME/ixload/8.01.99.14/../../ixos-api/8.01.0.2
+BPS_libs=/opt/ixia/bps
 
-PYTHONPATH=$IXL_libs:.:$IXOS_libs:$PYTHONPATH
+PYTHONPATH=.:$IXN_libs/lib/PythonApi:$IXL_libs/lib:$IXOS_libs:$BPS_libs:$PYTHONPATH
 for LIBS in "$IXL_libs $IXOS_libs"
 do
     for FOLDER in `find $LIBS -type f -name pkgIndex.tcl | rev | cut -d/ -f2- | rev`
@@ -160,7 +162,14 @@ export IXL_libs
 export PYTHONPATH
 ```
 
-``Notes:``
+Depending on your install order, sometims following lines are inserted at the end of `etc/profile`.
+These will override the TCCLLIBPATH configured in the above ixia.sh.
+Remember to comment them out if not IxLoad module will not work correctly.
+```
+TCLLIBPATH=/opt/ixia/ixos/6.80-EA-SP1/lib
+export TCLLIBPATH
+```
+
 The concept of ``Tester module`` is that the configuration should be created using Tester GUI (like Ixia Network or Ixia Load). RENAT framework supports controling the test items, stop/run the tests etc. but does not support traffic generating itself.
 
 ### Web server (optional)
@@ -187,6 +196,88 @@ The following is a snipset of Apache config file (httpd.conf) to show the user `
     Options MultiViews Indexes SymLinksIfOwnerMatch IncludesNoExec
 </Directory>
 ```
+
+### Selenium related libraries
+In order to capture the screen, Selenium and related drivers need to be installed and prepared correclty.
+
+#### Gecko driver
+Download and install gecko driver from https://github.com/mozilla/geckodriver/releases
+
+```
+# cd /tmp
+# wget https://github.com/mozilla/geckodriver/releases/download/v0.21.0/geckodriver-v0.21.0-linux64.tar.gz
+# cd /usr/local/bin
+# tar xzvf /root/work/download/geckodriver-v0.21.0-linux64.tar.gz
+# chown root:root geckodriver
+```
+
+#### Xvfb start script
+Depending on your system, a virtual screen (Xvfb) must be started before capturing happens. 
+For example on CentOS 6.x, prepare a service startup file /etc/rc.d/init.d/xvfb likes this:
+
+```
+#!/bin/bash
+#
+# /etc/rc.d/init.d/xvfbd
+#
+# chkconfig: 345 95 28
+# description: Starts/Stops X Virtual Framebuffer server
+# processname: Xvfb
+#
+
+. /etc/init.d/functions
+
+[ "${NETWORKING}" = "no" ] && exit 0
+
+PROG="/usr/bin/Xvfb"
+PROG_OPTIONS=":1 -screen 0 640x480x24"
+PROG_OUTPUT="/tmp/Xvfb.out"
+
+case "$1" in
+    start)
+        echo -n "Starting : X Virtual Frame Buffer "
+        $PROG $PROG_OPTIONS>>$PROG_OUTPUT 2>&1 &
+        disown -ar
+        /bin/usleep 500000
+        status Xvfb & >/dev/null && echo_success || echo_failure
+        RETVAL=$?
+        if [ $RETVAL -eq 0 ]; then
+            /bin/touch /var/lock/subsys/Xvfb
+            /sbin/pidof -o  %PPID -x Xvfb > /var/run/Xvfb.pid
+        fi
+        echo
+        ;;
+    stop)
+        echo -n "Shutting down : X Virtual Frame Buffer"
+        killproc $PROG
+        RETVAL=$?
+        [ $RETVAL -eq 0 ] && /bin/rm -f /var/lock/subsys/Xvfb
+ /var/run/Xvfb.pid
+        echo
+        ;;
+    restart|reload)
+        $0 stop
+        $0 start
+        RETVAL=$?
+        ;;
+    status)
+        status Xvfb
+        RETVAL=$?
+        ;;
+    *)
+     echo $"Usage: $0 (start|stop|restart|reload|status)"
+     exit 1
+esac
+
+exit $RETVAL
+```
+
+Then make it starts automatically 
+```
+# service xvfb start
+# chkconfig xvfb on
+```
+
 
 ### Installation check
 Make sure you have right Python (2.x) and runnable Ixia module (if `Tester` module is necessary)

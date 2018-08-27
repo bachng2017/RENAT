@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 898 $
+# $Rev: 1187 $
 # $Ver: $
-# $Date: 2018-04-10 15:33:53 +0900 (Tue, 10 Apr 2018) $
+# $Date: 2018-08-19 01:04:35 +0900 (Sun, 19 Aug 2018) $
 # $Author: $
 
 """ A library provides control for Telescent Network Topology Management (NTM)
@@ -49,9 +49,14 @@ def _read_map(self):
         cells = sheet['B3': 'D1058']
         for c1,c2,c3 in cells:
             if any(x is None for x in [c1.value,c2.value,c3.value]): continue
-            port    = unicode(c1.value).lower()
-            device  = unicode(c2.value).lower()
-            intf    = unicode(c3.value).lower()
+            if sys.version_info[0] > 2:
+                port    = str(c1.value).lower()
+                device  = str(c2.value).lower()
+                intf    = str(c3.value).lower()
+            else:
+                port    = unicode(c1.value).lower()
+                device  = unicode(c2.value).lower()
+                intf    = unicode(c3.value).lower()
             if device not in self._intf_map: self._intf_map[device] = {}
 
             # interface map

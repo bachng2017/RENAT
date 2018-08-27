@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-07-14 20:56:19 +0900 (Sat, 14 Jul 2018) $
-# $Rev: 1093 $
+# $Date: 2018-08-23 00:00:54 +0900 (Thu, 23 Aug 2018) $
+# $Rev: 1208 $
 # $Ver: $
 # $Author: $
 
@@ -200,7 +200,8 @@ class Router(object):
 
         BuiltIn().log("Stable checking ...")
 
-        while not stable and count < max_len:
+        max_len_value = int(max_len)
+        while not stable and count < max_len_value:
             stable = True
             for node in node_list:
                 for oid in data[node]['oid_list']:
@@ -217,7 +218,7 @@ class Router(object):
             count += 1   
             time.sleep(interval)
 
-        if count < max_len:
+        if count < max_len_value:
             BuiltIn().log("Stable checking normaly finished")
         else:
             BuiltIn().log("Stable chekcing forcely finsined")

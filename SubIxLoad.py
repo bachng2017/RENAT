@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-07-03 22:39:21 +0900 (Tue, 03 Jul 2018) $
-# $Rev: 1074 $
+# $Date: 2018-08-23 00:00:54 +0900 (Thu, 23 Aug 2018) $
+# $Rev: 1208 $
 # $Ver: $
 # $Author: $
 
@@ -40,6 +40,8 @@ class SubIxLoad(Process):
         self.task_queue     = task_queue
         self.result_queue   = result_queue
         self.elapsed = None
+        self.log_engine = None
+        self.repository = None
         self.random = Common.random_name('_tmp%05d','0','99999')
 
 
@@ -55,7 +57,6 @@ class SubIxLoad(Process):
             self.log_engine.setLevels(self.ix.ixLogger.kLevelDebug,self.ix.ixLogger.kLevelInfo)
         else:
             self.log_engine.setLevels(self.ix.ixLogger.kLevelDebug,self.ix.ixLogger.kLevelError)
-        # self.log_engine.setFile(self._ixload_tmp_dir()+'/'+Common.get_myid(),4,2048,1)
         self.log_engine.setFile(self._ixload_tmp_dir()+'/'+ self._ixload_tmp_dir(),1,256,1)
 
         self.result_queue.put(["ixload::ok"])
@@ -125,7 +126,7 @@ class SubIxLoad(Process):
                 test.setPorts(port_list)
                 self.result_queue.put(["ixload::ok",ixload_tmp_dir,log])
         except Exception as err:
-            self.result_queue.put(err)
+            self.result_queue.put([err])
 
         self.task_queue.task_done()
 
@@ -176,7 +177,7 @@ class SubIxLoad(Process):
                     if not ignore_not_found: raise err
             self.result_queue.put(["ixload::ok"])
         except Exception as err:
-            self.result_queue.put(err)
+            self.result_queue.put([err])
         self.task_queue.task_done()
 
     
@@ -219,7 +220,7 @@ class SubIxLoad(Process):
                 self.elapsed = (stop - self.run_start).total_seconds()
             self.result_queue.put(["ixload::ok",self.elapsed])
         except Exception as err:
-            self.result_queue.put(err)
+            self.result_queue.put([err])
         self.task_queue.task_done()
 
 
@@ -243,7 +244,7 @@ class SubIxLoad(Process):
                     if not ignore_not_found: raise err
             self.result_queue.put(["ixload::ok"])
         except Exception as err:
-            self.result_queue.put(err)
+            self.result_queue.put([err])
         self.task_queue.task_done()
         
     
@@ -262,7 +263,7 @@ class SubIxLoad(Process):
             self.ix.disconnect()
             self.result_queue.put(["ixload::ok",remote_logfile])
         except Exception as err:
-            self.result_queue.put(err)
+            self.result_queue.put([err])
         self.task_queue.task_done()
 
          
@@ -289,8 +290,8 @@ class SubIxLoad(Process):
                 else:
                     raise Exception()
 
-            except Exception as e:
-                self.result_queue.put(e)
+            except Exception as err:
+                self.result_queue.put([err])
                 self.task_queue.task_done()
         return
 

@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-08-01 21:54:31 +0900 (Wed, 01 Aug 2018) $
-# $Rev: 1161 $
+# $Date: 2018-08-23 23:36:56 +0900 (Thu, 23 Aug 2018) $
+# $Rev: 1211 $
 # $Ver: $
 # $Author: $
 
@@ -23,7 +23,6 @@ import Common
 from WebApp import WebApp
 from robot.libraries.BuiltIn import BuiltIn
 from robot.libraries.BuiltIn import RobotNotRunningError
-from Selenium2Library import Selenium2Library
 from selenium import webdriver
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 import robot.libraries.DateTime as DateTime
@@ -99,10 +98,12 @@ class Arbor(WebApp):
             proxy.proxy_type = ProxyType.MANUAL
             if 'http' in app_info['proxy']:
                 proxy.http_proxy    = app_info['proxy']['http']
-            if 'socks' in app_info['proxy']:
-                proxy.socks_proxy   = app_info['proxy']['socks']
+            # if 'socks' in app_info['proxy']:
+            #     proxy.socks_proxy   = app_info['proxy']['socks']
             if 'ssl' in app_info['proxy']:
                 proxy.ssl_proxy     = app_info['proxy']['ssl']
+            if 'ftp' in app_info['proxy']:
+                proxy.ftp_proxy   = app_info['proxy']['ftp']
             capabilities = webdriver.DesiredCapabilities.FIREFOX
             proxy.add_to_capabilities(capabilities)
 
@@ -139,7 +140,10 @@ class Arbor(WebApp):
             browser_info['capture_format']  = 'arbor_%010d'
             browser_info['browser']         = browser
             self._browsers[name] = browser_info
-    
+
+            #
+            self._driver.maximize_browser_window()
+
             BuiltIn().log("Connected to `%s` with name `%s`" % (app,name))
         except Exception as err:
             if not ignore_dead_node:
@@ -213,7 +217,7 @@ class Arbor(WebApp):
             self._driver.close_browser()
             del(self._browsers[old_name])
             if len(self._browsers) > 0:
-                self._current_name = self._browsers.keys()[-1]
+                self._current_name = list(self._browsers.keys())[-1]
             else:
                 self._current_name = None
         
@@ -295,7 +299,7 @@ class Arbor(WebApp):
         BuiltIn().log("Displayed detail of `%s` mitigation in the list" % num)
 
 
-    def menu(self,order,wait='2s',capture_all=False,prefix='menu_',suffix='.png'):
+    def menu(self,order,wait='2s',capture_all=False,prefix='menu_',suffix='.png',partial_match=False):
         """ Access to Arbor menu
 
         Parameters
@@ -304,6 +308,8 @@ class Arbor(WebApp):
         - if ``capture_all`` is ``True`` then a screenshot is captured for each
           menu item automtically. In this case, the image file is appended by
         ``prefix`` and ``suffix``.
+        - by default, the system try to match the menu item in full, when
+          ``partial_match`` is ``True``, partial match is applied.
 
         Samples:
         | Arbor.`Menu`               |          order=Alerts/Ongoing |
@@ -312,7 +318,7 @@ class Arbor(WebApp):
         | Arbor.`Capture Screenshot` |
         | Arbor.`Menu`               |          order=System/Status/Deployment Status |
         | Arbor.`Capture Screenshot` |
-        | Arbor.`Menu`               |          order=System/Status/Appliance Status |
+        | Arbor.`Menu`               |          order=System/Status/Signaling Status/Appliance Status | partial_match=${TRUE}
         | Arbor.`Capture Screenshot` |
         """
         self.switch(self._current_name)
@@ -321,14 +327,16 @@ class Arbor(WebApp):
         for item in items:
             BuiltIn().log("    Access to menu item %s" % item)
             index +=1
-            xpath1 = "xpath=//a[.='%s']" % item
-            xpath2 = "xpath=//a[contains(.,'%s')]" % item
-            self._driver.mouse_over(xpath1)
-            self._driver.wait_until_element_is_visible(xpath2)
-            if index == len(items):
-                self._driver.click_link(xpath1)
-                time.sleep(DateTime.convert_time(wait))
+            if partial_match:
+                xpath = "xpath=//a[contains(.,'%s')]" % item
+            else:
+                xpath = "xpath=//a[.='%s']" % item
+            self._driver.mouse_over(xpath)
+            self._driver.wait_until_element_is_visible(xpath)
             if capture_all:
                 capture_name='%s%s%s' % (prefix,item,suffix)
                 self._driver.capture_page_screenshot(capture_name)
+            if index == len(items):
+                self._driver.click_link(xpath)
+                time.sleep(DateTime.convert_time(wait))
 

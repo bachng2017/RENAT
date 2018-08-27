@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1182 $
+# $Rev: 1208 $
 # $Ver: $
-# $Date: 2018-08-18 21:48:51 +0900 (Sat, 18 Aug 2018) $
+# $Date: 2018-08-23 00:00:54 +0900 (Thu, 23 Aug 2018) $
 # $Author: $
 
 import os,re,sys
@@ -412,7 +412,11 @@ class VChannel(object):
             # channel['stream'] = pyte.ByteStream(encodings=[('UTF-8', 'ignore')])
             channel['stream'] = pyte.Stream()
             channel['stream'].attach(channel['screen'])
-            channel['screen'].set_charset('B', '(')
+            # handle different version of pyte
+            try:
+                channel['screen'].set_charset('B', '(')
+            except:
+                channel['screen'].define_charset('B', '(')
 
         BuiltIn().log("Started ``screen mode``")
   
@@ -434,13 +438,15 @@ class VChannel(object):
 
         BuiltIn().log("Stopped ``screen mode``")
 
-
     def _get_history(self,screen):
         return self._get_history_screen(screen.history.top) + Common.newline
 
     def _get_history_screen(self, deque):
-        return Common.newline.join(''.join(c.data for c in row).rstrip()
-                                  for row in deque).rstrip(Common.newline)
+        # the HistoryScreen.history.top is a StaticDefaultDict that contains
+        # Char element.
+        # The Char.data contains the real Unicode char
+        # return Common.newline.join(''.join(c.data for c in row).rstrip() for row in deque).rstrip(Common.newline)
+        return Common.newline.join(''.join(c.data for c in list(row.values())).rstrip() for row in deque)
 
     def _get_screen(self, screen):
         channel = self._channels[self._current_name]
@@ -450,9 +456,7 @@ class VChannel(object):
         channel = self._channels[self._current_name]
         if channel['screen']:
             return  self._get_history(channel['screen']) + self._get_screen(channel['screen'])
-            # return  self._get_screen(channel['screen'])
         return ''
-
  
     def switch(self,name):
         """ Switches the current active channel to ``name``. 
@@ -515,21 +519,17 @@ class VChannel(object):
         max_retry = Common.GLOBAL['default']['max-retry-for-connect']
         interval  = Common.GLOBAL['default']['interval-between-retry']
 
-        # BuiltIn().log("Try maximum %s times with %s second interval" % (max_retry,interval))
         for i in range(max_retry):
             try:
                 return f(*args)
             except (RuntimeError,EOFError,KeyError) as e:
                 BuiltIn().log("    Exception(%s): %s" % (str(type(e)),str(e)))
-                # BuiltIn().log(traceback.format_exc())
-
                 BuiltIn().log("    Try reconnection: " + str(i+1))
                 try:
                     self.reconnect(self._current_name)
                     continue
                 except Exception as e:
                     BuiltIn().log("    WARNING: %s: %s" % (str(type(e)),str(e)))
-                    # BuiltIn().log(traceback.format_exc())
                     if i == max_retry - 1:
                         err_msg = "    ERROR: Failed to reconnect to node `%s`" % self._current_name
                         BuiltIn().log(err_msg)
@@ -540,8 +540,10 @@ class VChannel(object):
             except Exception as e:
                 err_msg = "ERROR: timeout while processing command. Tunning ``terminal-timeout`` in RENAT config file or check your command"
                 BuiltIn().log(err_msg)
-                BuiltIn().log(type(e))
+                BuiltIn().log("Detail error is:")
+                BuiltIn().log("ErrorType: %s" % type(e))
                 BuiltIn().log(e)
+                BuiltIn().log(traceback.format_exc())
                 raise Exception(err_msg)
 
         err_msg = "    ERROR: failed to execute command `%s`" % f
@@ -804,7 +806,7 @@ class VChannel(object):
             self._telnet           = None
             self._ssh              = None
         else:
-            first_key = channels.keys()[0]
+            first_key = list(channels.keys())[0]  # make dict key compatible with Python3
             self._current_name     = channels[first_key]['name'] 
             self._current_id       = channels[first_key]['id']
 

@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-07-17 09:49:23 +0900 (Tue, 17 Jul 2018) $
-# $Rev: 1107 $
+# $Date: 2018-08-23 23:36:56 +0900 (Thu, 23 Aug 2018) $
+# $Rev: 1211 $
 # $Ver: $
 # $Author: $
 
@@ -22,7 +22,7 @@ import os,time,re
 import Common
 from robot.libraries.BuiltIn import BuiltIn
 from robot.libraries.BuiltIn import RobotNotRunningError
-from Selenium2Library import Selenium2Library
+from SeleniumLibrary import SeleniumLibrary
 import robot.libraries.DateTime as DateTime
 
 class WebApp(object):
@@ -86,7 +86,8 @@ class WebApp(object):
         self._type                  = None
         self._ajax_wait             = 2
         try:
-            self._driver = BuiltIn().get_library_instance('Selenium2Library')
+            # self._driver = BuiltIn().get_library_instance('Selenium2Library')
+            self._driver = BuiltIn().get_library_instance('SeleniumLibrary')
 
         except RobotNotRunningError as e:
             Common.err("WARN: RENAT is not running")

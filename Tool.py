@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-07-14 20:56:19 +0900 (Sat, 14 Jul 2018) $
-# $Rev: 1093 $
+# $Date: 2018-08-23 00:00:54 +0900 (Thu, 23 Aug 2018) $
+# $Rev: 1208 $
 # $Ver: $
 # $Author: $
 
@@ -97,7 +97,7 @@ class Tool(object):
         # output1 = proc1.stdout.readline()
         # output2 = subprocess.check_output('sudo kill %s' % proc1.pid,stderr=subprocess.STDOUT,shell=True)
         output2 = subprocess.check_output('sudo kill %s' % proc1.pid,shell=True)
-        output1 = '\n'.join(proc1.stdout.readlines())
+        output1 = b'\n'.join(proc1.stdout.readlines())
 
         time.sleep(1)
         BuiltIn().log(output1)

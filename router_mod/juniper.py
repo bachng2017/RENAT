@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 979 $
+# $Rev: 1223 $
 # $Ver: $
-# $Date: 2018-05-25 11:14:45 +0900 (Fri, 25 May 2018) $
+# $Date: 2018-08-26 17:13:44 +0900 (Sun, 26 Aug 2018) $
 # $Author: $
 
 """ Provides keywords for Juniper platform
@@ -194,7 +194,6 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(
  
     folder              = os.getcwd() + '/config/'
     file_path           = os.getcwd() + '/config/' + config_file
-    # file_path_replace = file_path + "_replace"
     file_path_replace   = os.getcwd() + '/tmp/' + config_file + '_tmp'
 
     # jinja2 process
@@ -208,7 +207,8 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(
 
     with codecs.open(file_path_replace,'w','utf-8') as f: 
         f.write(compiled_config)
-    cmd = "file copy robot@" + server + "://" + file_path_replace + ' /var/tmp/' + config_file
+    file_path_replace = file_path_replace.replace('(','\(').replace(')','\)')
+    cmd = 'file copy robot@%s:\'//%s\' /var/tmp/%s' % (server,file_path_replace,config_file)
 
     output = self._vchannel.cmd(cmd,prompt="(yes/no|password:)")
     if "yes/no" in output:
@@ -277,7 +277,10 @@ def get_file(self,src_file,dst_file=''):
         tmp_path    = os.getcwd() + '/tmp/' + dst_file
         dest_path   = os.getcwd() + '/' + Common.get_result_folder() + '/' + dst_file
 
-    cmd = "file copy %s robot@%s://%s" % (src_file,server,tmp_path)
+    dest_path = dest_path.replace('(','\(').replace(')','\)')
+    tmp_path = tmp_path.replace('(','\(').replace(')','\)')
+
+    cmd = 'file copy %s robot@%s:\'//%s\'' % (src_file,server,tmp_path)
     output = self._vchannel.cmd(cmd,prompt="(yes/no\)\?|password:)")
 
     if "yes/no" in output:
@@ -285,10 +288,11 @@ def get_file(self,src_file,dst_file=''):
     if "password:" in output:
         output = self._vchannel.cmd(password)
     if "error" in output:
+        BuiltIn().log("ERROR:")
+        BuiltIn().log(output)
         raise Exception("ERROR:" + output) 
 
-    # change config mod
-    # os.chmod(dest_path,int('0775',8)) 
+    # copy config from temp folder to result folder
     shutil.copy(tmp_path,dest_path)
     
     BuiltIn().log("Get the file `%s` from node `%s`" % (src_file,self._vchannel.current_name))

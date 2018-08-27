@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-07-14 20:56:19 +0900 (Sat, 14 Jul 2018) $
-# $Rev: 1093 $
+# $Date: 2018-08-27 18:38:01 +0900 (Mon, 27 Aug 2018) $
+# $Rev: 1238 $
 # $Ver: $
 # $Author: $
 
@@ -24,7 +24,8 @@ import Common
 from WebApp import WebApp
 from robot.libraries.BuiltIn import BuiltIn
 from robot.libraries.BuiltIn import RobotNotRunningError
-from Selenium2Library import Selenium2Library
+# from Selenium2Library import Selenium2Library
+from SeleniumLibrary import SeleniumLibrary
 from selenium import webdriver
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 
@@ -107,6 +108,7 @@ class Samurai(WebApp):
 
         login_url       = '/'
         browser         = 'firefox'
+        proxy = None
         capabilities    = None 
         ff_profile_dir  = None
 
@@ -123,10 +125,12 @@ class Samurai(WebApp):
             proxy.proxy_type = ProxyType.MANUAL
             if 'http' in app_info['proxy']:
                 proxy.http_proxy    = app_info['proxy']['http']
-            if 'socks' in app_info['proxy']:
-                proxy.socks_proxy   = app_info['proxy']['socks']
+            # if 'socks' in app_info['proxy']:
+            #    proxy.socks_proxy   = app_info['proxy']['socks']
             if 'ssl' in app_info['proxy']:
                 proxy.ssl_proxy     = app_info['proxy']['ssl']
+            if 'ftp' in app_info['proxy']:
+                proxy.ftp_proxy     = app_info['proxy']['ftp']
             capabilities = webdriver.DesiredCapabilities.FIREFOX
             proxy.add_to_capabilities(capabilities)
        
@@ -207,7 +211,7 @@ class Samurai(WebApp):
         self._driver.close_browser()
         del(self._browsers[old_name])
         if len(self._browsers) > 0:
-            self._current_name = self._browsers.keys()[-1]
+            self._current_name = list(self._browsers.keys())[-1]
         else:
             self._current_name = None
     
@@ -269,7 +273,8 @@ class Samurai(WebApp):
             else:
                 xpath = locator
             try:
-                item_list = map(lambda x:x.text,self._driver.get_webelements(xpath))
+                # item_list = map(lambda x:x.text,self._driver.get_webelements(xpath))
+                item_list = [ x.text for x in self._driver.get_webelements(xpath) ]
             except Exception:
                 pass 
         
@@ -441,8 +446,12 @@ _system_admin_.
         self._driver.wait_until_page_contains(u"ユーザ管理")
         items,selected_items = self.select_items_in_table("//tr/td[3]","../td[1]",*user_list)
         if len(selected_items) > 0:
-            self._driver.click_button(u"//input[contains(@value,'削除')]")
+            # self._driver.click_button(u"//input[contains(@value,'削除')]")
+            self._driver.click_button(u"//input[@value='削除']")
+            # self.capture_screenshot()
+            # self._driver.click_button(u"//input[@name='delete']")
             self._driver.confirm_action()
+            # self.capture_screenshot()
             self._driver.wait_until_page_contains_element(u"//span[contains(.,'ユーザを削除しました')]")
 
         BuiltIn().log("Deleted %d user" % len(selected_items))

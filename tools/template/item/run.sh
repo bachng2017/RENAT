@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 
-# $Date: 2018-07-06 00:23:45 +0900 (Fri, 06 Jul 2018) $
-# $Rev: 1081 $
+# $Date: 2018-08-27 23:36:42 +0900 (Mon, 27 Aug 2018) $
+# $Rev: 1239 $
 # $Author: $
 # usage: ./runsh [-n <num>] <other robot argument>
 

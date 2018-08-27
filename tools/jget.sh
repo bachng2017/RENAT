@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ $# -lt 3 ];  then
   echo "usage: $0 [set|def] <routername> <configname>"

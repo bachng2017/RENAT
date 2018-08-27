@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 
-# $Date: 2018-07-24 13:18:36 +0900 (Tue, 24 Jul 2018) $
-# $Rev: 1127 $
+# $Date: 2018-08-27 23:36:42 +0900 (Mon, 27 Aug 2018) $
+# $Rev: 1239 $
 # $Ver: $
 # $Author: $
 # suite run script

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [[ ! -f chibalab.robot ]] && [[ ! -f lab.robot ]]; then
   echo "ERROR: should be applied in a project folder which has chibalab.robot or lab.robot"
