@@ -197,6 +197,9 @@ service xvfb start
 chkconfig xvfb on
 ```
 
+#### Patch the RF SSHLibrary
+By default the Robotframework SSHLibrary does not support SSH proxy command. Using the information in th patch file `$RENAT_PATH/patch/SSHLibrary.patch` to patch `SSHLibrary` located in the Python package folder.
+
 ### Ixia Network and Ixia Load modules (optional)
 You need to access to proper Ixia softwares by your own and following its instruction correctly. The following instructions are just examples.You could by pass this part if you are not intending to use Ixia control modules.
 ```
