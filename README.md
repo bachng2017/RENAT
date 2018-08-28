@@ -273,17 +273,21 @@ cd work
 clone https://<git url> renat
 ```
 
-#### 2. $RENAT_PATH  configuration
+#### 2. RENAT  configuration
+- make $RENAT_PATH
+
 Make an environment varible `$RENAT_PATH` pointing the correct RENAT folder.
 If you have multi renat (different version) checked out, modify this varible to use the correct RENAT version.
 ```
 export RENAT_PATH=~/work/renat
 ```
 
-You could put the above on your startup file for convinience like:
+Or edit your startup script
 ```
 echo "export RENAT_PATH=~/work/renat" >> ~/.bashrc
 ```
+
+- configure device and authencation information in `$RENAT_PATH/config/device.yaml` and `$RENAT_PATH/config/auth.yaml` to suite to lab environment.
 
 ## Create test scenario and run
 Below example assumes that you've already have a test router running JunOS.
@@ -420,7 +424,7 @@ Log:     /home/user/work/renat/sample/item01/result/log.html
 Report:  /home/user/work/renat/sample/item01/result/report.html
 ```
 
-In case you has configured a web server, access `./result/log.html` or `./result/report.html` for more details about the result.
+In case you has configured a web server, access `http://<server-ip>/~<username>/tes01/result/log.html` or `http://<server-ip>/~<username>/result/report.html` for more details about the result.
 
 When running with `--debug` options likes `./run.sh --debug debug.txt`, the system creates detail debug information in the file `result/debug.txt`. Use this to see in details or bug report. Please make sure your passwords are removed before submit the files.
 
