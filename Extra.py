@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-08-18 21:51:52 +0900 (Sat, 18 Aug 2018) $
-# $Rev: 1183 $
+# $Date: 2018-08-28 10:52:25 +0900 (Tue, 28 Aug 2018) $
+# $Rev: 1250 $
 # $Ver: $
 # $Author: $
 
@@ -31,13 +31,14 @@ class Extra():
     def __init__(self):
         try:
             # load extra libraries
-            for lib in Common.GLOBAL['extra-lib']:
-                lib_name = lib + '.py'
-                BuiltIn().import_library(os.environ['RENAT_PATH'] + '/'+ lib_name)
-                BuiltIn().log_to_console("Loaded extra library `%s`" % lib)
+            if Common.GLOBAL['extra-lib']:
+                for lib in Common.GLOBAL['extra-lib']:
+                    lib_name = lib + '.py'
+                    BuiltIn().import_library(os.environ['RENAT_PATH'] + '/'+ lib_name)
+                    BuiltIn().log_to_console("Loaded extra library `%s`" % lib)
         
         except Exception as e:
-            Common.err("ERROR: while loading extra libraries")
+            Common.err("ERROR: error while loading extra libraries")
             Common.err(e)
 
     def connect_all(self):
