@@ -7,9 +7,8 @@
 
 """:"
 
-for cmd in python3 python; do
+for cmd in python3.6 python3.5 python3 python2 python; do
     command -v > /dev/null $cmd && exec $cmd $0 "$@"
-    
 done
 exit 127
 ":"""

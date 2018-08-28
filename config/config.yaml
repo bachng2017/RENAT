@@ -1,7 +1,7 @@
 default:
     robot-server: 127.0.0.1
     robot-password: password
-    renat-master-folder:
+    renat-master-folder: $RENAT_PATH/config
     calient-master-path:
     ntm-master-path:
     ixload-tmp-remote: C:/tmp
@@ -10,7 +10,7 @@ default:
     terminal-timeout: 20m
     cmd-auto-check: False
     newline: "\r\n"
-    slack-cmd: ${RENAT_PATH}/tools/renat_bot.sh
+    slack-cmd: $RENAT_PATH/tools/renat_bot.sh
     slack-proxy: 127.0.0.1:8888
     log-level: TRACE
     ignore-dead-node: FALSE
