@@ -270,7 +270,7 @@ Prepare a RENAT folder in user working folder and check out the source
 cd
 mkdir work
 cd work
-clone https://<git url> renat
+git clone https://github.com/bachng2017/RENAT.git renat
 ```
 
 #### 2. RENAT  configuration
