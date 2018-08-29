@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1258 $
+# $Rev: 1260 $
 # $Ver: $
-# $Date: 2018-08-29 16:44:02 +0900 (Wed, 29 Aug 2018) $
+# $Date: 2018-08-30 06:49:44 +0900 (Thu, 30 Aug 2018) $
 # $Author: $
 
 """ Provides keywords for Juniper platform
@@ -237,7 +237,7 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(
         msg = "ERROR: An error happened while loading the config. Output: `%s`" % output
         BuiltIn().log(msg)
         BuiltIn().log('output:')
-        ByuitIn().log(output)
+        BuiltIn().log(output)
         raise Exception(msg)
 
     if confirm_time == 0:
