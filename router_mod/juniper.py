@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1223 $
+# $Rev: 1258 $
 # $Ver: $
-# $Date: 2018-08-26 17:13:44 +0900 (Sun, 26 Aug 2018) $
+# $Date: 2018-08-29 16:44:02 +0900 (Wed, 29 Aug 2018) $
 # $Author: $
 
 """ Provides keywords for Juniper platform
@@ -164,7 +164,7 @@ def get_cli_mode(self):
 
 
 
-def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='( syntax | error )'):
+def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(error:)'):
     """ Loads configuration to a router. 
     Usable ``mode`` is ``set``, ``override``, ``merge`` and ``replace``
 
@@ -232,19 +232,27 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(
         raise Exception("Invalid ``mode``. ``mode`` should be ``set``,``override``,``merge``,``replace``")
 
     # check ouput
-    if re.search(err_match, output):
+    if re.search(err_match, output, re.MULTILINE):    
         self._vchannel.cmd("rollback 0")
-        raise Exception("ERROR: An error happened while loading the config. Output: `%s`" % output)
-    
+        msg = "ERROR: An error happened while loading the config. Output: `%s`" % output
+        BuiltIn().log(msg)
+        BuiltIn().log('output:')
+        ByuitIn().log(output)
+        raise Exception(msg)
+
     if confirm_time == 0:
         output = self._vchannel.cmd("commit")
     else: 
         output = self._vchannel.cmd("commit confirmed %s" % (confirm_time))
-   
+
     # check output 
-    if re.search(err_match, output):
+    if re.search(err_match, output, re.MULTILINE):
         self._vchannel.cmd("rollback 0")
-        raise Exception("ERROR: An error happened while committing the change so I rolled it back")
+        msg = "ERROR: An error happened while committing the change so I rolled it back"
+        BuiltIn().log(msg)
+        BuiltIn().log('output:')
+        BuiltIn().log(output)
+        raise Exception(msg)
 
 
     self._vchannel.cmd('exit')
