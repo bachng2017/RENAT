@@ -53,7 +53,7 @@ Install a typical Centos7 with following parameters:
 
     ```
     pip3.6 uninstall selenium
-    pip3.6 selenium==2.53.6
+    pip3.6 install selenium==2.53.6
     ```
     
 - install libraries (besides yum)
