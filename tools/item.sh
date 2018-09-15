@@ -55,13 +55,11 @@ if create_local.lower() in ['yes','y']:
         traffic     = input(_('Use tester config file [ex:traffic.ixncfg]:'))
         str_node    = input(_('Use node list (comma separated) [ex:vmx11]:'))
         str_app     = input(_('Use web app list (comma separated)[ex:samurai1]:'))
-        str_tester  = input(_('Use tester [ex:ixnet03_8009]:'))
     else:
         str_tester  = raw_input(_('Use tester [ex:ixnet03_8009]:'))
         traffic     = raw_input(_('Use tester config file [ex:traffic.ixncfg]:'))
         str_node    = raw_input(_('Use node list (comma separated) [ex:vmx11]:'))
         str_app     = raw_input(_('Use web app list (comma separated)[ex:samurai1]:'))
-        str_tester  = raw_input(_('Use tester [ex:ixnet03_8009]:'))
 
     ## customize local.yaml
     node_list   = re.split(r'[, ]+',str_node)

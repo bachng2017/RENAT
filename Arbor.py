@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-08-23 23:36:56 +0900 (Thu, 23 Aug 2018) $
-# $Rev: 1211 $
+# $Date: 2018-09-14 10:06:20 +0900 (Fri, 14 Sep 2018) $
+# $Rev: 1307 $
 # $Ver: $
 # $Author: $
 
@@ -45,7 +45,7 @@ class Arbor(WebApp):
 
     def __init__(self):
         super(Arbor,self).__init__()
-
+        self.auth = {}
 
     def connect_all(self):
         """ Connects to all applications defined in ``local.yaml``
@@ -116,9 +116,9 @@ class Arbor(WebApp):
         profile = template['profile']   
 
         # currently, only plain-text authentication is supported
-        auth = {}
-        auth['username']    = Common.GLOBAL['auth']['plain-text'][profile]['user']
-        auth['password']    = Common.GLOBAL['auth']['plain-text'][profile]['pass']
+        # auth = {}
+        self.auth['username']    = Common.GLOBAL['auth']['plain-text'][profile]['user']
+        self.auth['password']    = Common.GLOBAL['auth']['plain-text'][profile]['pass']
         url = 'https://%s/%s' %  (ip,login_url)
 
         ignore_dead_node = Common.get_config_value('ignore-dead-node')
@@ -128,8 +128,8 @@ class Arbor(WebApp):
             self._driver.open_browser(url,browser,'_arbor_' + name,False,None,profile_dir)
             self._driver.wait_until_element_is_visible('name=username')
             # login
-            self._driver.input_text('name=username', auth['username'])
-            self._driver.input_text('name=password', auth['password'])
+            self._driver.input_text('name=username', self.auth['username'])
+            self._driver.input_text('name=password', self.auth['password'])
             self._driver.click_button('name=Submit')
             time.sleep(5)
     
@@ -177,8 +177,8 @@ class Arbor(WebApp):
         """ Logged-into the Arbor application
         """
         self.switch(self._current_name) 
-        self._driver.input_text('name=username', auth['username'])
-        self._driver.input_text('name=password', auth['password'])
+        self._driver.input_text('name=username', self.auth['username'])
+        self._driver.input_text('name=password', self.auth['password'])
         self._driver.click_button('name=Submit')
         time.sleep(5)
 

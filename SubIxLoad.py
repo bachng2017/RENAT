@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-08-23 00:00:54 +0900 (Thu, 23 Aug 2018) $
-# $Rev: 1208 $
+# $Date: 2018-09-15 09:15:12 +0900 (Sat, 15 Sep 2018) $
+# $Rev: 1313 $
 # $Ver: $
 # $Author: $
 
@@ -169,8 +169,8 @@ class SubIxLoad(Process):
         try:
             for item in file_list:
                 dst = item.replace('-','')
-                dst = dst.replace(' ','_')
-                dst = dst.replace('__','_')
+                dst =  dst.replace(' ','_')
+                dst =  dst.replace('__','_')
                 try:
                     self.ix.retrieveFileCopy("%s/%s" % (ixload_tmp_dir,item), "%s/%s%s" % (result_folder,prefix,dst))
                 except Exception as err:
@@ -224,7 +224,7 @@ class SubIxLoad(Process):
         self.task_queue.task_done()
 
 
-    def get_test_report(self,prefix=''):
+    def get_test_report(self,prefix='',ignore_not_found=False):
         self.controller.generateReport(detailedReport=1, format="PDF")
         ixload_tmp_dir = self._ixload_tmp_dir()
 

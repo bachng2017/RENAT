@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-08-23 00:00:54 +0900 (Thu, 23 Aug 2018) $
-# $Rev: 1208 $
+# $Date: 2018-08-28 09:19:10 +0900 (Tue, 28 Aug 2018) $
+# $Rev: 1248 $
 # $Ver: $
 # $Author: $
 
@@ -541,14 +541,14 @@ def _fix_data(data):
     return result
 
 
-def collect_data(self,view,prefix="stat_"):
+def collect_data(self,view,prefix=u"stat_"):
     """ Depricated. Use `Get Test Result`
     """
     BuiltIn().log_to_console("WARNING: `Collect Data` is deprecated. Use `Get Test Result instead")
     self.get_test_result(view,prefix)
 
 
-def get_test_result(self,view,prefix="stat_"):
+def get_test_result(self,view,prefix=u"stat_"):
     """ Collects traffic data of a ``view`` and export to a CSV file in
     ``result`` folder 
 
@@ -628,7 +628,7 @@ def collect_all_data(self,prefix="stat_"):
     self.get_all_test_result(prefix)
 
 
-def get_all_test_result(self,prefix="stat_"):
+def get_all_test_result(self,prefix=u"stat_"):
     """ Collects all Ixia traffic data after traffic is stopped. 
 
     Results are CSV files that are stored in ``result`` folder. The prefix ``prefix`` is appended

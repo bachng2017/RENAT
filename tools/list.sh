@@ -1,16 +1,29 @@
 #!/bin/bash
+#
+# $Rev: $
+# $Ver: $
+# $Date: $
+# $Author: $ 
 
-echo "item list:"
+if [ $# -lt 1 ];  then
+  echo "List information about test items in a RENAT project"
+  echo "usage: $0 <project>"
+  exit 1
+fi
+
+BASE=$(basename $1)
+
+echo "all item list in '$BASE':"
 echo "----------"
 COUNT=0
-BASE="."
-for item in $(find $BASE -depth -type f -name "run.sh" | sort); do
-    if [ $item != './run.sh' ]; then
-        ITEM=$(echo $item | sed "s/^$BASE\///g" | sed "s/\/run.sh//g")
-        COMMENT="active"
-        if [ -f $ITEM/main.robot ]; then
-            INFO=$(cat $ITEM/main.robot | grep "^Documentation" | sed 's/^Documentation *//g')
-        fi
+# find all run.sh script
+for item in $(find $1 -depth -type f -name "run.sh" | sort); do
+    ITEM=$(echo $item | sed "s/^$BASE\///g" | sed "s/\/run.sh//g")
+    ROBOT=$(echo $item | sed "s/run.sh/main.robot/g")
+    COMMENT="active"
+    # and make sure there is a main.robot file in the same folder of the run.sh
+    if [ -f $ROBOT ]; then
+        INFO=$(cat $ROBOT | grep "^Documentation" | sed 's/^Documentation *//g')
         printf "%-64s %s %s\n" "$ITEM" "$INFO"
         COUNT=$(expr $COUNT + 1)
     fi
@@ -19,11 +32,10 @@ echo "---"
 echo "total items: $COUNT"
 echo ""
 echo ""
-echo "ignored list:"
+echo "ignored item list in '$BASE':"
 echo "------------"
 COUNT=0
-BASE="."
-for item in $(find $BASE -depth -type f -name ".ignore" | sort); do
+for item in $(find $1 -depth -type f -name ".ignore" | sort); do
     ITEM=$(echo $item | sed "s/^$BASE\///g" | sed "s/\/\.ignore//g")
     COMMENT=$(cat $item)
     printf "%-64s %s\n" $ITEM "$COMMENT"

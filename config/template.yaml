@@ -1,6 +1,6 @@
-# $Rev: 0.1.7 $
-# $Date: 2018-03-20 02:58:07 +0900 (Tue, 20 Mar 2018) $
-# $Author: bachng $
+# $Rev: 167 $
+# $Date: 2017-04-05 12:12:04 +0900 (Wed, 05 Apr 2017) $
+# $Author: $
 
 access-template:
     ssh-host:
@@ -49,24 +49,96 @@ access-template:
         login_prompt: "Login:"
         password_prompt: "Password:"
         init:
-            - environment no more    
+            - environment no more
     samurai:
         access: webapp
         auth: plain-text
         profile: samurai
+    samurai-cli:
+        access: ssh
+        auth: plain-text
+        profile: samurai-cli
+        prompt: "@.*(#)"
+        init: 
+            - unalias -a
+    arbor-sp:
+        access: webapp
+        auth: plain-text
+        profile: arbor
+    arbor-tms:
+        access: webapp
+        auth: plain-text
+        profile: arbor
     smartcs:
         access: telnet
         auth: plain-text
         profile: default
         prompt: ".*(#|>) "
         init:
+    apresia-l2:
+        access: telnet
+        auth: plain-text
+        profile: ap-sw
+        prompt: ".*(#|>) "
+        login_prompt:
+        password_prompt: "login:"
+        init:
+            - "\n"
+    yamaha-l2:
+        access: telnet
+        auth: plain-text
+        profile: ymh
+        prompt: ".*(#|>) "
+        login_prompt:
+        password_prompt: "Password:"
+        init:
+    arbor-sp-cli:
+        access: ssh
+        proxy_cmd: "/usr/bin/ssh -l robot -i ~/.ssh/robot_id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p 10.128.3.101"
+        auth: plain-text
+        profile: arbor
+        prompt: "(:.*#|DIAG>) "
+        init:
+    arbor-tms-cli:
+        access: ssh
+        proxy_cmd: "/usr/bin/ssh -l robot -i ~/.ssh/robot_id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p 10.128.3.101"
+        auth: plain-text
+        profile: arbor
+        prompt: ":.*# "
+        init:
+    sandvine-spb:
+        access: ssh
+        auth: plain-text
+        profile: sandvine-spb
+        prompt: ".*(#|>) "
+        init:
+            -   svcli
+    sandvine-sde:
+        access: ssh
+        auth: plain-text
+        profile: sandvine-sde
+        prompt: ".*(#|>) "
+        init:
+            -   svcli
+    sandvine-pts:
+        access: ssh
+        auth: plain-text
+        profile: sandvine-pts
+        prompt: ".*($|>) "
+        init:
+            -   svcli
+    telnet-host:
+        access: telnet
+        auth: plain-text
+        profile: default
+        prompt: ".*(#|$)"
+
 snmp-template:
        juniper:
-            mib: ${RENAT_PATH}/tools/mib-Juniper.json
+            mib: $RENAT_PATH/tools/mib-Juniper.json
             community: public
             poller: apollo
        cisco:
-            mib: ${RENAT_PATH}/tools/mib-Cisco.json
+            mib: $RENAT_PATH/tools//mib-Cisco.json
             community: public
             poller: apollo
-

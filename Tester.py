@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-08-19 01:04:35 +0900 (Sun, 19 Aug 2018) $
-# $Rev: 1187 $
+# $Date: 2018-09-15 00:20:46 +0900 (Sat, 15 Sep 2018) $
+# $Rev: 1311 $
 # $Ver: $
 # $Author: $
 
@@ -26,16 +26,13 @@ import inspect
 import yaml
 import time
 import Common
+import requests
 try:
     import IxNetwork
 except:
     pass
 try: 
     import SubIxLoad
-except:
-    pass
-try:
-    import BpsRobotLibrary
 except:
     pass
 from datetime import datetime
@@ -113,6 +110,7 @@ module.
         self._clients   = {}
         self._cur_name  = ""
         self._test_id = None
+        self._config_path = None
 
         try:
             BuiltIn().get_library_instance('VChannel')
@@ -174,7 +172,6 @@ module.
         ### IxLoad
         elif type == 'ixload':
             tmp = os.getcwd().split('/')
-            # win_folder = "D:/RENAT/RESULTS/%s_%s" % (tmp[-2],tmp[-1])
             win_case = "%s_%s" % (tmp[-2],tmp[-1])
 
             # start IxLoad in different process
@@ -192,9 +189,15 @@ module.
             results.get()
         ### Breaking point
         elif type == 'ixbps': 
-            ix = BpsRobotLibrary.BpsRobotLibrary()
+            self._base_url = 'https://%s/api/v1' % ip
+            ix = requests.Session()
             auth = Common.GLOBAL['auth']['plain-text'][type]
-            ix.login(chassis=ip,username=auth['user'],password=auth['pass'])
+            headers = {'content-type':'application/json'}
+            payload = '{"username":"%s", "password":"%s"}' % (auth['user'],auth['pass'])
+            result = ix.post( self._base_url + '/auth/session',data=payload,headers=headers,verify=False)
+            if result.status_code != requests.codes.ok:
+                BuiltIn().log(result.text)
+                raise Exception('ERROR: could not login to `%s`' % ip) 
             client['connection'] = ix   
         else:
             raise Exception("ERROR: wrong module type")
@@ -213,7 +216,7 @@ module.
             BuiltIn().log("No valid tester configuration found")
             return True
         for entry in Common.LOCAL['tester']: 
-            BuiltIn().log(entry)
+            BuiltIn().log('Connect to tester `%s`' % entry)
             self.connect(entry) 
 
         BuiltIn().log("Connected to all %d testers" % len(self._clients))

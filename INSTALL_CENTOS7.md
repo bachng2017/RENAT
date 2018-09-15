@@ -131,6 +131,22 @@ Install a typical Centos7 with following parameters:
         systemctl start jenkins
         ```
 
+- configure iptables:
+    By default, Centos7 does not support saving iptables from `service` command. 
+    ```
+    systemctl stop firewalld
+    systemctl disable firewalld
+    yum install -y iptables-services
+    systemctl enable iptables.service
+    systemctl start iptables.service
+    ```
+    
+    Then configure `iptables` to allow necessary ports like `80`,`8082`,`22` and traffic from IxiaAppServer.
+    Or allow access for your whole local network:
+    ```
+    -A INPUT -s 10.128.0.0/16 -j ACCEPT
+    ```
+
 - create Xvfb startup file for Selenium library
     - add a file `xvfb.service` to folder `/etc/systemd/system`
     

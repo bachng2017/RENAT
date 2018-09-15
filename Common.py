@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1243 $
+# $Rev: 1308 $
 # $Ver: $
-# $Date: 2018-08-28 00:09:52 +0900 (Tue, 28 Aug 2018) $
+# $Date: 2018-09-14 11:45:26 +0900 (Fri, 14 Sep 2018) $
 # $Author: $
 
 """ Common library for RENAT
@@ -1341,6 +1341,15 @@ def get_config_value(key,base=u'default'):
         return GLOBAL[base][key]
     return None
 
+
+def log_csv(csv_file,index=False,border=0):
+    """ Logs a content of ``csv_file`` into default log.html
+
+    `index`, `border` are table attributes
+    """
+    df = pandas.read_csv(csv_file)
+    BuiltIn().log(df.to_html(index=index,border=border),html=True)    
+
 # set RF global variables and load libraries
 try:
     
@@ -1354,7 +1363,7 @@ try:
     BuiltIn().set_global_variable('${START_TIME}', START_TIME)
 
     # define Ctrl A-Z
-    for i,char in enumerate(list(string.ascii_uppercase)):
+    for i,char in enumerate(list(string.ascii_uppercase+'[\]^_')):
         BuiltIn().set_global_variable('${CTRL_%s}' % char,chr(int(1+i)))
 
     # set log level
