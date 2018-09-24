@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1308 $
+# $Rev: 1348 $
 # $Ver: $
-# $Date: 2018-09-14 11:45:26 +0900 (Fri, 14 Sep 2018) $
+# $Date: 2018-09-23 07:15:11 +0900 (Sun, 23 Sep 2018) $
 # $Author: $
 
 """ Common library for RENAT
@@ -287,7 +287,7 @@ the test and remove the node from its active node list.
 
 """
 
-ROBOT_LIBRARY_VERSION = 'RENAT 0.1.9'
+ROBOT_LIBRARY_VERSION = 'RENAT 0.1.10'
 
 import os
 import glob,fnmatch
@@ -1350,6 +1350,31 @@ def log_csv(csv_file,index=False,border=0):
     df = pandas.read_csv(csv_file)
     BuiltIn().log(df.to_html(index=index,border=border),html=True)    
 
+
+def wait(wait_time,size=10):
+    """ Waits for `wait-time` and display the proress bar
+
+    `wait_time` used RF `DateTime` format.
+    
+    Examples:
+    | Common.`Wait` | wait_time=30s | size=10 |
+    """
+    wait_sec = DateTime.convert_time(wait_time)
+    length = int(size)
+    # if length > wait_sec: length = int(wait_sec)
+    step = float(wait_sec/length)
+    display = '%3.2fsecs [%%-%ds] %%02d%%%%' % (wait_sec,int(size))
+    del_size = len(display % ('',0)) 
+    BuiltIn().log_to_console(display % ('',0),'STDOUT',True)
+    for i in range(length):
+        BuiltIn().log_to_console('\010'*del_size + display % ('='*i,int(i*100/length)),'STDOUT',True)
+        time.sleep(step)
+    i = length
+    BuiltIn().log_to_console('\010'*del_size + display % ('='*i,int(i*100/length)),'STDOUT',True)
+    # BuiltIn().log_to_console('')
+    BuiltIn().log('Slept `%d` seconds' % wait_sec)
+
+
 # set RF global variables and load libraries
 try:
     
@@ -1362,9 +1387,9 @@ try:
     BuiltIn().set_global_variable('${WEBAPP}', WEBAPP)
     BuiltIn().set_global_variable('${START_TIME}', START_TIME)
 
-    # define Ctrl A-Z
-    for i,char in enumerate(list(string.ascii_uppercase+'[\]^_')):
-        BuiltIn().set_global_variable('${CTRL_%s}' % char,chr(int(1+i)))
+    # define Ctrl @A-Z[\]^_ string
+    for i,char in enumerate(list('@'+string.ascii_uppercase+'[\]^_')):
+        BuiltIn().set_global_variable('${CTRL_%s}' % char,chr(i))
 
     # set log level
     BuiltIn().set_log_level(self.GLOBAL['default']['log-level'])

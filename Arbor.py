@@ -13,12 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-09-14 10:06:20 +0900 (Fri, 14 Sep 2018) $
-# $Rev: 1307 $
+# $Date: 2018-09-23 07:15:11 +0900 (Sun, 23 Sep 2018) $
+# $Rev: 1348 $
 # $Ver: $
 # $Author: $
 
-import os,time
+import os,time,traceback
 import Common
 from WebApp import WebApp
 from robot.libraries.BuiltIn import BuiltIn
@@ -26,6 +26,24 @@ from robot.libraries.BuiltIn import RobotNotRunningError
 from selenium import webdriver
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 import robot.libraries.DateTime as DateTime
+
+
+def _with_reconnect(keyword):
+    """ a local decorator that relogin to the site if it is logout for some
+    reasons
+    """
+    def wrapper(self,*args, **kwargs):
+        count = 0
+        while count < int(Common.GLOBAL['default']['max-retry-for-connect']):
+            try:
+                return keyword(self,*args,**kwargs)
+            except AssertionError as err:
+                BuiltIn().log(traceback.format_exc())
+                BuiltIn().log('Failed to execute the keyword retry once more')
+                count += 1
+                self.reconnect()
+    return wrapper 
+
 
 class Arbor(WebApp):
     """ A library provides functions to control Arbor application
@@ -45,7 +63,9 @@ class Arbor(WebApp):
 
     def __init__(self):
         super(Arbor,self).__init__()
+        self.retry_num = 3
         self.auth = {}
+
 
     def connect_all(self):
         """ Connects to all applications defined in ``local.yaml``
@@ -159,9 +179,8 @@ class Arbor(WebApp):
 
 
     def reconnect(self):
-        """ Reconnect if necessary
+        """ Reconnect to server if necessary
         """
-        # self._driver.reload_page()
         login_element_count = 0
         
         self._driver.reload_page()
@@ -169,10 +188,14 @@ class Arbor(WebApp):
 
         if login_element_count > 0: 
             BuiltIn().log("Try to reconnect to the system")
+            browser_info = self._browsers[self._current_name]
             self.connect(self._current_app, self._current_name)
+            # reconstruct old information
+            self._browsers[self._current_name] = browser_info
             BuiltIn().log("Reconnected to the system by `%s`" % self._current_name)
+        BuiltIn().log("Reload the page without any reconnection")
+    
 
-        
     def login(self):
         """ Logged-into the Arbor application
         """
@@ -182,7 +205,7 @@ class Arbor(WebApp):
         self._driver.click_button('name=Submit')
         time.sleep(5)
 
-    
+    @_with_reconnect 
     def logout(self):
         """ Logs-out the current application, the browser remains
         """
@@ -197,14 +220,11 @@ class Arbor(WebApp):
         """
         self._driver.switch_browser('_arbor_' + name)
         self._current_name = name
-        self.reconnect()
+        # a reconnect here is not good
+        # it clears the previous change of any keyword
+        # self.reconnect()
         BuiltIn().log("Switched the current browser to `%s`" % name)
 
-    
-    def set_count(self,counter=0):
-        """ Sets current counter to ``counter``
-        """
-        pass
     
     def close(self):
         """ Closes the current active browser
@@ -243,7 +263,8 @@ class Arbor(WebApp):
             self._driver.close_browser()
         BuiltIn().log("Closed all Arbor applications")
     
-    
+   
+    @_with_reconnect 
     def show_all_mitigations(self):
         """ Shows all mitigations
         """
@@ -259,14 +280,17 @@ class Arbor(WebApp):
         BuiltIn().log("Displayed all current mitigations")
 
 
+    @_with_reconnect
+    def show_detail_mitigation(self,id,format=u'%010d'):
+        """ Shows detail information of a mitigation 
 
-    def show_detail_mitigation(self,id):
-        """ Shows detail information for a mitigation 
+        `id` is the mitigation ID number and `format` is used to form the
+        mitigation name.
         """
         self.switch(self._current_name)
         self.show_all_mitigations() 
-        xpath = "//a[contains(.,'%010d')]" % int(id)
-        miti_id = "samurai%010d" % int(id)
+        miti_id = format % int(id)
+        xpath = "//a[contains(.,'%s')]" %  miti_id
         self._driver.input_text("search_string_id",miti_id)
         self._driver.click_button("search_button")
         self._driver.wait_until_page_contains_element("xpath=//div[@class='sp_page_content']") 
@@ -274,18 +298,36 @@ class Arbor(WebApp):
         self._driver.wait_until_element_is_visible(xpath)
         self._driver.click_link(xpath)
         time.sleep(5)
-        BuiltIn().log("Showed details of a mitigation")    
-  
+        BuiltIn().log("Showed details of a mitigation `%s`" % id)    
 
+
+    @_with_reconnect
+    def show_detail_countermeasure(self,id,name):
+        """ Shows detail informatin about a countermeasure
+
+        `id` is mitigation ID number and `name` is a countermeasure name that is
+        listed in Arbor Countermeasures panel
+        """
+        self.show_detail_mitigation(id)
+        xpath = '//table//td[(@class="borderright") and (. = "%s")]/../td[1]/a' % name 
+        target = self._driver.get_webelement(xpath)
+        target.click()
+        time.sleep(2)
+
+        BuiltIn().log('Showed detail information for countermesure `%s` of mitigation `%s`' %(name,id)) 
+
+    @_with_reconnect
     def detail_first_mitigation(self):
         BuiltIn().log_to_console('WARN: This keyword is deprecated. Use `Show Detail First Mitigation` instead')
         self.show_detail_first_mitigation()
- 
+
+    @_with_reconnect
     def show_detail_first_mitigation(self):
         """ Shows details about the 1st mitigation on the list
         """
         self.show_detail_mitigation_with_order(1)
 
+    @_with_reconnect
     def show_detail_mitigation_with_order(self,num):
         """ Shows details about `number` mitigation in the current list
 
@@ -299,6 +341,7 @@ class Arbor(WebApp):
         BuiltIn().log("Displayed detail of `%s` mitigation in the list" % num)
 
 
+    @_with_reconnect
     def menu(self,order,wait='2s',capture_all=False,prefix='menu_',suffix='.png',partial_match=False):
         """ Access to Arbor menu
 

@@ -22,7 +22,7 @@ from distutils.dir_util import copy_tree
 
 #
 folder = os.path.dirname(__file__) 
-language = gettext.translation('item',folder+'/locale',fallback=True)
+language = gettext.translation('item_ja_JP',folder+'/locale',fallback=True)
 language.install()
 
 
@@ -55,17 +55,23 @@ if create_local.lower() in ['yes','y']:
         traffic     = input(_('Use tester config file [ex:traffic.ixncfg]:'))
         str_node    = input(_('Use node list (comma separated) [ex:vmx11]:'))
         str_app     = input(_('Use web app list (comma separated)[ex:samurai1]:'))
+        str_hpv     = input(_('Use hypervisor list (comma separated)[ex:esxi-3-15]:'))
     else:
         str_tester  = raw_input(_('Use tester [ex:ixnet03_8009]:'))
         traffic     = raw_input(_('Use tester config file [ex:traffic.ixncfg]:'))
         str_node    = raw_input(_('Use node list (comma separated) [ex:vmx11]:'))
         str_app     = raw_input(_('Use web app list (comma separated)[ex:samurai1]:'))
+        str_hpv     = raw_input(_('Use hypervisor list (comma separated)[ex:esxi-3-15]:'))
 
     ## customize local.yaml
     node_list   = re.split(r'[, ]+',str_node)
     if '' in node_list: node_list.remove('')
     app_list    = re.split(r'[, ]+',str_app)
     if '' in app_list: app_list.remove('')
+    tester_list = re.split(r'[, ]+',str_tester)
+    if '' in tester_list: tester_list.remove('')
+    hpv_list    = re.split(r'[, ]+',str_hpv)
+    if '' in hpv_list: hpv_list.remove('')
 
     ## base copy and necessary symbolic
     shutil.copytree(TEMPLATE, CASE)
@@ -74,16 +80,11 @@ if create_local.lower() in ['yes','y']:
     ## create null config file for nodes:
     for item in node_list: os.system("touch %s/config/%s.conf" % (CASE,item))
     
-    if str_tester == "":    tester_list = []
-    else:                   
-        tester_list = re.split(r'[, ]+',str_tester)
-        if '' in tester_list: tester_list.remove('')
-
     # create traffic file 
     os.system("touch %s/config/%s" % (CASE,traffic))
 
     loader = jinja2.Environment(loader=jinja2.FileSystemLoader(CURDIR)).get_template('local.yaml.tmpl')
-    content = loader.render({'node_list':node_list,'app_list':app_list,'tester_list':tester_list,'traffic':traffic})
+    content = loader.render({'node_list':node_list,'app_list':app_list,'tester_list':tester_list,'traffic':traffic,'hpv_list':hpv_list})
     
     with open(CASE + '/config/local.yaml','w') as f: f.write(content)
 

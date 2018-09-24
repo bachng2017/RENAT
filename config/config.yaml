@@ -1,23 +1,25 @@
 default:
     robot-server: 127.0.0.1
-    robot-password: <password>
+    robot-password: password
     renat-master-folder: $RENAT_PATH/config
     calient-master-path: 
     ntm-master-path: 
-    ixload-tmp-remote: C:/Windows/Temp
+    ixload-tmp-remote: C:/tmp
     max-retry-for-connect: 3
     interval-between-retry: 15
     terminal-timeout: 20m
     cmd-auto-check: False
     newline: "\r"
-    slack-cmd: ${RENAT_PATH}/tools/renat_bot.sh
-    slack-proxy: 127.0.0.1:8888
+    slack-cmd:  $RENAT_PATH/tools/slack.sh
+    slack-proxy: 127.0.0.1
     log-level: TRACE
     ignore-dead-node: FALSE
 
 extra-lib:
-#    - Tester
+    - Tester
+    - Hypervisor 
 #    - OpticalSwitch
 #    - Samurai
 #    - Arbor
+
 

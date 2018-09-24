@@ -2,7 +2,7 @@
 
 . gettext.sh
 
-TEXTDOMAIN=project
+TEXTDOMAIN=project_ja_JP
 TEXTDOMAINDIR=$(dirname $0)/locale
 export TEXTDOMAIN
 export TEXTDOMAINDIR

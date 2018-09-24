@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1297 $
+# $Rev: 1348 $
 # $Ver: $
-# $Date: 2018-09-12 17:34:24 +0900 (Wed, 12 Sep 2018) $
+# $Date: 2018-09-23 07:15:11 +0900 (Sun, 23 Sep 2018) $
 # $Author: $
 
 import os,re,sys
@@ -111,7 +111,6 @@ class VChannel(object):
         self._max_id = 0
         self._snap_buffer = {}
         self._channels = {}
-
 
     @property
     def current_name(self):
@@ -292,9 +291,11 @@ class VChannel(object):
                         home_folder = os.environ.get('HOME')
                         port = 22
                         _cmd = _proxy_cmd.replace('%h',_ip).replace('%p',str(port)).replace('%u',user).replace('~',home_folder)
+                        out = self._ssh.login(_auth['user'],_auth['pass'],proxy_cmd=_cmd)
                     else:
                         _cmd = None
-                    out = self._ssh.login(_auth['user'],_auth['pass'],proxy_cmd=_cmd)
+                        out = self._ssh.login(_auth['user'],_auth['pass'],False)
+                    # out = self._ssh.login(_auth['user'],_auth['pass'],proxy_cmd=_cmd)
                     # out = self._ssh.login(_auth['user'],_auth['pass'],False)
                 if _auth_type == 'public-key':
                     out = self._ssh.login_with_public_key(_auth['user'],_auth['key'])

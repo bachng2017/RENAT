@@ -36,16 +36,25 @@ For details about Robot Framework see [RobotFramework](http://www.robotframework
 ## Features
 The framework provides an simple way to conduct Network Automation Testing by using simple scenario
 
-![Renat scenario sample](doc/renat_sample.png)
+RENAT features:
+- a Robot-framework (RF) library aims to support NW testing with easy-to-write plain-text scenario utilizing all features of current RF
+- supports end-to-end NW testing process in a large scale lab environment
+- highly reusable scenarios with data-logic separated format and well-structured test project/ items
+- supports multi access types to NW appliances including telnet/ssh (ssh proxy) and web access
+- simulates user’s actions, keystrokes in details with virtual terminals
+- conceals common access, logging process to focus on the test’s content easily 
+- supports a wide range of NW devices including routers, switches, L1 optic switch and web appliances out-of-the-shelves
+- supports hypervisors and webMKS
+- flexible  modular and multi-vendors architecture, easy to customize
+- currently supported platforms:
+    - routers/switches: Cisco, Junipers, GR, Alcatel Lucent, Yamaha
+    - L1 switches: Calient, G4NMT
+    - testers: IxiaNetwork, IxiaLoad, IxiaBreakingPoint
+    - hypervisors: VMware
+    - servers: *unix system
+    - others platforms: SmartCS, ArborSP, Samurai (a NTTCOM product)
 
-Feature includes: 
-- An extension of widely used RobotFramework that add more supports for Network Automation Testing
-- Easy to write and read testing scenario
-- Separate testing data and logic
-- Easy to collect logs and activities on testing devices
-- Easy to add vendor-independent keywords for new platforms
-- Support traffic generator (IxNetwork/IxLoad) and L1 Switch (Calient)
-- Extend Selenium library for simple web appliance testing
+![Renat scenario sample](doc/renat_sample.png)
 
 ## Installation
 The following instructions is aimed for Centos 6.x systems. Other system could use the equivalent commands to install necessary packages

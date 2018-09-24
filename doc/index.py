@@ -23,9 +23,11 @@ Optical_:
 Router_:
     Library provides keywords to control routers, includes mod_juniper_ mod , mod_cisco_ mod and mod_gr_ mod
 Tester_:
-    Library provieds keywors to control testers, includes mod_ixnet_ , mod_ixload_ and mod_ixbps_
+    Library provides keywords to control testers, includes mod_ixnet_ , mod_ixload_ and mod_ixbps_
 WebApp_:
     Common library for web application, includes 2 child libraries: Samurai_ and Arbor_
+Hypervisor_:
+    Library provides keywords to control Hypervisor, included mod_vmware_
 
 LabKeyword_:
     Common lab keywords
@@ -60,6 +62,8 @@ Choose each libraries for detail infomration and samples about keywords.
 .. _Arbor:          ./Arbor.html   
 .. _Changes:        ./CHANGES.txt  
 .. _LabKeyword:     ./lab_robot.html
+.. _Hypervisor:     ./Hypervisor.html
+.. _mod_vmware:     ./hpv_mod_vmware.html
 
 """
 ROBOT_LIBRARY_DOC_FORMAT = 'reST'

@@ -21,6 +21,8 @@ $PYTHON_CMD -m robot.libdoc $RENAT_PATH/optic_mod/g4ntm.py html/optic_mod_g4ntm.
 $PYTHON_CMD -m robot.libdoc $RENAT_PATH/WebApp.py html/WebApp.html
 $PYTHON_CMD -m robot.libdoc $RENAT_PATH/Samurai.py html/Samurai.html
 $PYTHON_CMD -m robot.libdoc $RENAT_PATH/Arbor.py html/Arbor.html
+$PYTHON_CMD -m robot.libdoc $RENAT_PATH/Hypervisor.py html/Hypervisor.html
+$PYTHON_CMD -m robot.libdoc $RENAT_PATH/hypervisor_mod/vmware.py html/hpv_mod_vmware.html
 $PYTHON_CMD -m robot.libdoc -F REST -n RENAT ./index.py html/index.html
 $PYTHON_CMD -m robot.libdoc ./lab_robot.py html/lab_robot.html
 # $PYTHON_CMD -m robot.libdoc $RENAT_PATH/CHANGES.txt html/Changes.html

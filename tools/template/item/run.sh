@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# $Date: 2018-08-27 23:36:42 +0900 (Mon, 27 Aug 2018) $
-# $Rev: 1239 $
+# $Date: 2018-09-23 07:15:11 +0900 (Sun, 23 Sep 2018) $
+# $Rev: 1348 $
 # $Author: $
 # usage: ./runsh [-n <num>] <other robot argument>
 
@@ -31,6 +31,7 @@ usage () {
     echo "  -v VAR:VALUE            define a global RF variable ${VAR} with value VALUE"
     echo "  -e TAG                  ignore steps tagged with TAG"
     echo "  -i TAG                  execute only steps tagged with TAG"
+    echo "  -B                      automatically backup result folder with current date information"
     echo ""
     echo "Predefinded global variables:"
     echo "  -v CLEAN                execute CleanUp Result keyword before in Setup step"
@@ -52,6 +53,10 @@ for OPT in "$@"; do
         '-h'|'--help' )
             usage
             exit 1
+            ;;
+        '-B'|'--Backup' )
+            BACKUP=1
+            shift 1
             ;;
         '-d'|'--dir' )
             if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
@@ -137,6 +142,14 @@ process() {
             if [ $INDEX -gt 1 ]; then
                 RESULT_FOLDER="result_$INDEX"
             fi
+
+            # backup result folder if it exists
+            if [ ! -z $BACKUP ] && [ -d $RESULT_FOLDER ]; then
+                echo "Found result folder and make a backup of it"
+                NAME=$(date '+%Y%m%d_%H%M%S')
+                tar czf ${RESULT_FOLDER}_$NAME.tar.gz ${RESULT_FOLDER}
+            fi
+
             robot $PARAM -d ${RESULT_FOLDER} -v MYID:$MYID -v RESULT_FOLDER:$RESULT_FOLDER -v RENAT_PATH:$RENAT_PATH -K off main.robot
             CODE=$?
             RESULT=$(expr $RESULT + $CODE)

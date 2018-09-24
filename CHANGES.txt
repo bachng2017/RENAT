@@ -13,27 +13,33 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1208 $
+# $Rev: 1348 $
 # $Ver: $
-# $Date: 2018-08-23 00:00:54 +0900 (Thu, 23 Aug 2018) $
+# $Date: 2018-09-23 07:15:11 +0900 (Sun, 23 Sep 2018) $
 # $Author: $
 
 RENAT(Robotframework Extension for Network Automation Testing)
 
 == What's new ==
 
-=== 1.9 ===
+=== 0.1.10 ===
+- added Hypervisor module
+- add Wait keyword to Common module
+- fix error when SSHlibrary is not patched for proxy command
+- add option -B to item/run.sh to backup result folder
+
+=== 0.1.9 ===
 - ignored SOCKS setting in WebApp configuration
 - added ftp_proxy in WebApp configuration
 - shifted to SeleniumLibrary (from Selenium2Library)
 - consolidate code to support Python3
 
-=== 1.8 ===
+=== 0.1.8 ===
 - added support for SSH proxy template
 - added Apresia and Yamaha support
 - added Tool module
 
-=== 1.7 ===
+=== 0.1.7 ===
 - added plugin mechanism to add user keywords
 - added G4NTM mod to OpticalSwitch module
 - added QuickTest support to IxNet module
@@ -42,7 +48,7 @@ RENAT(Robotframework Extension for Network Automation Testing)
 - rewrote project and item run scripts
 - modulized optical module and added support for Telescent NTM
 
-=== 1.6 ===
+=== 0.1.6 ===
 - fixed some minor bugs in Japanes codecs
 - enabled IxLoad to reassign ports and added more keyword (Get Test Report)
 - stopped using network drive to exchange files b/w renat server and Windows Ixia client
@@ -60,12 +66,12 @@ RENAT(Robotframework Extension for Network Automation Testing)
 - changed suite/case concept to project/item and their scripts
 - changed OpticalSwitch 'Add' keyword not use 'force' by default
 
-=== 1.5 ===
+=== 0.1.5 ===
 - Added juniper mod.Get File keyword
 - Using \n as default newline char
 - Added ``Get Address`` to mod_juniper
 
-=== 1.4 ===
+=== 0.1.4 ===
 - fix error in case.sh
 - Added step mode for Router.Exec File keyword
 
@@ -83,11 +89,11 @@ RENAT(Robotframework Extension for Network Automation Testing)
 - fix error in case.sh
 - Added step mode for Router.Exec File keyword
 
-=== 1.3 ===
+=== 0.1.3 ===
 - splited Tester into modules
 - added ability to run keywords for module without Xrun
 
-=== 1.2 ===
+=== 0.1.2 ===
 - new for OpticalSwitch module:
    - added Save To File, Load From File, Clear By File keywords
    - added support multi Calient boxes

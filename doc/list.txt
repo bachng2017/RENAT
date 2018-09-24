@@ -16,3 +16,5 @@ Tester
 tester_mod_ixload
 tester_mod_ixnet
 tester_mod_ixbps
+Hypervisor
+hpv_mod_vmware

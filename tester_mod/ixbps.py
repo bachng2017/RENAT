@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-09-15 11:15:16 +0900 (Sat, 15 Sep 2018) $
-# $Rev: 1314 $
+# $Date: 2018-09-21 15:22:52 +0900 (Fri, 21 Sep 2018) $
+# $Rev: 1347 $
 # $Ver: $
 # $Author: $
 
@@ -195,7 +195,7 @@ def wait_until_finish(self,interval='30s',timeout=u'30m',verbose=False):
         service = self._base_url + '/bps/tests/operations/getrts'
         data = {'runid':self._test_id}
         while progress < 100.0 and count < wait_time:
-            result = ix.post(service,json=data)
+            result = ix.post(service,json=data,verify=False)
             if result.status_code != requests.codes.ok:
                 BuiltIn().log(result.text)
                 raise Exception('ERROR: could not get status of the test') 
@@ -265,3 +265,74 @@ def get_test_report(self,report_name='result',format='csv'):
     
     BuiltIn().log("Got test reports by name `%s` with format `%s`" % (report_name,format))
 
+
+def get_card_config(self,slot_num):
+    """ Get card configuration for `slot_num`
+    
+    Parameter:
+    - `slot_num` is `all` or an integer start from 1
+
+    Result is a json formatted string contains the informaition for specific
+    slot or `all` slots. 
+    """
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection'] 
+    service = self._base_url + '/bps/ports/chassisconfig'
+    result = ix.get(service)
+    if result.status_code != requests.codes.ok:
+        BuiltIn().log(result.text)
+        raise Exception('ERROR: could not release ports `%s`' %json.dumps(payload)) 
+
+    jresult = json.loads(result.text)
+    if slot_num in ['all','All','ALL']:
+        card_info = jresult
+    else:
+        card_info = jresult[str(slot_num)]
+    BuiltIn().log('Got slot configuration for slot `%s`' % str(slot_num))
+    return card_info
+
+def get_card_mode(self,slot_num):
+    """ Gets the `mode` of a specific slot
+    """
+    card_info = self.get_card_config(slot_num)
+    result = card_info['mode']
+    BuiltIn().log('Got mode information of card `%s`' % str(slot_num))
+    return result
+    
+
+def set_card_config(self,slot,action=u'mode',param=u'ixload'):
+    """ Changes the configuration of BPS card
+
+        Parameters:
+        - slot:  slot number
+        - action: ``mode`` or ``perfacc``
+        - param: depending on `action`
+
+        Values of `param`:
+        - if `action` is ``mode`` then `param` should be ``ixload``, ``bp`` or ``bpl23`` (BreakingPoint L2/3)     
+        - if `action` is ``perfacc`` then `param` should be ``${TRUE}`` or ``${FALSE}``
+    """
+    set_param = '0' 
+    payload = {}
+    if action == 'mode':
+        if param in ['ixload','IxLoad']:                set_param = 0
+        if param in ['bp','BreakingPoint']:             set_param = 1
+        if param in ['bpl23','BreakingPoint L2/3']:     set_param = 2
+        payload = { 'slot':slot,'action':'mode','mode':set_param }
+    if action == 'perfacc':
+        set_param = param
+        payload = { 'slot':slot,'action':'perfacc','perfacc':set_param }
+
+
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection'] 
+    service = self._base_url + '/bps/ports/operations/changeCardConfig'
+    result = ix.post(service,json=payload,verify=False)
+    if result.status_code != requests.codes.ok:
+        BuiltIn().log(result.text)
+        raise Exception('ERROR: could not release ports `%s`' %json.dumps(payload)) 
+    BuiltIn().log('Changed slot `%d` configuration' % int(slot))
+
+    
+
+    

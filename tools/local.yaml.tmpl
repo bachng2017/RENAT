@@ -4,26 +4,33 @@
 # $Date: 2017-04-19 10:14:50 +0900 (Wed, 19 Apr 2017) $
 # $Author: $
 
-# router, server information
+# router, server setting
 node:
-{% for node in node_list %}
+{%- for node in node_list %}
     {{ node }}:
         device: {{ node }}
         snmp-polling: yes
         follow-remote-log: yes
         mib: 
         tag:
-{% endfor %}
+{%- endfor %}
 
-# web application information
+# web application setting
 webapp:   
-{% for app in app_list %}
+{%- for app in app_list %}
     {{ app }}:
         device: {{ app }}
         browser:
         login_url:
         profile_dir:
-{% endfor %}
+{%- endfor %}
+
+# hypervisor setting
+hypervisor:
+{%- for hpv in hpv_list %}
+   {{ hpv }}: 
+        device: {{ hpv }}
+{%- endfor %}
 
 # L1 switch information
 optic:
@@ -31,11 +38,11 @@ optic:
 
 # tester information
 tester:
-{% for tester in tester_list %}
+{%- for tester in tester_list %}
     {{ tester }}:
         device: {{ tester }}
         config: {{ traffic }}
-{% endfor %}
+{%- endfor %}
 
 # other default information
 default:

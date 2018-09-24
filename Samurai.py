@@ -13,12 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-08-27 18:38:01 +0900 (Mon, 27 Aug 2018) $
-# $Rev: 1238 $
+# $Date: 2018-09-23 09:31:10 +0900 (Sun, 23 Sep 2018) $
+# $Rev: 1352 $
 # $Ver: $
 # $Author: $
 
-import os,time,re
+import os,time,re,traceback
 import lxml.html
 import Common
 from WebApp import WebApp
@@ -28,6 +28,23 @@ from robot.libraries.BuiltIn import RobotNotRunningError
 from SeleniumLibrary import SeleniumLibrary
 from selenium import webdriver
 from selenium.webdriver.common.proxy import Proxy, ProxyType
+
+
+def _with_reconnect(keyword):
+    """ a local decorator that relogin to the site if it is logout for some
+    reasons
+    """
+    def wrapper(self,*args, **kwargs):
+        count = 0
+        while count < int(Common.GLOBAL['default']['max-retry-for-connect']):
+            try:
+                return keyword(self,*args,**kwargs)
+            except AssertionError as err:
+                BuiltIn().log(traceback.format_exc())
+                BuiltIn().log('Failed to execute the keyword retry once more')
+                count += 1
+                self.reconnect()
+    return wrapper
 
 
 class Samurai(WebApp):
@@ -160,6 +177,12 @@ class Samurai(WebApp):
         browser_info['browser']         = browser
         self._browsers[name] = browser_info
 
+    
+    def reconnect(self):
+        """ Reconnects to the server
+        """
+        pass
+
 
     def login(self):
         """ Logs-in into the application
@@ -175,7 +198,7 @@ class Samurai(WebApp):
         
         BuiltIn().log("Logged-in the application")
 
-    
+    @_with_reconnect    
     def logout(self):
         """ Logs-out the current application, the browser remains
         """
@@ -195,11 +218,6 @@ class Samurai(WebApp):
         self._current_name = name
         BuiltIn().log("Switched the current browser to `%s`" % name)
 
-    
-#    def set_count(self,value=0):
-#        """ Sets current screen capture counter to ``value``
-#        """
-#        pass
     
     def close(self):
         """ Closes the current active browser
@@ -227,7 +245,8 @@ class Samurai(WebApp):
             self._driver.close_browser()
         BuiltIn().log("Closed all Samurai applications")
     
-    
+   
+    @_with_reconnect 
     def left_menu(self,menu,locator=None, ignore_first_element=True):
         """ Chooses the left panel menu by its displayed name
 
@@ -284,10 +303,11 @@ class Samurai(WebApp):
         else:
             BuiltIn().log("    Found zero elements")
 
-        BuiltIn().log("Chose menu `%s`" % menu)
+        BuiltIn().log("Chose left menu `%s`" % menu)
         return item_list
   
- 
+
+    @_with_reconnect 
     def start_mitigation(self,policy,prefix,comment="mitigation started by RENAT",device=None,force=False):
         """ Starts a mitigation with specific ``prefix``
 
@@ -352,7 +372,8 @@ class Samurai(WebApp):
         BuiltIn().log("Started a new mitigation id=`%s` by device `%s`" % (result,applied_device))
         return (result,applied_device)
  
-    
+   
+    @_with_reconnect 
     def stop_mitigation(self,id,stop_when_error=True):
         """ Stops a mitigation by its ID
 
@@ -378,14 +399,14 @@ class Samurai(WebApp):
             else:
                 BuiltIn().log_to_console("WARN: failed to stop mitgation %s but continue" % id)
 
-    
+   
+    @_with_reconnect 
     def add_user(self,group,**user_info): 
         """ Adds user to the current group
         ``user_info`` is a dictionary contains user information that has
         following keys: ``name``, ``password``, ``privilege`` and ``policy``
 
-        ``privilege`` is existed privilege that has been created (e.g:
-_system_admin_. 
+        ``privilege`` is existed privilege that has been created (e.g: _system_admin_. 
         
         ``policy`` could be ``*`` for all current policies or a list of policy
         names that are binded to this user.
@@ -426,6 +447,7 @@ _system_admin_.
         BuiltIn().log("Added user `%s`" % user_info['name']) 
         
 
+    @_with_reconnect
     def delete_user(self,group,*user_list):
         """ Deletes user from the user group
    
@@ -446,18 +468,15 @@ _system_admin_.
         self._driver.wait_until_page_contains(u"ユーザ管理")
         items,selected_items = self.select_items_in_table("//tr/td[3]","../td[1]",*user_list)
         if len(selected_items) > 0:
-            # self._driver.click_button(u"//input[contains(@value,'削除')]")
             self._driver.click_button(u"//input[@value='削除']")
-            # self.capture_screenshot()
-            # self._driver.click_button(u"//input[@name='delete']")
             self._driver.confirm_action()
-            # self.capture_screenshot()
             self._driver.wait_until_page_contains_element(u"//span[contains(.,'ユーザを削除しました')]")
 
         BuiltIn().log("Deleted %d user" % len(selected_items))
         return len(selected_items)    
 
 
+    @_with_reconnect
     def make_item_map(self,xpath):
         """ Makes a item/webelement defined `xpath`
         
@@ -480,60 +499,7 @@ _system_admin_.
         return item_map
 
 
-
-#     def click_buttons_in_table(self,xpath,xpath2,*item_list):
-#         """ Clicks buttons in Samurai table by xpath
-#         
-#         ``xpath`` points to the column that used as key and ``xpath2`` is the
-#         relative xpath contains the button column.
-# 
-#         ``item_list`` is a list of item that need to check. Item in the list
-#         could be a regular expresion with the format ``reg=<regular
-#         expression``.
-# 
-#         The keyword is called with assuming that the table is already visible.
-# 
-#         Returns the tupple of all items and selected items
-# 
-#         *Note:* Non-width-space (\u200b) will be take care by the keyword.
-#     
-#         *Note:* if the first item_list is `*` then the keywork will try to click
-#         a link named `すべてを選択`.
-#         """
-# 
-#         BuiltIn().log("Trying to click %d buttons in the table" % len(item_list))
-# 
-#         item_map  = self.make_item_map(xpath)
-#         if item_list[0] == '*':
-#             self._driver.click_link(u"すべてを選択")
-#             count = len(item_map)
-#             result_map = item_map
-#         else:  
-#             key_list = [] 
-#             for item in item_list:
-#                 if item.startswith('reg='):
-#                     pattern = item.split('=')[1]
-#                     re_match = re.compile(pattern)
-#                     key_list += [k for k in item_map if re_match.match(k)] 
-#                 else:
-#                     key_list.append(item)
-# 
-#             result_map = {} 
-#             for k in key_list:
-#                 if k in item_map: 
-#                     BuiltIn().log("    Found item `%s`" % k)
-#                     result_map[k] = item_map[k]
-#         count = len(result_map)
-#         # if count == 0:
-#         #    raise Exception("ERROR: Could not found any item in the table")
-#         for item in result_map:
-#              = result_map[item].find_element_by_xpath(xpath2) 
-#             self._driver.click_element(checkbox)
-# 
-#         BuiltIn().log("Selected %d/%d items in the table" % (len(result_map),len(item_map)))
-
-
-
+    @_with_reconnect
     def select_items_in_table(self,xpath,xpath2,*item_list):
         """ Checks items in Samurai table by xpath
         
@@ -541,7 +507,7 @@ _system_admin_.
         relative xpath contains the target column.
 
         ``item_list`` is a list of item that need to check. Item in the list
-        could be a regular expresion with the format ``reg=<regular
+        could be a regular expresion with the format ``re:<regular
         expression>``.
 
         The keyword is called with assuming that the table is already visible.
@@ -579,8 +545,8 @@ _system_admin_.
                     action = 'click'
                 else:
                     action = tmp[1]
-                if tmp[0].startswith('reg='):
-                    pattern = tmp[0].split('=')[1]
+                if tmp[0].startswith('re:'):
+                    pattern = tmp[0].split(':')[1]
                     re_match = re.compile(pattern)
                     for k in item_map:
                         if re_match.match(k):
@@ -622,7 +588,7 @@ _system_admin_.
         return (item_map,result_map)
 
 
-
+    @_with_reconnect
     def show_policy_basic(self,policy_name):
         """ Makes the virtual browser show basic setting of the policy `name`.
 
@@ -640,7 +606,8 @@ _system_admin_.
         self._driver.click_element(button)
         BuiltIn().log("Showed basic setting of the policy `%s`" % policy_name)
 
-    
+   
+    @_with_reconnect 
     def show_policy_mitigation(self,policy_name):
         """ Make the virtual browser show the mitigation setting of a policy
 
@@ -664,6 +631,7 @@ _system_admin_.
         BuiltIn().log("Showed mitigation setting of the policy `%s`" % policy_name)
 
 
+    @_with_reconnect
     def show_policy_mo(self,policy_name):
         """ Make the virtual browser show the MO setting of a policy
 
@@ -697,6 +665,7 @@ _system_admin_.
         BuiltIn().log("Showed mitigation setting of the policy `%s`" % policy_name)
 
 
+    @_with_reconnect
     def show_policy_monitor(self,policy_name):
         """ Make a virtual browser show the mitigation setting of a policy
 
@@ -719,7 +688,8 @@ _system_admin_.
 
         BuiltIn().log("Showed NW monitoring setting of the policy `%s`" % policy_name)
 
-       
+      
+    @_with_reconnect 
     def edit_policy(self,**policy):
         """ Edits a Samurai policy
 
@@ -804,6 +774,7 @@ _system_admin_.
         BuiltIn().log("Changed setting for the policy `%s`" % policy_name)
 
 
+    @_with_reconnect
     def add_policy(self,**policy):
         """ Adds a new Samurai policy
         
@@ -871,6 +842,9 @@ _system_admin_.
         # basic 
         BuiltIn().log("### Basic setting ###")
         self._driver.click_button(u"//input[@value='ポリシーの追加']")
+        # if the policy number reached its limit, no more policy is addable
+        
+        self._driver.wait_until_element_is_visible("policy_name")
         self._driver.input_text("policy_name", policy['name'])
         if 'basic_alias' in policy: 
             self._driver.input_text("alias_name1", policy['basic_alias'])
@@ -1035,7 +1009,7 @@ _system_admin_.
         BuiltIn().log("Added a Samurai policy named `%s`" % policy['name'])
          
 
-
+    @_with_reconnect
     def change_policy_view_group(self,name,*group_name):
         """ Changes the groups that could see this policy
 
@@ -1073,6 +1047,7 @@ _system_admin_.
         BuiltIn().log("Changed the groups that could see this policy")
 
 
+    @_with_reconnect
     def delete_policy(self,*policy_names):
         """ Deletes poilcies by their names
 
@@ -1097,6 +1072,7 @@ _system_admin_.
         return len(selected_items)
 
 
+    @_with_reconnect
     def add_policy_group(self,group_name,policy_list="*",limit_bps="4000000000",limit_pps="2700000"):
         """ Add a new policy group
 
@@ -1131,6 +1107,7 @@ _system_admin_.
         BuiltIn().log("Added policy group '%s' and bound it to %d policies" % (group_name,count))
 
 
+    @_with_reconnect
     def delete_policy_group(self,*group_list):
         """ Deletes policy groups
     
@@ -1150,6 +1127,7 @@ _system_admin_.
         return len(selected_items)
         
 
+    @_with_reconnect
     def click_all_elements(self,xpath):
         """ Click all element in current page defined by ``xpath``
 
@@ -1162,6 +1140,7 @@ _system_admin_.
         return len(items)
 
 
+    @_with_reconnect
     def show_detail_mitigation(self,id):
         """ Shows detail information of a mitigation
         """
@@ -1182,6 +1161,7 @@ _system_admin_.
         BuiltIn().log("Closed the current window")
 
 
+    @_with_reconnect
     def select_window(self,title):
         """ Selects a window by its title
         """
@@ -1192,6 +1172,7 @@ _system_admin_.
         BuiltIn().log("Selected window `%s`" % title)
 
 
+    @_with_reconnect
     def get_mitigation_list(self,status=u'実行中'):
         """ Gets current mitigation list
 
@@ -1218,7 +1199,8 @@ _system_admin_.
             BuiltIn().log("No active mitigations found")
         return result,result_ids,len(result)
 
-    
+   
+    @_with_reconnect 
     def edit_mitigation_controller(self,controller,**config):
         """ Change the setting of the mitigation control
     
