@@ -13,14 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-09-23 07:15:11 +0900 (Sun, 23 Sep 2018) $
-# $Rev: 1348 $
+# $Date: 2018-09-25 20:21:01 +0900 (Tue, 25 Sep 2018) $
+# $Rev: 1367 $
 # $Ver: $
 # $Author: $
 
 import os,time,traceback
 import Common
-from WebApp import WebApp
+from WebApp import WebApp,with_reconnect
 from robot.libraries.BuiltIn import BuiltIn
 from robot.libraries.BuiltIn import RobotNotRunningError
 from selenium import webdriver
@@ -28,33 +28,19 @@ from selenium.webdriver.common.proxy import Proxy, ProxyType
 import robot.libraries.DateTime as DateTime
 
 
-def _with_reconnect(keyword):
-    """ a local decorator that relogin to the site if it is logout for some
-    reasons
-    """
-    def wrapper(self,*args, **kwargs):
-        count = 0
-        while count < int(Common.GLOBAL['default']['max-retry-for-connect']):
-            try:
-                return keyword(self,*args,**kwargs)
-            except AssertionError as err:
-                BuiltIn().log(traceback.format_exc())
-                BuiltIn().log('Failed to execute the keyword retry once more')
-                count += 1
-                self.reconnect()
-    return wrapper 
-
 
 class Arbor(WebApp):
     """ A library provides functions to control Arbor application
 
-    The library utilize `Selenium2Library` and adds more functions to control
+    The library utilize `SeleniumLibrary` and adds more functions to control
     Arbor application easily.
 
     See [./WebApp.html|WebApp] for common keywords of web applications.
 
-    `Selenium2Library` keywords still could be used along with this library.
-    See [http://robotframework.org/Selenium2Library/Selenium2Library.html|Selenium2Library] for more details.
+    `SeleniumLibrary` keywords still could be used along with this library.
+    See [http://robotframework.org/SeleniumLibrary/SeleniumLibrary.html|SeleniumLibrary] for more details.
+
+    *Notes*: From 0.1.10, move from `Selenium2Library` to `SeleniumLibrary`
     """
 
     ROBOT_LIBRARY_SCOPE = 'TEST SUITE'
@@ -197,7 +183,7 @@ class Arbor(WebApp):
     
 
     def login(self):
-        """ Logged-into the Arbor application
+        """ Logs into the Arbor application
         """
         self.switch(self._current_name) 
         self._driver.input_text('name=username', self.auth['username'])
@@ -205,7 +191,7 @@ class Arbor(WebApp):
         self._driver.click_button('name=Submit')
         time.sleep(5)
 
-    @_with_reconnect 
+    @with_reconnect 
     def logout(self):
         """ Logs-out the current application, the browser remains
         """
@@ -264,7 +250,7 @@ class Arbor(WebApp):
         BuiltIn().log("Closed all Arbor applications")
     
    
-    @_with_reconnect 
+    @with_reconnect 
     def show_all_mitigations(self):
         """ Shows all mitigations
         """
@@ -280,68 +266,90 @@ class Arbor(WebApp):
         BuiltIn().log("Displayed all current mitigations")
 
 
-    @_with_reconnect
-    def show_detail_mitigation(self,id,format=u'%010d'):
-        """ Shows detail information of a mitigation 
+    @with_reconnect
+    def show_detail_mitigation(self,search_str):
+        """ Shows detail information of a mitigation by its `search_str`
 
-        `id` is the mitigation ID number and `format` is used to form the
-        mitigation name.
+        *Note*: the result could include multi mitigations
         """
-        self.switch(self._current_name)
         self.show_all_mitigations() 
-        miti_id = format % int(id)
-        xpath = "//a[contains(.,'%s')]" %  miti_id
-        self._driver.input_text("search_string_id",miti_id)
+        xpath = "//a[contains(.,'%s')]" %  search_str
+        self._driver.input_text("search_string_id",search_str)
         self._driver.click_button("search_button")
         self._driver.wait_until_page_contains_element("xpath=//div[@class='sp_page_content']") 
 
         self._driver.wait_until_element_is_visible(xpath)
         self._driver.click_link(xpath)
         time.sleep(5)
-        BuiltIn().log("Showed details of a mitigation `%s`" % id)    
+        BuiltIn().log("Showed details of a mitigation searched by `%s`" % search_str)    
 
 
-    @_with_reconnect
-    def show_detail_countermeasure(self,id,name):
+    @with_reconnect
+    def show_detail_countermeasure(self,name,*method_list):
         """ Shows detail informatin about a countermeasure
 
-        `id` is mitigation ID number and `name` is a countermeasure name that is
-        listed in Arbor Countermeasures panel
+        `name` is used to search the the mitigation and `method_list` is a list
+        of countermeasures that are listed in Arbor Countermeasures panel
+
+        Example:
+        | ${NAME}  |   ${ID}=   |       `Show Detail First Mitigation` |
+        | Arbor.`Show Detail Countermeasure` | ${NAME} | DNS Malformed |
+        | Arbor.`Capture Screenshot` |
+        | Sleep  | 10s |
+        | Arbor.`Show Detail Countermeasure` | ${NAME} |  Zombie Detection | HTTP Malformed |  
+        | Arbor.`Capture Screenshot` |
         """
-        self.show_detail_mitigation(id)
-        xpath = '//table//td[(@class="borderright") and (. = "%s")]/../td[1]/a' % name 
-        target = self._driver.get_webelement(xpath)
-        target.click()
-        time.sleep(2)
+        self.show_detail_mitigation(name)
+        for item in method_list:
+            xpath = '//table//td[(@class="borderright") and (. = "%s")]/../td[1]/a' % item
+            target = self._driver.get_webelement(xpath)
+            target.click()
+            time.sleep(2)
+        BuiltIn().log('Showed detail information for %d countermesure of mitigation `%s`' %(len(method_list),name)) 
 
-        BuiltIn().log('Showed detail information for countermesure `%s` of mitigation `%s`' %(name,id)) 
 
-    @_with_reconnect
+    @with_reconnect
     def detail_first_mitigation(self):
         BuiltIn().log_to_console('WARN: This keyword is deprecated. Use `Show Detail First Mitigation` instead')
-        self.show_detail_first_mitigation()
+        return self.show_detail_first_mitigation()
 
-    @_with_reconnect
+    @with_reconnect
     def show_detail_first_mitigation(self):
         """ Shows details about the 1st mitigation on the list
+    
+        The keyword returns the `mitigation ID` and its name
         """
-        self.show_detail_mitigation_with_order(1)
+        name,id = self.show_detail_mitigation_with_order(1)
+        return name,id
 
-    @_with_reconnect
-    def show_detail_mitigation_with_order(self,num):
-        """ Shows details about `number` mitigation in the current list
 
-        `number` is counted from 1
+    @with_reconnect
+    def show_detail_mitigation_with_order(self,order):
+        """ Shows details about the `order`(th) mitigation in the current list
+
+        `order` is counted from 1. 
+        The keyword returns the mitigation_id and its name
+        
+        Example:
+        | ${NAME} |  ${ID}= | Arbor.`Show Detail Mitigation With Order` | 3 |
+        | Log To Console  |   ${NAME}:${ID} |
+        | Arbor.`Capture Screenshot` |
         """
         self.switch(self._current_name)
         self.show_all_mitigations() 
         # ignore the header line
-        self._driver.click_link("xpath=//table[1]//tr[%s]/td[%s]//a[1]" % (int(num)+1,2))
+        xpath = '//table[1]//tr[%s]/td[%s]//a[1]' % (int(order)+1,2)
+        link = self._driver.get_webelement(xpath)
+        mitigation_name = link.get_attribute('innerText')
+        href=link.get_attribute('href')
+        mitigation_id = href.split('&')[1].split('=')[1] 
+        self._driver.click_link(xpath)
         time.sleep(5)
-        BuiltIn().log("Displayed detail of `%s` mitigation in the list" % num)
+        BuiltIn().log("Displayed detail of `%s`th mitigation in the list" % order)
+        return mitigation_name,mitigation_id
 
 
-    @_with_reconnect
+    @with_reconnect
     def menu(self,order,wait='2s',capture_all=False,prefix='menu_',suffix='.png',partial_match=False):
         """ Access to Arbor menu
 
@@ -361,7 +369,7 @@ class Arbor(WebApp):
         | Arbor.`Capture Screenshot` |
         | Arbor.`Menu`               |          order=System/Status/Deployment Status |
         | Arbor.`Capture Screenshot` |
-        | Arbor.`Menu`               |          order=System/Status/Signaling Status/Appliance Status | partial_match=${TRUE}
+        | Arbor.`Menu`               |          order=System/Status/Signaling Status/Appliance Status | partial_match=${TRUE} |
         | Arbor.`Capture Screenshot` |
         """
         self.switch(self._current_name)

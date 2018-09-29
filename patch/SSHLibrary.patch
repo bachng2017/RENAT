@@ -1,49 +1,151 @@
 diff -uprN SSHLibrary.org/abstractclient.py SSHLibrary/abstractclient.py
---- SSHLibrary.org/abstractclient.py	2018-08-28 01:24:29.818487919 +0900
-+++ SSHLibrary/abstractclient.py	2018-08-24 11:04:18.296360980 +0900
-@@ -116,7 +116,7 @@ class AbstractSSHClient(object):
+--- SSHLibrary.org/abstractclient.py	2018-09-24 23:46:17.945025361 +0900
++++ SSHLibrary/abstractclient.py	2018-09-25 00:17:16.146369563 +0900
+@@ -115,7 +115,7 @@ class AbstractSSHClient(object):
          self._shell = None
          self.client.close()
  
 -    def login(self, username, password, delay=None, look_for_keys=False):
-+    def login(self, username, password, delay=None, look_for_keys=False, proxy_cmd=None):
++    def login(self, username, password, delay=None, look_for_keys=False,proxy_cmd=None):
          """Logs into the remote host using password authentication.
  
          This method reads the output from the remote host after logging in,
-@@ -144,7 +144,7 @@ class AbstractSSHClient(object):
+@@ -136,6 +136,8 @@ class AbstractSSHClient(object):
+             available public keys for login. This will also enable ssh agent.
+             This option in ignored in Jython.
+ 
++        :param str proxy_cmd: Proxy command 
++
+         :raises SSHClientException: If logging in failed.
+ 
+         :returns: The read output from the server.
+@@ -143,7 +145,7 @@ class AbstractSSHClient(object):
          username = self._encode(username)
          password = self._encode(password)
          try:
 -            self._login(username, password, look_for_keys=look_for_keys)
-+            self._login(username, password, look_for_keys=look_for_keys, proxy_cmd=proxy_cmd)
++            self._login(username, password, look_for_keys=look_for_keys,proxy_cmd=proxy_cmd)
          except SSHClientException:
              raise SSHClientException("Authentication failed for user '%s'."
-                                      % self._decode(username))
+                                      % username)
+@@ -164,7 +166,7 @@ class AbstractSSHClient(object):
+             return self.read_until_prompt()
+         return self.read(delay)
+ 
+-    def login_with_public_key(self, username, keyfile, password, delay=None):
++    def login_with_public_key(self, username, keyfile, password, delay=None, proxy=None):
+         """Logs into the remote host using the public key authentication.
+ 
+         This method reads the output from the remote host after logging in,
+@@ -183,6 +185,8 @@ class AbstractSSHClient(object):
+             the output after logging in. The delay is only effective if
+             the prompt is not set.
+ 
++        :param str proxy_cmd : Proxy command
++
+         :raises SSHClientException: If logging in failed.
+ 
+         :returns: The read output from the server.
+diff -uprN SSHLibrary.org/javaclient.py SSHLibrary/javaclient.py
+--- SSHLibrary.org/javaclient.py	2018-09-24 23:46:17.945025361 +0900
++++ SSHLibrary/javaclient.py	2018-09-25 01:42:40.637918587 +0900
+@@ -41,11 +41,11 @@ class JavaSSHClient(AbstractSSHClient):
+     def enable_logging(logfile):
+         return False
+ 
+-    def _login(self, username, password, look_for_keys='ignored'):
++    def _login(self, username, password, look_for_keys='ignored',proxy_cmd=None):
+         if not self.client.authenticateWithPassword(username, password):
+             raise SSHClientException
+ 
+-    def _login_with_public_key(self, username, key_file, password):
++    def _login_with_public_key(self, username, key_file, password, proxy_cmd=None):
+         try:
+             success = self.client.authenticateWithPublicKey(username,
+                                                             File(key_file),
 diff -uprN SSHLibrary.org/library.py SSHLibrary/library.py
---- SSHLibrary.org/library.py	2018-08-28 01:24:29.818487919 +0900
-+++ SSHLibrary/library.py	2018-08-24 12:59:26.301452704 +0900
-@@ -817,7 +817,7 @@ class SSHLibrary(object):
-             self._log(str(c), self._config.loglevel)
+--- SSHLibrary.org/library.py	2018-09-24 23:46:17.926025657 +0900
++++ SSHLibrary/library.py	2018-09-25 00:29:21.741102200 +0900
+@@ -28,7 +28,6 @@ __version__ = VERSION
+ 
+ plural_or_not = lambda count: '' if count == 1 else 's'
+ 
+-
+ class SSHLibrary(object):
+     """Robot Framework test library for SSH and SFTP.
+ 
+@@ -766,7 +765,7 @@ class SSHLibrary(object):
+             self._info(str(c))
          return configs
  
 -    def login(self, username, password, delay='0.5 seconds'):
-+    def login(self, username, password, delay='0.5 seconds', proxy_cmd=None):
-         """Logs into the SSH server with the given ``username`` and ``password``.
++    def login(self, username, password, delay='0.5 seconds',proxy_cmd=None):
+         """Logs into the SSH server with the given `username` and `password`.
  
          Connection must be opened before using this keyword.
-@@ -839,7 +839,7 @@ class SSHLibrary(object):
-         | ${output}=        | `Login`          | johndoe          | secretpasswd |
-         | `Should Contain`  | ${output}        | johndoe@linux:~$ |
+@@ -775,7 +774,8 @@ class SSHLibrary(object):
+         If the [#Default prompt|prompt is set], everything until the prompt
+         is read. Otherwise the output is read using the `Read` keyword with
+         the given `delay`. The output is logged using the [#Default loglevel|
+-        default log level].
++        default log level]. The `proxy_cmd` is used when connecting to a SSH 
++        proxy
+ 
+         Example that logs in and returns the output:
+         | Open Connection | linux.server.com |
+@@ -789,10 +789,10 @@ class SSHLibrary(object):
+ 
+         Argument `delay` was added in SSHLibrary 2.0.
          """
 -        return self._login(self.current.login, username, password, delay)
 +        return self._login(self.current.login, username, password, delay, False, proxy_cmd)
  
      def login_with_public_key(self, username, keyfile, password='',
-                               allow_agent=False, look_for_keys=False,
+-                              delay='0.5 seconds'):
++                              delay='0.5 seconds',proxy_cmd=None):
+         """Logs into the SSH server using key-based authentication.
+ 
+         Connection must be opened before using this keyword.
+@@ -804,6 +804,8 @@ class SSHLibrary(object):
+ 
+         `password` is used to unlock the `keyfile` if unlocking is required.
+ 
++        `proxy_cmd` is used to connect to a SSH Proxy server
++
+         This keyword reads, returns and logs the server output after logging in.
+         If the [#Default prompt|prompt is set], everything until the prompt
+         is read. Otherwise the output is read using the `Read` keyword with
+@@ -822,7 +824,7 @@ class SSHLibrary(object):
+         Argument `delay` was added in SSHLibrary 2.0.
+         """
+         return self._login(self.current.login_with_public_key, username,
+-                           keyfile, password, delay)
++                           keyfile, password, delay, proxy_cmd)
+ 
+     def _login(self, login_method, username, *args):
+         self._info("Logging into '%s:%s' as '%s'."
 diff -uprN SSHLibrary.org/pythonclient.py SSHLibrary/pythonclient.py
---- SSHLibrary.org/pythonclient.py	2018-08-28 01:24:29.818487919 +0900
-+++ SSHLibrary/pythonclient.py	2018-08-24 13:00:10.478453290 +0900
-@@ -66,9 +66,21 @@ class PythonSSHClient(AbstractSSHClient)
+--- SSHLibrary.org/pythonclient.py	2018-09-24 23:46:17.967025030 +0900
++++ SSHLibrary/pythonclient.py	2018-09-25 00:31:07.936454808 +0900
+@@ -48,12 +48,17 @@ def _custom_log(self, level, msg, *args)
+ paramiko.sftp_client.SFTPClient._orig_log = paramiko.sftp_client.SFTPClient._log
+ paramiko.sftp_client.SFTPClient._log = _custom_log
+ 
++# 
++# class AllowAnythingPolicy(paramiko.MissingHostKeyPolicy):
++#    def missing_host_key(self, client, hostname, key):
++#        return
+ 
+ class PythonSSHClient(AbstractSSHClient):
+ 
+     def _get_client(self):
+         client = paramiko.SSHClient()
+         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
++        # client.set_missing_host_key_policy(AllowAnythingPolicy())
+         return client
+ 
+     @staticmethod
+@@ -61,18 +66,40 @@ class PythonSSHClient(AbstractSSHClient)
          paramiko.util.log_to_file(path)
          return True
  
@@ -51,10 +153,10 @@ diff -uprN SSHLibrary.org/pythonclient.py SSHLibrary/pythonclient.py
 +    def _login(self, username, password, look_for_keys=False, proxy_cmd=None):
          try:
 -            self.client.connect(self.config.host, self.config.port, username,
-+    #        self.client.connect(self.config.host, self.config.port, username,
-+    #                            password, look_for_keys=look_for_keys,
-+    #                            allow_agent=look_for_keys,
-+    #                            timeout=float(self.config.timeout))
++            # self.client.connect(self.config.host, self.config.port, username,
++            #                    password, look_for_keys=look_for_keys,
++            #                    allow_agent=look_for_keys,
++            #                    timeout=float(self.config.timeout))
 +            if proxy_cmd:
 +                proxy = paramiko.ProxyCommand(proxy_cmd)
 +                self.client.connect(self.config.host, self.config.port, username,
@@ -67,3 +169,24 @@ diff -uprN SSHLibrary.org/pythonclient.py SSHLibrary/pythonclient.py
                                  password, look_for_keys=look_for_keys,
                                  allow_agent=look_for_keys,
                                  timeout=float(self.config.timeout))
++            
+         except paramiko.AuthenticationException:
+             raise SSHClientException
+ 
+-    def _login_with_public_key(self, username, key_file, password):
++    def _login_with_public_key(self, username, key_file, password, proxy_cmd=None):
+         try:
+-            self.client.connect(self.config.host, self.config.port, username,
++            # self.client.connect(self.config.host, self.config.port, username,
++            #                    password, key_filename=key_file,
++            #                    allow_agent=False, timeout=float(self.config.timeout))
++            if proxy_cmd:
++                proxy = paramiko.ProxyCommand(proxy_cmd)
++                self.client.connect(self.config.host, self.config.port, username,
++                                password, key_filename=key_file,
++                                allow_agent=False, timeout=float(self.config.timeout), sock=proxy)
++            else:
++                self.client.connect(self.config.host, self.config.port, username,
+                                 password, key_filename=key_file,
+                                 allow_agent=False, timeout=float(self.config.timeout))
+         except paramiko.AuthenticationException:

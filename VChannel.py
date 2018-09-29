@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1348 $
+# $Rev: 1377 $
 # $Ver: $
-# $Date: 2018-09-23 07:15:11 +0900 (Sun, 23 Sep 2018) $
+# $Date: 2018-09-27 10:29:34 +0900 (Thu, 27 Sep 2018) $
 # $Author: $
 
 import os,re,sys
@@ -281,10 +281,11 @@ class VChannel(object):
                 channel_info['local_id']    = local_id
     
     
-            ### SSH plain-text
+            ### SSH
             if _access == 'ssh':
                 out = ""
                 local_id = self._ssh.open_connection(_ip,alias=name,term_type='vt100',width=w,height=h,timeout=_timeout)
+                # SSH with plaintext
                 if _auth_type == 'plain-text':
                     if _proxy_cmd:
                         user        = os.environ.get('USER')
@@ -295,10 +296,14 @@ class VChannel(object):
                     else:
                         _cmd = None
                         out = self._ssh.login(_auth['user'],_auth['pass'],False)
-                    # out = self._ssh.login(_auth['user'],_auth['pass'],proxy_cmd=_cmd)
-                    # out = self._ssh.login(_auth['user'],_auth['pass'],False)
+
+                # SSH with publick-key
                 if _auth_type == 'public-key':
-                    out = self._ssh.login_with_public_key(_auth['user'],_auth['key'])
+                    if 'pass' in _auth:
+                        pass_phrase = _auth['pass']
+                    else:
+                        pass_phrase = None
+                    out = self._ssh.login_with_public_key(_auth['user'],_auth['key'],pass_phrase)
     
                 # allocate new channel id
                 id = self._max_id + 1
@@ -882,7 +887,7 @@ class VChannel(object):
         Examples:
             | ${router_ip}= | Router.`Get IP` |
         """
-        name    = self._cur_name
+        name    = self._current_name
         node    = Common.LOCAL['node'][name]
         dev     = node['device']
         ip      = Common.GLOBAL['device'][dev]['ip']

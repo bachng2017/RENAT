@@ -13,15 +13,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-09-23 09:31:10 +0900 (Sun, 23 Sep 2018) $
-# $Rev: 1352 $
+# $Date: 2018-09-25 10:11:46 +0900 (Tue, 25 Sep 2018) $
+# $Rev: 1358 $
 # $Ver: $
 # $Author: $
 
 import os,time,re,traceback
 import lxml.html
 import Common
-from WebApp import WebApp
+from decorator import decorate
+from WebApp import WebApp,with_reconnect
 from robot.libraries.BuiltIn import BuiltIn
 from robot.libraries.BuiltIn import RobotNotRunningError
 # from Selenium2Library import Selenium2Library
@@ -29,22 +30,6 @@ from SeleniumLibrary import SeleniumLibrary
 from selenium import webdriver
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 
-
-def _with_reconnect(keyword):
-    """ a local decorator that relogin to the site if it is logout for some
-    reasons
-    """
-    def wrapper(self,*args, **kwargs):
-        count = 0
-        while count < int(Common.GLOBAL['default']['max-retry-for-connect']):
-            try:
-                return keyword(self,*args,**kwargs)
-            except AssertionError as err:
-                BuiltIn().log(traceback.format_exc())
-                BuiltIn().log('Failed to execute the keyword retry once more')
-                count += 1
-                self.reconnect()
-    return wrapper
 
 
 class Samurai(WebApp):
@@ -198,7 +183,7 @@ class Samurai(WebApp):
         
         BuiltIn().log("Logged-in the application")
 
-    @_with_reconnect    
+    @with_reconnect    
     def logout(self):
         """ Logs-out the current application, the browser remains
         """
@@ -246,7 +231,7 @@ class Samurai(WebApp):
         BuiltIn().log("Closed all Samurai applications")
     
    
-    @_with_reconnect 
+    @with_reconnect 
     def left_menu(self,menu,locator=None, ignore_first_element=True):
         """ Chooses the left panel menu by its displayed name
 
@@ -307,7 +292,7 @@ class Samurai(WebApp):
         return item_list
   
 
-    @_with_reconnect 
+    @with_reconnect 
     def start_mitigation(self,policy,prefix,comment="mitigation started by RENAT",device=None,force=False):
         """ Starts a mitigation with specific ``prefix``
 
@@ -373,7 +358,7 @@ class Samurai(WebApp):
         return (result,applied_device)
  
    
-    @_with_reconnect 
+    @with_reconnect 
     def stop_mitigation(self,id,stop_when_error=True):
         """ Stops a mitigation by its ID
 
@@ -400,7 +385,7 @@ class Samurai(WebApp):
                 BuiltIn().log_to_console("WARN: failed to stop mitgation %s but continue" % id)
 
    
-    @_with_reconnect 
+    @with_reconnect 
     def add_user(self,group,**user_info): 
         """ Adds user to the current group
         ``user_info`` is a dictionary contains user information that has
@@ -447,7 +432,7 @@ class Samurai(WebApp):
         BuiltIn().log("Added user `%s`" % user_info['name']) 
         
 
-    @_with_reconnect
+    @with_reconnect
     def delete_user(self,group,*user_list):
         """ Deletes user from the user group
    
@@ -476,7 +461,7 @@ class Samurai(WebApp):
         return len(selected_items)    
 
 
-    @_with_reconnect
+    @with_reconnect
     def make_item_map(self,xpath):
         """ Makes a item/webelement defined `xpath`
         
@@ -499,7 +484,7 @@ class Samurai(WebApp):
         return item_map
 
 
-    @_with_reconnect
+    @with_reconnect
     def select_items_in_table(self,xpath,xpath2,*item_list):
         """ Checks items in Samurai table by xpath
         
@@ -588,7 +573,7 @@ class Samurai(WebApp):
         return (item_map,result_map)
 
 
-    @_with_reconnect
+    @with_reconnect
     def show_policy_basic(self,policy_name):
         """ Makes the virtual browser show basic setting of the policy `name`.
 
@@ -607,7 +592,7 @@ class Samurai(WebApp):
         BuiltIn().log("Showed basic setting of the policy `%s`" % policy_name)
 
    
-    @_with_reconnect 
+    @with_reconnect 
     def show_policy_mitigation(self,policy_name):
         """ Make the virtual browser show the mitigation setting of a policy
 
@@ -631,7 +616,7 @@ class Samurai(WebApp):
         BuiltIn().log("Showed mitigation setting of the policy `%s`" % policy_name)
 
 
-    @_with_reconnect
+    @with_reconnect
     def show_policy_mo(self,policy_name):
         """ Make the virtual browser show the MO setting of a policy
 
@@ -665,7 +650,7 @@ class Samurai(WebApp):
         BuiltIn().log("Showed mitigation setting of the policy `%s`" % policy_name)
 
 
-    @_with_reconnect
+    @with_reconnect
     def show_policy_monitor(self,policy_name):
         """ Make a virtual browser show the mitigation setting of a policy
 
@@ -689,7 +674,7 @@ class Samurai(WebApp):
         BuiltIn().log("Showed NW monitoring setting of the policy `%s`" % policy_name)
 
       
-    @_with_reconnect 
+    @with_reconnect 
     def edit_policy(self,**policy):
         """ Edits a Samurai policy
 
@@ -774,7 +759,7 @@ class Samurai(WebApp):
         BuiltIn().log("Changed setting for the policy `%s`" % policy_name)
 
 
-    @_with_reconnect
+    @with_reconnect
     def add_policy(self,**policy):
         """ Adds a new Samurai policy
         
@@ -1009,7 +994,7 @@ class Samurai(WebApp):
         BuiltIn().log("Added a Samurai policy named `%s`" % policy['name'])
          
 
-    @_with_reconnect
+    @with_reconnect
     def change_policy_view_group(self,name,*group_name):
         """ Changes the groups that could see this policy
 
@@ -1047,7 +1032,7 @@ class Samurai(WebApp):
         BuiltIn().log("Changed the groups that could see this policy")
 
 
-    @_with_reconnect
+    @with_reconnect
     def delete_policy(self,*policy_names):
         """ Deletes poilcies by their names
 
@@ -1072,7 +1057,7 @@ class Samurai(WebApp):
         return len(selected_items)
 
 
-    @_with_reconnect
+    @with_reconnect
     def add_policy_group(self,group_name,policy_list="*",limit_bps="4000000000",limit_pps="2700000"):
         """ Add a new policy group
 
@@ -1107,7 +1092,7 @@ class Samurai(WebApp):
         BuiltIn().log("Added policy group '%s' and bound it to %d policies" % (group_name,count))
 
 
-    @_with_reconnect
+    @with_reconnect
     def delete_policy_group(self,*group_list):
         """ Deletes policy groups
     
@@ -1127,7 +1112,7 @@ class Samurai(WebApp):
         return len(selected_items)
         
 
-    @_with_reconnect
+    @with_reconnect
     def click_all_elements(self,xpath):
         """ Click all element in current page defined by ``xpath``
 
@@ -1140,7 +1125,7 @@ class Samurai(WebApp):
         return len(items)
 
 
-    @_with_reconnect
+    @with_reconnect
     def show_detail_mitigation(self,id):
         """ Shows detail information of a mitigation
         """
@@ -1161,7 +1146,7 @@ class Samurai(WebApp):
         BuiltIn().log("Closed the current window")
 
 
-    @_with_reconnect
+    @with_reconnect
     def select_window(self,title):
         """ Selects a window by its title
         """
@@ -1172,7 +1157,7 @@ class Samurai(WebApp):
         BuiltIn().log("Selected window `%s`" % title)
 
 
-    @_with_reconnect
+    @with_reconnect
     def get_mitigation_list(self,status=u'実行中'):
         """ Gets current mitigation list
 
@@ -1200,7 +1185,7 @@ class Samurai(WebApp):
         return result,result_ids,len(result)
 
    
-    @_with_reconnect 
+    @with_reconnect 
     def edit_mitigation_controller(self,controller,**config):
         """ Change the setting of the mitigation control
     

@@ -13,17 +13,34 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-08-23 23:36:56 +0900 (Thu, 23 Aug 2018) $
-# $Rev: 1211 $
+# $Date: 2018-09-25 13:07:34 +0900 (Tue, 25 Sep 2018) $
+# $Rev: 1363 $
 # $Ver: $
 # $Author: $
 
-import os,time,re
+import os,time,re,traceback
+from decorator import decorate
 import Common
 from robot.libraries.BuiltIn import BuiltIn
 from robot.libraries.BuiltIn import RobotNotRunningError
 from SeleniumLibrary import SeleniumLibrary
 import robot.libraries.DateTime as DateTime
+
+def _with_reconnect(keyword, self, *args, **kwargs):
+    count = 0
+    while count < int(Common.GLOBAL['default']['max-retry-for-connect']):
+        try:
+            return keyword(self,*args,**kwargs)
+        except AssertionError as err:
+            BuiltIn().log(traceback.format_exc())
+            BuiltIn().log('Failed to execute the keyword retry once more')
+            count += 1
+            self.reconnect()
+
+def with_reconnect(f):
+    return decorate(f, _with_reconnect)
+
+
 
 class WebApp(object):
     """ A library provides common keywords for web applications (aka Samurai,

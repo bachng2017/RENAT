@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# $Date: 2018-08-27 23:36:42 +0900 (Mon, 27 Aug 2018) $
-# $Rev: 1239 $
+# $Date: 2018-09-26 09:38:45 +0900 (Wed, 26 Sep 2018) $
+# $Rev: 1372 $
 # $Ver: $
 # $Author: $
 # suite run script
@@ -31,6 +31,9 @@ usage() {
     echo
 }
 
+PIDS=""
+declare -A ITEMS
+
 # find all sub folders and execute run.sh if there is no .ignore in the same folder.
 process() { 
     for folder in $(find . -mindepth 1 -maxdepth 1 -type d | sort); do
@@ -49,24 +52,27 @@ process() {
     elif [ -f ./main.robot ]; then
         if [ "$PARALLEL" == "1" ]; then 
             ./run.sh $PARAM &
+            PIDS="$PIDS $!" 
+            ITEMS[$!]=$PWD
         else
             ./run.sh $PARAM
+            CODE=$?
+            RETURN=$(expr $RETURN + $CODE)
+            if [ $CODE -eq 0 ]; then
+                SUCCEED=$(expr $SUCCEED + 1)
+            else
+                FAIL=$(expr $FAIL + 1)
+                FAIL_ITEM="$PWD \n$FAIL_ITEM"
+            fi
+            echo "Finished with exit code $CODE"
         fi
-        CODE=$?
-        RETURN=$(expr $RETURN + $CODE)
-        if [ $CODE -eq 0 ]; then
-            SUCCEED=$(expr $SUCCEED + 1)
-        else
-            FAIL=$(expr $FAIL + 1)
-            FAIL_ITEM="$PWD \n$FAIL_ITEM"
-        fi
-        echo "Finished with exit code $CODE"
     fi
     echo ""
     echo ""
     echo ""
 }
 
+# main process
 for OPT in "$@"; do
     case "$OPT" in
         '-h'|'--help' )
@@ -85,6 +91,20 @@ for OPT in "$@"; do
 done
 
 process
+
+# 
+if [ "$PARALLEL" == "1" ]; then 
+    for item in $PIDS; do
+        wait $item
+        CODE=$?  
+        if [ $CODE -eq 0 ]; then
+            SUCCEED=$(expr $SUCCEED + 1)
+        else
+            FAIL=$(expr $FAIL + 1)
+            FAIL_ITEM="${ITEMS[$item]} \n$FAIL_ITEM"
+        fi
+    done
+fi
 
 # summerize
 echo "---"
