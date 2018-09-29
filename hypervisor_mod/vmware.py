@@ -135,7 +135,7 @@ def power_off(self,vm_name,graceful=True):
 def send_mks_key(self,key,wait='1s'):
     """ Sends key strokes to current web console
    
-    Special Ctrl char could be use by ``${CTRL_A}`` to ``${CTRL_Z}``
+    Special Ctrl char could be used as ``${CTRL_A}`` to ``${CTRL_Z}``
 
     Examples:
     | `Send MKS Key`   |     ${CTRL_L} |

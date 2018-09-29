@@ -307,6 +307,7 @@ import hashlib
 import pandas
 import sys,select
 import subprocess
+from selenium.webdriver.common.keys import Keys
 try:
     from sets import Set
 except:
@@ -1387,9 +1388,13 @@ try:
     BuiltIn().set_global_variable('${WEBAPP}', WEBAPP)
     BuiltIn().set_global_variable('${START_TIME}', START_TIME)
 
-    # define Ctrl @A-Z[\]^_ string
+    # define Ctrl @A-Z[\]^_ string by ASCII code
     for i,char in enumerate(list('@'+string.ascii_uppercase+'[\]^_')):
         BuiltIn().set_global_variable('${CTRL_%s}' % char,chr(i))
+
+    # other unicode keys from Selenium Key
+    for key in filter(lambda x:x[0].isupper(),dir(Keys)):
+        BuiltIn().set_global_variable('${Keys.%s}' % key, getattr(Keys,key))
 
     # set log level
     BuiltIn().set_log_level(self.GLOBAL['default']['log-level'])
