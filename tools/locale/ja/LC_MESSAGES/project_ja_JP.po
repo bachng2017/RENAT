@@ -1,0 +1,39 @@
+# Japanese translations for PACKAGE package
+# PACKAGE パッケージに対する英訳.
+# Copyright (C) 2018 2018 NTT Communications
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: renat 0.1.10\n"
+"Report-Msgid-Bugs-To: bachng@gmail.co\n"
+"POT-Creation-Date: 2018-09-20 01:55+0900\n"
+"PO-Revision-Date: 2018-09-20 01:55+0900\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ../../../project.sh:21
+#, sh-format
+msgid ""
+"RENAT_PATH environment variable is not defined. Please check your environment"
+msgstr  "環境変数 RENAT_PATH は定義されていない。環境を確認ください"
+
+#: ../../../project.sh:26
+#, sh-format
+msgid "Test project existed."
+msgstr  "テスト・プロジェクトが既にある"
+
+#: ../../../project.sh:33
+#, sh-format
+msgid "created test project: "
+msgstr  "テスト・プロジェクトが作成された"
+
+#: ../../../project.sh:34
+#, sh-format
+msgid "use item.sh to create test case"
+msgstr  "item.sh を使ってテスト項目を作成ください"
