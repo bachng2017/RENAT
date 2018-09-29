@@ -46,7 +46,7 @@ Install a typical Centos7 with following parameters:
     ```
     yum install -y numpy net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python35u-tkinter xorg-x11-server-Xvfb  vim httpd xorg-x11-fonts-75dpi  nfs samba4 samba-client samba-winbind cifs-utils tcpdump hping3 telnet nmap wireshark java-1.8.0-openjdk firefox-52.8.0-1.el7.centos.x86_64 telnet ld-linux.so.2 ghostscript
     pip3.6 install pytest-runner
-    pip3.6 install numpy pyte PyYAML openpyxl Jinja2 pandas lxml requests netsnmp-py pdfkit robotframework robotframework-selenium2library robotframework-sshlibrary docutils
+    pip3.6 install numpy pyte PyYAML openpyxl Jinja2 pandas lxml requests netsnmp-py pdfkit robotframework robotframework-selenium2library robotframework-sshlibrary docutils pyvmomi
     ```
     
 - add just selenium version
