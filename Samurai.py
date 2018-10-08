@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-09-25 10:11:46 +0900 (Tue, 25 Sep 2018) $
-# $Rev: 1358 $
+# $Date: 2018-10-06 20:12:33 +0900 (Sat, 06 Oct 2018) $
+# $Rev: 1420 $
 # $Ver: $
 # $Author: $
 
@@ -157,6 +157,10 @@ class Samurai(WebApp):
     
         self._current_name = name
         browser_info = {}
+        browser_info['url'] = url
+        browser_info['auth'] = auth
+        browser_info['capabilities'] = capabilities
+        browser_info['ff_profile_dir'] = ff_profile_dir
         browser_info['capture_counter'] = 0
         browser_info['capture_format']  = 'samurai_%010d'
         browser_info['browser']         = browser
@@ -166,7 +170,23 @@ class Samurai(WebApp):
     def reconnect(self):
         """ Reconnects to the server
         """
-        pass
+        # open a browser
+        name = self._current_name
+   
+        auth            = self._browsers[name]['auth']
+        url             = self._browsers[name]['url']
+        browser         = self._browsers[name]['browser']
+        capabilities    = self._browsers[name]['capabilities']
+        ff_profile_dir  = self._browsers[name]['ff_profile_dir']
+        self._driver.open_browser(url,browser,'_samurai_'+name,False,capabilities,ff_profile_dir)
+        self._driver.wait_until_element_is_visible('name=username')
+        
+        # login
+        self._driver.input_text('name=username', auth['username'])
+        self._driver.input_text('name=password', auth['password'])
+        self._driver.click_button('name=Submit')
+        time.sleep(5)
+        BuiltIn().log("Reconnected to the Samurai(%s)" % name)
 
 
     def login(self):
@@ -207,9 +227,8 @@ class Samurai(WebApp):
     def close(self):
         """ Closes the current active browser
         """
-    
         self.switch(self._current_name) 
-
+        
         old_name = self._current_name
         self._driver.close_browser()
         del(self._browsers[old_name])
@@ -256,7 +275,7 @@ class Samurai(WebApp):
         self.switch(self._current_name) 
         self._driver.select_window('MAIN')
 
-        target = self._driver.get_webelement("xpath=//div[@class='submenu' and contains(.,'%s')]" % menu)
+        target = self._driver.get_webelement(u'//div[@class="submenu" and contains(.,"%s")]' % menu)
         id      = target.get_attribute('id')
         style   = target.get_attribute('style')
         if 'none' in style: 
@@ -491,9 +510,10 @@ class Samurai(WebApp):
         ``xpath`` points to the column that used as key and ``xpath2`` is the
         relative xpath contains the target column.
 
-        ``item_list`` is a list of item that need to check. Item in the list
-        could be a regular expresion with the format ``re:<regular
-        expression>``.
+        ``item_list`` is a list of item and its action that need to check. 
+        Item in the list could be a regular expresion with the format ``re:<regular expression>|action``.
+
+        The default action for the item could be ``click``(default),``check`` or ``uncheck``
 
         The keyword is called with assuming that the table is already visible.
 
@@ -525,7 +545,7 @@ class Samurai(WebApp):
             key_list = [] 
             action_list = []
             for item in item_list:
-                tmp = item.split(':')
+                tmp = item.split('|')
                 if len(tmp) < 2: 
                     action = 'click'
                 else:
@@ -580,8 +600,8 @@ class Samurai(WebApp):
         A following Samurai.`Capture Screenshot` is necessary to capture  the
         result.
         """
-
         self.left_menu(u"ポリシー管理")
+        self._driver.wait_until_page_contains_element("//input[@id='filter']")
         self._driver.input_text("filter",policy_name)
         time.sleep(self._ajax_wait)
         item_map = self.make_item_map("//tr/td[3]/div")
@@ -591,6 +611,26 @@ class Samurai(WebApp):
         self._driver.click_element(button)
         BuiltIn().log("Showed basic setting of the policy `%s`" % policy_name)
 
+
+    @with_reconnect
+    def show_policy_detection(self,policy_name):
+        """Shows the detction pannel of `policy_name` policy
+        """
+        self.left_menu(u"ポリシー管理")
+        self._driver.wait_until_page_contains_element("//input[@id='filter']")
+        self._driver.input_text("filter",policy_name)
+        time.sleep(self._ajax_wait)
+        item_map = self.make_item_map("//tr/td[3]/div")
+        item = item_map[policy_name]
+        button = item.find_element_by_xpath(u"../../td/div/input[@title='編集']")
+        self._driver.wait_until_page_contains_element(button)
+        self._driver.click_element(button)
+        self._driver.wait_until_page_contains(u"Detection設定")
+        self._driver.click_element(u"//span[normalize-space(.)='Detection設定']")
+        self._driver.wait_until_page_contains(u"攻撃検出")
+
+        BuiltIn().log("Showed detection setting of the policy `%s`" % policy_name)
+    
    
     @with_reconnect 
     def show_policy_mitigation(self,policy_name):
@@ -599,14 +639,13 @@ class Samurai(WebApp):
         A following Samurai.`Capture Screenshot` is necessary to capture  the
         result.
         """
-
         self.left_menu(u"ポリシー管理")
         self._driver.wait_until_page_contains_element("//input[@id='filter']")
         self._driver.input_text("filter",policy_name)
         time.sleep(self._ajax_wait)
         item_map = self.make_item_map("//tr/td[3]/div")
         item = item_map[policy_name]
-        button = item.find_element_by_xpath("../../td/div/input[@title='編集']")
+        button = item.find_element_by_xpath(u"../../td/div/input[@title='編集']")
         self._driver.wait_until_page_contains_element(button)
         self._driver.click_element(button)
         self._driver.wait_until_page_contains(u"Mitigation設定")
@@ -633,7 +672,7 @@ class Samurai(WebApp):
         time.sleep(self._ajax_wait)
         item_map = self.make_item_map("//tr/td[3]/div")
         item = item_map[policy_name]
-        button = item.find_element_by_xpath("../../td/div/input[@title='編集']")
+        button = item.find_element_by_xpath(u"../../td/div/input[@title='編集']")
         self._driver.wait_until_page_contains_element(button)
         self._driver.click_element(button)
         self._driver.wait_until_page_contains(u"TMS MO設定")
@@ -705,6 +744,19 @@ class Samurai(WebApp):
         if changing:
             self._driver.click_button("submitbutton")
             self._driver.wait_until_page_contains(u"ポリシー情報を変更しました")
+
+        # detection setting
+        changing = False
+        BuiltIn().log("### Detection setting ###")
+        self.show_policy_detection(policy_name)
+        detection_enabled = 'false'
+        if 'detection_enabled' in policy and policy['detection_enabled']:
+            changing = True
+            detection_enabled = 'true'
+            self._driver.select_radio_button("misuse_enabled_flag",detection_enabled)
+        if changing: 
+            self._driver.click_button("submitbutton")
+            self._driver.wait_until_page_contains(u"Detection情報を変更しました")
 
         # mitigation
         changing = False
@@ -959,7 +1011,7 @@ class Samurai(WebApp):
 
         # Add more setting for Samurai16
         BuiltIn().log("### Monitoring setting ###")
-        nw_monitor = int(self._driver.get_matching_xpath_count(u"//div[contains(.,'NW 監視設定')]"))
+        nw_monitor = self._driver.get_element_count(u"//div[contains(.,'NW 監視設定')]")
         if nw_monitor > 0:
             if ('nw_monitor_gre1' in policy) or ('nw_monitor_gre2' in policy):
                 gre_elements = self._driver.get_webelements('//input[contains(@id,"gre_addr")]')
@@ -1095,7 +1147,9 @@ class Samurai(WebApp):
     @with_reconnect
     def delete_policy_group(self,*group_list):
         """ Deletes policy groups
-    
+   
+        See `Select Items In Table` for more detail about how to choose `group_list`
+ 
         Returns the number of deleted policy groups
         Example:
         | Samurai.`Delete Policy Group` | test_group001 | test_group002 |

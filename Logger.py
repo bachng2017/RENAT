@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-07-14 20:56:19 +0900 (Sat, 14 Jul 2018) $
-# $Rev: 1093 $
+# $Date: 2018-10-07 13:30:09 +0900 (Sun, 07 Oct 2018) $
+# $Rev: 1421 $
 # $Ver: $
 # $Author: $
 
@@ -86,7 +86,7 @@ class Logger(object):
 
     
     def log_all(self,msg,with_time=False,mark="***"):
-        """ inserts a message ``msg`` to current *all* [./VChannel.html|VChannel] log files. 
+        """ Inserts a message ``msg`` to current *all* [./VChannel.html|VChannel] log files. 
 
         A default ``mark`` of ``***`` and newline will be added at the beggining and the end of this
         message.

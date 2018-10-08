@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-09-23 07:15:11 +0900 (Sun, 23 Sep 2018) $
-# $Rev: 1348 $
+# $Date: 2018-10-04 07:25:11 +0900 (Thu, 04 Oct 2018) $
+# $Rev: 1397 $
 # $Ver: $
 # $Author: $
 
@@ -246,6 +246,7 @@ def open_console(self,vm_name,width=None,height=None):
     | `Send MKS Cmd`   |     whoami |
     | Hypervisor.Capture MKS Screenshot` |
     """
+    BuiltIn().log("Opening a web MKS console")
     server_ip = Common.GLOBAL['default']['robot-server']
     channel = self._channels[self._current_name]
 
@@ -257,12 +258,13 @@ def open_console(self,vm_name,width=None,height=None):
 
     render_var = {}
     loader=jinja2.Environment(loader=jinja2.FileSystemLoader(console_folder)).get_template('console.html')
+    console_info = Common.get_config_value('mks-console')
     if width is None:
-        render_var['WIDTH'] = Common.GLOBAL['default']['mks-console']['width']
+        render_var['WIDTH'] = console_info['width']
     else:
         render_var['WIDTH'] = width
     if height is None:
-        render_var['HEIGHT'] = Common.GLOBAL['default']['mks-console']['height']
+        render_var['HEIGHT'] = console_info['height']
     else:
         render_var['HEIGHT'] = height
         
@@ -277,6 +279,7 @@ def open_console(self,vm_name,width=None,height=None):
 
     driver = BuiltIn().get_library_instance('SeleniumLibrary')
     driver.open_browser('file:///' + console_file)
+    # driver.open_browser('file:///' + console_file,'chrome')
     time.sleep(5)
     canvas = driver.get_webelement('mainCanvas')
     size = canvas.size

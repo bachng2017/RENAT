@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1348 $
+# $Rev: 1397 $
 # $Ver: $
-# $Date: 2018-09-23 07:15:11 +0900 (Sun, 23 Sep 2018) $
+# $Date: 2018-10-04 07:25:11 +0900 (Thu, 04 Oct 2018) $
 # $Author: $
 
 """ Common library for RENAT
@@ -307,6 +307,7 @@ import hashlib
 import pandas
 import sys,select
 import subprocess
+from pyvirtualdisplay import Display
 from selenium.webdriver.common.keys import Keys
 try:
     from sets import Set
@@ -332,6 +333,7 @@ GLOBAL  = {}
 LOCAL   = {}
 NODE    = []
 WEBAPP  = []
+DISPLAY = None
 START_TIME = datetime.datetime.now()
 
 def log(msg,level=1):
@@ -1376,6 +1378,24 @@ def wait(wait_time,size=10):
     BuiltIn().log('Slept `%d` seconds' % wait_sec)
 
 
+def start_display():
+    """ Starts a virtual display
+    """
+    global DISPLAY
+    display_info = get_config_value('display')
+    DISPLAY = Display(visible=0, size=(display_info['width'],display_info['height']))
+    DISPLAY.start()
+    BuiltIn().log('Started a virtual display')
+
+
+def close_display():
+    """ Closes the opened display
+    """
+    global DISPLAY
+    DISPLAY.stop()
+    DISPLAY.sendstop()
+    BuiltIn().log('Closed the virtual display')
+
 # set RF global variables and load libraries
 try:
     
@@ -1395,6 +1415,8 @@ try:
     # other unicode keys from Selenium Key
     for key in filter(lambda x:x[0].isupper(),dir(Keys)):
         BuiltIn().set_global_variable('${Keys.%s}' % key, getattr(Keys,key))
+    BuiltIn().set_global_variable('${Keys.WIN}', u'\u00FF')
+    BuiltIn().set_global_variable('${Keys.WINDOWS}', u'\u00FF')
 
     # set log level
     BuiltIn().set_log_level(self.GLOBAL['default']['log-level'])

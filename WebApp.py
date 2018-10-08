@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-09-25 13:07:34 +0900 (Tue, 25 Sep 2018) $
-# $Rev: 1363 $
+# $Date: 2018-10-07 14:36:22 +0900 (Sun, 07 Oct 2018) $
+# $Rev: 1422 $
 # $Ver: $
 # $Author: $
 
@@ -24,24 +24,36 @@ import Common
 from robot.libraries.BuiltIn import BuiltIn
 from robot.libraries.BuiltIn import RobotNotRunningError
 from SeleniumLibrary import SeleniumLibrary
+from SeleniumLibrary.errors import ElementNotFound
 import robot.libraries.DateTime as DateTime
 
+
+### module methods
 def _with_reconnect(keyword, self, *args, **kwargs):
     count = 0
-    while count < int(Common.GLOBAL['default']['max-retry-for-connect']):
+    max_count = int(Common.GLOBAL['default']['max-retry-for-connect'])
+    while count < max_count:
         try:
             return keyword(self,*args,**kwargs)
-        except AssertionError as err:
+        except (AssertionError,ElementNotFound) as err:
+        # except Exception as err:
+            BuiltIn().log(type(err))
+            BuiltIn().log(err)
             BuiltIn().log(traceback.format_exc())
-            BuiltIn().log('Failed to execute the keyword retry once more')
             count += 1
-            self.reconnect()
+            if count < max_count:
+                BuiltIn().log('WARN: Failed to execute the keyword: %d'  % count)
+                self.reconnect()
+            else:
+                BuiltIn().log('ERROR: Gave up retry for keyword `%s`' % keyword.__name__)
+                raise
+
 
 def with_reconnect(f):
     return decorate(f, _with_reconnect)
 
 
-
+###
 class WebApp(object):
     """ A library provides common keywords for web applications (aka Samurai,
     Arbor TMS)
@@ -105,7 +117,6 @@ class WebApp(object):
         try:
             # self._driver = BuiltIn().get_library_instance('Selenium2Library')
             self._driver = BuiltIn().get_library_instance('SeleniumLibrary')
-
         except RobotNotRunningError as e:
             Common.err("WARN: RENAT is not running")
 
@@ -175,7 +186,15 @@ class WebApp(object):
             self._browsers[name]['capture_counter'] = new_counter
         else:
             capture_name = filename
+        total_width = self._driver.execute_javascript("return document.body.offsetWidth")
+        total_height = self._driver.execute_javascript("return document.body.parentNode.scrollHeight")
+        self._driver.set_window_size(int(total_width), int(total_height))
+        time.sleep(2)
         self._driver.capture_page_screenshot(capture_name)
+        # self._driver.driver.save_screenshot(capture_name)
         BuiltIn().log("Captured the current screenshot to file `%s`" % capture_name) 
 
-   
+    def close():
+        """ Close the web application
+        """
+        self._display.close() 

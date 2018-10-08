@@ -13,12 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1377 $
+# $Rev: 1433 $
 # $Ver: $
-# $Date: 2018-09-27 10:29:34 +0900 (Thu, 27 Sep 2018) $
+# $Date: 2018-10-08 10:09:35 +0900 (Mon, 08 Oct 2018) $
 # $Author: $
 
 import os,re,sys
+from decorator import decorate
 import yaml
 import jinja2,difflib
 import pyte
@@ -32,6 +33,96 @@ from robot.libraries.Telnet import Telnet
 from robot.libraries.BuiltIn import BuiltIn
 import robot.libraries.DateTime as DateTime
 from paramiko import SSHException
+
+
+### module methods
+def _get_history(screen):
+    return _get_history_screen(screen.history.top) + Common.newline
+
+
+def _get_history_screen(deque):
+    # the HistoryScreen.history.top is a StaticDefaultDict that contains
+    # Char element.
+    # The Char.data contains the real Unicode char
+    return Common.newline.join(''.join(c.data for c in list(row.values())).rstrip() for row in deque)
+
+
+def _get_screen(screen):
+    return Common.newline.join(row.rstrip() for row in screen.display).rstrip(Common.newline)   
+
+
+def _dump_screen(channel):
+    if channel['screen']:
+        return  _get_history(channel['screen']) + _get_screen(channel['screen'])
+    return ''
+
+
+def _flush_all(channels):
+    for name in  channels:
+        channel = channels[name]
+        output = ""
+        if channel['screen']:
+            # read from the session and log the result
+            channel['stream'].feed(channel['connection'].read())
+            try:
+                output = _dump_screen(channel) + Common.newline
+            except UnicodeDecodeError as err:
+                BuiltIn().log('ERROR: Unicode error in read output')
+                output = err.args[1].decode('utf-8','replace')
+        else:
+            try:
+                output = channel['connection'].read() 
+            except UnicodeDecodeError as err:
+                output = err.args[1].decode('utf-8','replace')
+        _log(channel,output)
+        if 'logger' in channel: channel['logger'].flush()
+
+
+def _log(channel,msg):
+    """ log for a channel
+    """
+    # in case the channel has already has the logger
+    if 'logger' in channel:
+        logger      = channel['logger']
+        separator   = channel['separator']
+        if separator != "":
+            if channel['screen']: logger.write(Common.newline)
+            logger.write(Common.newline + separator + Common.newline)
+        # remove some special control char before write to file
+        logger.write(re.sub(r"[\x07]", "", msg))
+        logger.flush()
+
+
+def _with_reconnect(keyword,self,*args,**kwargs):
+    """ local method that provide a fail safe reconnect when read/write
+    """
+    max_count = int(Common.GLOBAL['default']['max-retry-for-connect'])
+    interval  = DateTime.convert_time(Common.GLOBAL['default']['interval-between-retry'])
+    count = 0
+    while count < max_count:
+        try:
+            return keyword(self,*args,**kwargs)
+        except (RuntimeError,EOFError,KeyError,SSHException) as err:
+            BuiltIn().log('Error while trying keyword `%s`' % keyword.__name__)
+            count = count + 1
+            if count < max_count:
+                BuiltIn().log('    Try reconnection %d(th) after %d seconds ' % (count,interval))
+                BuiltIn().log_to_console('.','STDOUT',True)
+                time.sleep(interval)
+                self.reconnect(self._current_name)
+            else:
+                err_msg = "ERROR: error while processing command. Tunning ``terminal-timeout`` in RENAT config file or check your command"
+                BuiltIn().log(err_msg)
+                BuiltIn().log("ErrorType: %s" % type(err))
+                BuiltIn().log("Detail error is:")
+                BuiltIn().log(err)
+                BuiltIn().log(traceback.format_exc())
+                raise 
+
+    
+def with_reconnect(f):
+    return decorate(f, _with_reconnect)
+
 
 ### 
 class VChannel(object):
@@ -101,7 +192,6 @@ class VChannel(object):
     ROBOT_LIBRARY_SCOPE = 'TEST SUITE'
     ROBOT_LIBRARY_VERSION = Common.version()
 
-      
     def __init__(self):
         # initialize instance of Telnet and SSH lib
         self._telnet = Telnet()
@@ -114,6 +204,11 @@ class VChannel(object):
 
     @property
     def current_name(self):
+        return self._current_name
+
+    def get_current_name(self):
+        """ Returns the current active channel's name
+        """
         return self._current_name
 
     def get_current_channel(self):
@@ -137,18 +232,7 @@ class VChannel(object):
         """
 
         channel = self._channels[self._current_name]
- 
-       # in case the channel has already has the logger
-        if 'logger' in channel:
-            logger      = channel['logger']
-            separator   = channel['separator']
-            if separator != "":
-                if channel['screen']: logger.write(Common.newline)
-                logger.write(Common.newline + separator + Common.newline)
-            # logger.write(msg)
-            # remove some special control char before write to file
-            logger.write(re.sub(r"[\x07]", "", msg))
-            logger.flush()
+        _log(channel,msg) 
 
 
     def set_log_separator(self,sep=""):
@@ -410,20 +494,7 @@ class VChannel(object):
         means that any real-time application likes ``top`` will be captured as-is. 
         Consecutive `read` from this VChannel instance may produce redundancy ouput.
         """
-
         channel = self._channels[self._current_name]
-        
-#        if not channel['screen']:
-#            channel['screen'] = pyte.HistoryScreen(channel['w'], channel['h'],100000)
-#            # channel['screen'] = pyte.Screen(channel['w'], channel['h'])
-#            # channel['stream'] = pyte.ByteStream(encodings=[('UTF-8', 'ignore')])
-#            channel['stream'] = pyte.Stream()
-#            channel['stream'].attach(channel['screen'])
-#            # handle different version of pyte
-#            try:
-#                channel['screen'].set_charset('B', '(')
-#            except:
-#                channel['screen'].define_charset('B', '(')
         channel['screen'] = pyte.HistoryScreen(channel['w'], channel['h'],100000)
         channel['stream'] = pyte.Stream()
         channel['stream'].attach(channel['screen'])
@@ -443,8 +514,6 @@ class VChannel(object):
         In ``normal mode``, escape sequences are not processed by the virtual terminal.
         
         """
-        # clear buffer
-        # self.read()
         channel = self._channels[self._current_name]
         if channel['screen']:
             channel['screen'] = None
@@ -453,20 +522,14 @@ class VChannel(object):
         BuiltIn().log("Stopped ``screen mode`` of channel `%s`" % self._current_name)
 
 
-    def _get_history(self,screen):
-        return self._get_history_screen(screen.history.top) + Common.newline
-
-
-    def _get_history_screen(self, deque):
+    def _get_history(self, screen):
         # the HistoryScreen.history.top is a StaticDefaultDict that contains
         # Char element.
         # The Char.data contains the real Unicode char
-        # return Common.newline.join(''.join(c.data for c in row).rstrip() for row in deque).rstrip(Common.newline)
-        return Common.newline.join(''.join(c.data for c in list(row.values())).rstrip() for row in deque)
+        return Common.newline.join(''.join(c.data for c in list(row.values())).rstrip() for row in screen.history.top) + Common.newline
 
 
     def _get_screen(self, screen):
-        channel = self._channels[self._current_name]
         return Common.newline.join(row.rstrip() for row in screen.display).rstrip(Common.newline)   
 
 
@@ -484,23 +547,34 @@ class VChannel(object):
         Examples:
         | VChannel.`Switch` | vmx12 | 
         """
-        # clear buffer before switch 
-        # but ignore error in the case of channel is not there anymore
+        BuiltIn().log('Switching current vchannel to `%s`' % name)
         old_name = self._current_name
-        try:
-            self._read()
-        except Exception as err:
-            pass
- 
+
+        for item in self._channels:
+            output = ""
+            channel_info = self._channels[item]
+            channel_info['connection'].switch_connection(channel_info['local_id'])
+            if channel_info['screen']:
+                screen = channel_info['screen']
+                channel_info['stream'].feed(channel_info['connection'].read())
+                try:
+                    output = self._get_history(screen) + self._get_screen(screen) + Common.newline
+                except UnicodeDecodeError as err:
+                    BuiltIn().log('ERROR: Unicode error in read output')
+                    output = err.args[1].decode('utf-8','replace')
+            else:
+                try:
+                    output = channel_info['connection'].read() 
+                except UnicodeDecodeError as err:
+                    output = err.args[1].decode('utf-8','replace')
+            self.log(output)
+
         if name in self._channels: 
             channel_info = self._channels[name]
             self._current_name = name
             self._current_channel_info = channel_info
-
             self._current_id = channel_info['id']
-
             channel_info['connection'].switch_connection(channel_info['local_id'])
-
             BuiltIn().log("Switched current channel to `%s(%s)`" % (name,channel_info['ip']))
             return channel_info['id'], channel_info['local_id']
         else:
@@ -530,80 +604,7 @@ class VChannel(object):
         return old_log_file
 
 
-    def _with_reconnect(self,f,*args):
-        """ local method that provide a fail safe reconnect when read/write
-        """
-        max_retry = Common.GLOBAL['default']['max-retry-for-connect']
-        interval  = Common.GLOBAL['default']['interval-between-retry']
-
-        for i in range(max_retry):
-            try:
-                return f(*args)
-            except (RuntimeError,EOFError,KeyError,SSHException) as e:
-                BuiltIn().log("    Exception(%s): %s" % (str(type(e)),str(e)))
-                BuiltIn().log("    Try reconnection: " + str(i+1))
-                try:
-                    self.reconnect(self._current_name)
-                    continue
-                except Exception as e:
-                    BuiltIn().log("    WARNING: %s: %s" % (str(type(e)),str(e)))
-                    if i == max_retry - 1:
-                        err_msg = "    ERROR: Failed to reconnect to node `%s`" % self._current_name
-                        BuiltIn().log(err_msg)
-                        raise Exception(err_msg)
-                    else:
-                        time.sleep(interval)
-                        BuiltIn().log_to_console('.','STDOUT',True)
-            except Exception as e:
-                err_msg = "ERROR: timeout while processing command. Tunning ``terminal-timeout`` in RENAT config file or check your command"
-                BuiltIn().log(err_msg)
-                BuiltIn().log("Detail error is:")
-                BuiltIn().log("ErrorType: %s" % type(e))
-                BuiltIn().log(e)
-                BuiltIn().log(traceback.format_exc())
-                # raise Exception(err_msg)
-                raise Exception(e)
-
-        err_msg = "    ERROR: failed to execute command `%s`" % f
-        BuiltIn().log(err_msg)
-        raise Exception(err_msg)
-
-
-    def _write(self,cmd,wait):
-        """ local write function
-            pyte   renat->-(write)->-device
-            pyte-<-renat-<-(read)-<-device
-        """
-        result = ""
-        channel = self._channels[self._current_name]
-
-        display_cmd = cmd.replace(Common.newline,'<Enter>')
-    
-        if channel['screen']:
-            self.read()     # get if something remains in the buffer
-            BuiltIn().log('Write directly to session: `%s`' % display_cmd)
-            channel['connection'].write_bare(cmd)
-            self.log(cmd)
-
-            if wait > 0:
-                time.sleep(wait)
-                result = self.read()
-            else:
-                pass
-                # self.log(cmd)
-                # result = self.read()
-        else:
-            # by default, always add a `newline` to the cmd
-            channel['connection'].write_bare(cmd + Common.newline)
-            if wait > 0:
-                time.sleep(wait)
-                result = self.read()
-            else:
-                self.log(cmd + Common.newline)
-           
-        return result
-
-
+    @with_reconnect
     def write(self,str_cmd=u"",str_wait=u'0s',start_screen_mode=False):
         """ Sends ``str_cmd`` to the target node and return after ``str_wait`` time. 
 
@@ -638,25 +639,40 @@ class VChannel(object):
         | VChannel.`Write` | ${CTRL_C} | # simulates Ctrl-C |
         
         """
-
-        #
-        # self.read()
-
+        result = ""
         wait = DateTime.convert_time(str_wait)
-
         channel = self._channels[self._current_name]
-        screen_mode = (channel['screen'] is not None)
+        is_screen_mode = (channel['screen'] is not None)
+        display_cmd = str_cmd.replace(Common.newline,'<Enter>')
         
-        BuiltIn().log("Write '%s', screen_mode=`%s`" % (str_cmd,screen_mode))
+        BuiltIn().log("Write '%s', screen_mode=`%s`" % (str_cmd,is_screen_mode))
         if start_screen_mode:
+            # channel['screen'] becomes valid after
             self.start_screen_mode()
             # because we've just start the screen mode but the node has not yet
             # be in screen mode, a newline is necessary here
-            result = self._with_reconnect(self._write,str_cmd + Common.newline,wait)
+            cmd = str_cmd + Common.newline
         else:
-            result = self._with_reconnect(self._write,str_cmd,wait)
+            cmd = str_cmd
 
-        BuiltIn().log("Wrote '%s',screen_mode=`%s`" % (str_cmd,screen_mode))
+        if channel['screen']:
+            self.read()     # get if something remains in the buffer
+            BuiltIn().log('Write directly to session: `%s`' % display_cmd)
+            channel['connection'].write_bare(cmd)
+            self.log(cmd)
+            if wait > 0:
+                time.sleep(wait)
+                result = self.read()
+        else:
+            # by default, always add a `newline` to the cmd
+            channel['connection'].write_bare(cmd + Common.newline)
+            if wait > 0:
+                time.sleep(wait)
+                result = self.read()
+            else:
+                self.log(cmd + Common.newline)
+
+        BuiltIn().log("Wrote '%s',screen_mode=`%s`" % (str_cmd,is_screen_mode))
         return result
 
 
@@ -691,16 +707,14 @@ class VChannel(object):
         return  old_prompt
         
 
-
+    @with_reconnect
     def _cmd(self,str_cmd,str_prompt):
         output = ""
         channel = self._channels[self._current_name]
 
         if channel['screen']: raise Exception("``Cmd`` keyword is prohibitted in ``screen  mode``")
-
         access      = channel['access-type']
         cur_prompt  = channel['prompt']
-
 
         # in case something left in the buffer
         output  = channel['connection'].read()
@@ -748,7 +762,7 @@ class VChannel(object):
         """
 
         BuiltIn().log("Execute command: `%s`" % (command))
-        output = self._with_reconnect(self._cmd,command,prompt)
+        output = self._cmd(command,prompt)
 
         # result checking
         if Common.GLOBAL['default']['cmd-auto-check'] and match_err != '' and re.search(match_err, output):
@@ -775,17 +789,23 @@ class VChannel(object):
         output = self.write(ans)
 
         BuiltIn().log("Answered `%s` to command `%s`" % (ans,cmd))
-        return True
 
 
-    def _read(self):
+    @with_reconnect
+    def read(self,silence=False):
+        """ Returns the current output of the virtual terminal and automatically
+        logs to file. 
+ 
+        In ``normal mode`` this will return the *unread* output only, not all the content of the screen.
+        """
+        if not silence: BuiltIn().log("Read from channel buffer:")
         channel = self._channels[self._current_name]
         output = ""
         if channel['screen']:
             # read from the session and log the result
             channel['stream'].feed(channel['connection'].read())
             try:
-                output = self._dump_screen() + Common.newline
+                output = _dump_screen(channel) + Common.newline
             except UnicodeDecodeError as err:
                 BuiltIn().log('ERROR: Unicode error in read output')
                 output = err.args[1].decode('utf-8','replace')
@@ -798,19 +818,6 @@ class VChannel(object):
         self.log(output)
         return output
 
-
-    def read(self,silence=False):
-        """ Returns the current output of the virtual terminal and automatically
-        logs to file. 
- 
-        In ``normal mode`` this will return the *unread* output only, not all the content of the screen.
-        """
-        if not silence: BuiltIn().log("Read from channel buffer:")
-        output = self._with_reconnect(self._read)
-
-        return output
-   
- 
 
     @property
     def current_name(self):
@@ -869,7 +876,7 @@ class VChannel(object):
 
  
     def flush_all(self):
-        """
+        """ Flushes all remain data into the logger
         """
         current_name = self._current_name
         for name in self._channels:
@@ -959,6 +966,33 @@ class VChannel(object):
                     raise Exception("Stopped because matched error after executing `%s`" % str_cmd)
 
         BuiltIn().log("Executed commands in file %s" % file_name)
+
+
+    def cmd_and_wait_for_regex(self,command,pattern,interval=u'30s',max_num=u'10',error_with_max_num=True):
+        """ Execute a command and expect ``pattern`` occurs in the output.
+        If not wait for ``interval`` and repeat the process again
+
+        After ``max_num``, if ``error_with_max_num`` is ``True`` then the
+        keyword will fail. Ortherwise the test continues.
+        """
+
+        num = 1
+        BuiltIn().log("Execute command `%s` and wait for `%s`" % (command,pattern))
+        while num <= int(max_num):
+            BuiltIn().log("    %d: command is `%s`" % (num,command))
+            output = self.cmd(command)
+            if re.search(pattern,output):
+                BuiltIn().log("Found pattern `%s` and stopped the loop" % pattern)
+                break;
+            else:
+                num = num + 1
+                time.sleep(DateTime.convert_time(interval))
+                BuiltIn().log_to_console('.','STDOUT',True)
+        if error_with_max_num and num > max_num:
+            msg = "ERROR: Could not found pattern `%s`" % pattern
+            BuiltIn().log(msg)
+            raise Exception(msg)
+        BuiltIn().log("Executed command `%s` and waited for pattern `%s`" % (command,pattern))
 
 
     def cmd_and_wait_for(self,command,keyword,interval='30s',max_num=10,error_with_max_num=True):

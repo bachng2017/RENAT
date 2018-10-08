@@ -70,8 +70,8 @@ python --version
 ### Other necessary packages
 ```
 yum install -y epel-release
-yum install -y gettext gcc net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python27-tkinter xorg-x11-server-Xvfb ghostscript firefox-52.8.0-1.el6.centos.x86_64 httpd vimjj
-pip install numpy pyte PyYAML openpyxl Jinja2 pandas paramiko lxml requests pdfkit pyvmomi
+yum install -y gettext gcc net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python27-tkinter xorg-x11-server-Xvfb ghostscript firefox-60.2.1-1.el6.centos.x86_64 httpd vim
+pip install numpy pyte PyYAML openpyxl Jinja2 pandas paramiko lxml requests pdfkit pyvmomi PyVirtualDisplay
 pip install netsnmp-py==0.3 
 ```
 
@@ -80,13 +80,6 @@ pip install netsnmp-py==0.3
 pip install robotframework robotframework-seleniumlibrary robotframework-selenium2library robotframework-sshlibrary docutils
 ```
 For more information about Robotframework and installation, check http://robotframework.org/
-
-The newest selenium pakage could not capture the whole page (but only current view). In other to utilize the fullpage capture, make sure the correcnt `selenium` package and `gecko-driver` is install
-
-```
-pip uninstall selenium
-pip install selenium==2.53.6
-```
 
 ### Other system configuration
 ##### RENAT account
@@ -131,6 +124,16 @@ The following is a snipset of Apache config file `httpd.conf` to show the user `
 ### Selenium related libraries
 In order to capture the screen, Selenium and related drivers need to be installed and prepared correclty.
 
+`Selenium`,`geckodriver` and `firefox` version combination is important for web appliance testing and also hypervisor MKS console.
+The following combination is known that could work together
+
+```
+firefox-60.2.1-1.el6.centos.x86_64
+robotframework-selenium2library 3.0.0
+robotframework-seleniumlibrary  3.2.0
+selenium                        3.14.1
+```
+
 #### Gecko driver
 Download and install gecko driver from https://github.com/mozilla/geckodriver/releases
 
@@ -140,73 +143,6 @@ wget https://github.com/mozilla/geckodriver/releases/download/v0.21.0/geckodrive
 cd /usr/local/bin
 tar xzvf /root/work/download/geckodriver-v0.21.0-linux64.tar.gz
 chown root:root geckodriver
-```
-
-#### Xvfb start script
-Depending on your system, a virtual screen (Xvfb) must be started before using scree ncapture function.
-
-For example on CentOS 6.x, prepare a service startup file `xvfb` in folder `/etc/rc.d/init.d` likes this:
-
-```
-#!/bin/bash
-#
-# /etc/rc.d/init.d/xvfbd
-#
-# chkconfig: 345 95 28
-# description: Starts/Stops X Virtual Framebuffer server
-# processname: Xvfb
-#
-
-. /etc/init.d/functions
-
-[ "${NETWORKING}" = "no" ] && exit 0
-
-PROG="/usr/bin/Xvfb"
-PROG_OPTIONS=":1 -screen 0 640x480x24"
-PROG_OUTPUT="/tmp/Xvfb.out"
-
-case "$1" in
-    start)
-        echo -n "Starting : X Virtual Frame Buffer "
-        $PROG $PROG_OPTIONS>>$PROG_OUTPUT 2>&1 &
-        disown -ar
-        /bin/usleep 500000
-        status Xvfb & >/dev/null && echo_success || echo_failure
-        RETVAL=$?
-        if [ $RETVAL -eq 0 ]; then
-            /bin/touch /var/lock/subsys/Xvfb
-            /sbin/pidof -o  %PPID -x Xvfb > /var/run/Xvfb.pid
-        fi
-        echo
-        ;;
-    stop)
-        echo -n "Shutting down : X Virtual Frame Buffer"
-        killproc $PROG
-        RETVAL=$?
-        [ $RETVAL -eq 0 ] && /bin/rm -f /var/lock/subsys/Xvfb /var/run/Xvfb.pid
-        echo
-        ;;
-    restart|reload)
-        $0 stop
-        $0 start
-        RETVAL=$?
-        ;;
-    status)
-        status Xvfb
-        RETVAL=$?
-        ;;
-    *)
-     echo $"Usage: $0 (start|stop|restart|reload|status)"
-     exit 1
-esac
-
-exit $RETVAL
-```
-
-Then make it starts automatically 
-```
-service xvfb start
-chkconfig xvfb on
 ```
 
 ### Ixia Network and Ixia Load modules (optional)

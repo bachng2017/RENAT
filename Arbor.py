@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-09-25 20:21:01 +0900 (Tue, 25 Sep 2018) $
-# $Rev: 1367 $
+# $Date: 2018-10-06 20:12:33 +0900 (Sat, 06 Oct 2018) $
+# $Rev: 1420 $
 # $Ver: $
 # $Author: $
 
@@ -170,7 +170,7 @@ class Arbor(WebApp):
         login_element_count = 0
         
         self._driver.reload_page()
-        login_element_count = int(self._driver.get_matching_xpath_count("//button[@value='Log In']"))
+        login_element_count = self._driver.get_element_count("//button[@value='Log In']")
 
         if login_element_count > 0: 
             BuiltIn().log("Try to reconnect to the system")
@@ -195,9 +195,11 @@ class Arbor(WebApp):
     def logout(self):
         """ Logs-out the current application, the browser remains
         """
-    
         self.switch(self._current_name) 
         self._driver.click_link("xpath=//a[contains(.,'(Log Out)')]")
+
+        if self._driver.get_element_count('logout_confirm') > 0: 
+            self._driver.click_button('logout_confirm')
         BuiltIn().log("Exited Arbor application")
     
     
@@ -215,7 +217,6 @@ class Arbor(WebApp):
     def close(self):
         """ Closes the current active browser
         """
-  
         ignore_dead_node = Common.get_config_value('ignore-dead-node')
 
         try: 

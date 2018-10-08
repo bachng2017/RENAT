@@ -4,9 +4,9 @@ default:
     renat-master-folder: $RENAT_PATH/config
     calient-master-path: 
     ntm-master-path: 
-    ixload-tmp-remote: C:/tmp
+    ixload-tmp-remote: C:/Windows/Temp
     max-retry-for-connect: 3
-    interval-between-retry: 15
+    interval-between-retry: 15s
     terminal-timeout: 20m
     cmd-auto-check: False
     newline: "\r"
@@ -15,8 +15,11 @@ default:
     log-level: TRACE
     ignore-dead-node: FALSE
     mks-console:
-        width:    800
-        height:   600
+        width:  1024
+        height: 768
+    display:
+        width:  1921
+        height: 1080
 
 extra-lib:
     - Tester

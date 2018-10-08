@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# $Date: 2018-09-23 07:15:11 +0900 (Sun, 23 Sep 2018) $
-# $Rev: 1348 $
+# $Date: 2018-09-29 20:15:21 +0900 (Sat, 29 Sep 2018) $
+# $Rev: 1382 $
 # $Author: $
 # usage: ./runsh [-n <num>] <other robot argument>
 
@@ -32,6 +32,7 @@ usage () {
     echo "  -e TAG                  ignore steps tagged with TAG"
     echo "  -i TAG                  execute only steps tagged with TAG"
     echo "  -B                      automatically backup result folder with current date information"
+    echo "  -r, --dry-run           same meaning with the original --dryrun"
     echo ""
     echo "Predefinded global variables:"
     echo "  -v CLEAN                execute CleanUp Result keyword before in Setup step"
@@ -72,6 +73,10 @@ for OPT in "$@"; do
             ;;
         '-a'|'--all' )
             RUN_ALL=1
+            shift 1
+            ;;
+        '-r'|'--dry-run' )
+            DRYRUN=1
             shift 1
             ;; 
         '-n'|'--number' )
@@ -150,7 +155,12 @@ process() {
                 tar czf ${RESULT_FOLDER}_$NAME.tar.gz ${RESULT_FOLDER}
             fi
 
-            robot $PARAM -d ${RESULT_FOLDER} -v MYID:$MYID -v RESULT_FOLDER:$RESULT_FOLDER -v RENAT_PATH:$RENAT_PATH -K off main.robot
+            OPTION=''
+            if [ ! -z $DRYRUN ]; then
+                OPTION="$OPTION --dryrun"
+            fi
+
+            robot $PARAM -d ${RESULT_FOLDER} -v MYID:$MYID -v RESULT_FOLDER:$RESULT_FOLDER -v RENAT_PATH:$RENAT_PATH $OPTION -K off main.robot
             CODE=$?
             RESULT=$(expr $RESULT + $CODE)
             echo

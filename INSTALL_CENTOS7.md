@@ -46,7 +46,7 @@ Install a typical Centos7 with following parameters:
     ```
     yum install -y numpy net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python35u-tkinter xorg-x11-server-Xvfb  vim httpd xorg-x11-fonts-75dpi  nfs samba4 samba-client samba-winbind cifs-utils tcpdump hping3 telnet nmap wireshark java-1.8.0-openjdk firefox-52.8.0-1.el7.centos.x86_64 telnet ld-linux.so.2 ghostscript
     pip3.6 install pytest-runner
-    pip3.6 install numpy pyte PyYAML openpyxl Jinja2 pandas lxml requests netsnmp-py pdfkit robotframework robotframework-selenium2library robotframework-sshlibrary docutils pyvmomi
+    pip3.6 install numpy pyte PyYAML openpyxl Jinja2 pandas lxml requests netsnmp-py pdfkit robotframework robotframework-selenium2library robotframework-sshlibrary docutils pyvmomi PyVirtualDisplay
     ```
     
 - add just selenium version
@@ -147,30 +147,6 @@ Install a typical Centos7 with following parameters:
     -A INPUT -s 10.128.0.0/16 -j ACCEPT
     ```
 
-- create Xvfb startup file for Selenium library
-    - add a file `xvfb.service` to folder `/etc/systemd/system`
-    
-        ```
-        [Unit]
-        Description=X Virtual Frame Buffer Service
-        After=network.target
-
-        [Service]
-        ExecStart=/usr/bin/Xvfb :1 -screen 0 1921x1080x24
-        Restart=always
-        RestartSec=3
-
-        [Install]
-        WantedBy=multi-user.target
-        ```
-        
-    - enable and start the service
-    
-        ```
-        systemctl enable xvfb.service
-        systemctl start xvfb.service  
-        ```
-        
 - configure httpd service
     - add `apache` to `techno` group
     - modify `userdir.conf` under folder `/etc/httpd/conf.d` to show list the `work` folder of each user

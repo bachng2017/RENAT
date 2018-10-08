@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-08-28 09:19:10 +0900 (Tue, 28 Aug 2018) $
-# $Rev: 1248 $
+# $Date: 2018-10-06 20:12:33 +0900 (Sat, 06 Oct 2018) $
+# $Rev: 1420 $
 # $Ver: $
 # $Author: $
 
@@ -1157,7 +1157,7 @@ def get_quicktest_result_path(self,test_index=u'-1'):
     # get quicktest list    
     index = int(test_index)
     test_list = ix.getAttribute(ix.getRoot() + '/quickTest', '-testIds')
-
+    BuiltIn().log("    Got %d tests" % len(test_list))
     # get the result path
     result_path = ix.getAttribute(test_list[index]+'/results','-resultPath')
     if result_path == "":

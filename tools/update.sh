@@ -1,4 +1,16 @@
 #!/bin/bash
+# WARN: this this should be run inside a RENAT project folder
+
+if [[ "$1" == "-h" ]]; then
+    echo "apply necessary changes to projects/items using current renat folder"
+    echo "usage: $0 -h|-q"
+    echo "   -h: print this help"
+    echo "   -q: more quiet, do not print out diff information"
+    exit 1 
+fi
+if [[ "$1" == "-q" ]]; then
+    QUIET=$1
+fi
 
 if [[ ! -f chibalab.robot ]] && [[ ! -f lab.robot ]]; then
   echo "ERROR: should be applied in a project folder which has chibalab.robot or lab.robot"
@@ -16,7 +28,7 @@ else
 
   FILE=$RENAT_PATH/tools/template/project/lab.robot
   if [[ -f ./lab.robot ]]; then
-        diff $FILE lab.robot
+        diff $QUIET  $FILE lab.robot
         if [[ $? != 0 ]]; then
             cp -f $FILE .
             echo "updated lab.robot"
@@ -25,22 +37,25 @@ else
   fi
 
   FILE=$RENAT_PATH/tools/template/project/run.sh
-  diff $FILE run.sh
+  diff $QUIET $FILE run.sh
   if [[ $? != 0 ]]; then 
     cp -f $RENAT_PATH/tools/template/project/run.sh .
     echo "updated project run.sh"
     echo "---"
   fi
 
+  # update lab.robot for items
   RUN_FILE=$RENAT_PATH/tools/template/item/run.sh
   for entry in $(find . -type d -name config); do
-    if [[ -f $entry/../main.robot ]]; then
-       diff $RUN_FILE  $entry/../run.sh
+    if [[ -f $entry/../main.robot ]] && [[ -f $entry/../lab.robot ]] ; then
+       diff $QUIET $RUN_FILE  $entry/../run.sh
        cp -f $RUN_FILE $entry/../run.sh
        echo "updated $entry/../run.sh"
        ln -sf ../lab.robot $entry/../lab.robot
        echo "updated lab.robot"
        echo "---"
+    else
+       echo "ignore $entry because it does not look like an item folder"
     fi
   done
 
