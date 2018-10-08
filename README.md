@@ -4,6 +4,9 @@ A Robotframework Extension for Network Automation Testing
 
 ---
 
+![python version](https://img.shields.io/badge/python-2.7%20%7C%203.6-blue.svg)
+
+
 ## Disclaimer
 
 The Authors assume no responsibility for damage or loss of system
