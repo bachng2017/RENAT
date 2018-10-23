@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1397 $
+# $Rev: 1476 $
 # $Ver: $
-# $Date: 2018-10-04 07:25:11 +0900 (Thu, 04 Oct 2018) $
+# $Date: 2018-10-23 21:34:18 +0900 (Tue, 23 Oct 2018) $
 # $Author: $
 
 """ Common library for RENAT
@@ -1395,6 +1395,39 @@ def close_display():
     DISPLAY.stop()
     DISPLAY.sendstop()
     BuiltIn().log('Closed the virtual display')
+
+
+def csv_create(pathname, *header):
+    """ Create a CSV file with headers defined by a list `header`
+    
+    The CSV file is opend with `UTF-8` encoding mode
+    """
+    if sys.version_info[0] > 2:
+        with open(pathname, 'w', 'utf-8') as f:
+            f.write(','.join(header))
+    else:
+        with codecs.open(pathname, 'w', 'utf-8') as f:
+            f.write(','.join(header))
+    BuiltIn().log('Create an empty CSV file `%s`' % pathname)
+
+
+def csv_add(pathname, *items):
+    """ Add more data define by a list `items` to a existed CSV file
+
+    *Note:*: do not check the consistency between item's number and header's
+    number
+    """
+    if sys.version_info[0] > 2:
+        with open(pathname, 'a', 'utf-8') as f:
+            f.write("\r\n")
+            f.write(','.join(items))
+    else:
+        with codecs.open(pathname, 'a', 'utf-8') as f:
+            f.write("\r\n")
+            f.write(','.join(items))
+    BuiltIn().log('Added more data to CSV file `%s`' % pathname)
+    
+    
 
 # set RF global variables and load libraries
 try:

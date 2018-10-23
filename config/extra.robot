@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-# $Date: 2018-08-25 23:24:26 +0900 (Sat, 25 Aug 2018) $
-# $Rev: 1220 $
+# $Date: 2018-09-30 17:29:23 +0900 (Sun, 30 Sep 2018) $
+# $Rev: 1383 $
 # $Ver: $
 # $Author: $
 
 *** Setting ***
 # RENAT libraries
-Library                     SeleniumLibrary                timeout=10.0     implicit_wait=15.0   run_on_failure=Capture Page Screenshot
+Library                     SeleniumLibrary                timeout=10.0     implicit_wait=15.0
 Library                     DateTime
 Library                     OperatingSystem
 Library                     ${RENAT_PATH}/Common.py

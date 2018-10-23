@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-10-07 14:36:22 +0900 (Sun, 07 Oct 2018) $
-# $Rev: 1422 $
+# $Date: 2018-10-12 10:36:47 +0900 (Fri, 12 Oct 2018) $
+# $Rev: 1457 $
 # $Ver: $
 # $Author: $
 
@@ -160,7 +160,7 @@ class WebApp(object):
         """    
         self.set_capture_counter(0)
 
-    def capture_screenshot(self,filename=None,extra=''):
+    def capture_screenshot(self,filename=None,extra=u''):
         """ Captures the current screen to file
 
         Using the internal counter for filename if ``filename`` is not
@@ -181,7 +181,7 @@ class WebApp(object):
         if not filename:
             current_counter = self._browsers[name]['capture_counter']
             new_counter = current_counter + 1
-            format = self._browsers[name]['capture_format'] + extra + '.png'
+            format = self._browsers[name]['capture_format'] + str(extra) + '.png'
             capture_name = format % (new_counter)
             self._browsers[name]['capture_counter'] = new_counter
         else:

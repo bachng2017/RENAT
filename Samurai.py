@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-10-06 20:12:33 +0900 (Sat, 06 Oct 2018) $
-# $Rev: 1420 $
+# $Date: 2018-10-12 00:06:27 +0900 (Fri, 12 Oct 2018) $
+# $Rev: 1455 $
 # $Ver: $
 # $Author: $
 
@@ -35,7 +35,7 @@ from selenium.webdriver.common.proxy import Proxy, ProxyType
 class Samurai(WebApp):
     """ A library provides functions to control Samurai application
 
-    The library utilize `Selenium2Library` and adds more functions to control
+    The library utilize `SeleniumLibrary` and adds more functions to control
     Samurai application easily. Without other furthur mentions, all of the concepts
     of ``user``, ``user group`` are Samurai concepts. By default, RENAT will try to
     connec to all Samurai nodes defined in active ``local.yaml`` at the beginning of
@@ -276,9 +276,8 @@ class Samurai(WebApp):
         self._driver.select_window('MAIN')
 
         target = self._driver.get_webelement(u'//div[@class="submenu" and contains(.,"%s")]' % menu)
-        id      = target.get_attribute('id')
-        style   = target.get_attribute('style')
-        if 'none' in style: 
+        id = target.get_attribute('id')
+        if not target.is_displayed():
             self._driver.execute_javascript("toggle_disp('%s','mitigation')" % id)
         self._driver.click_link(menu)
         self._driver.wait_until_element_is_visible("id=my_contents")
@@ -326,7 +325,13 @@ class Samurai(WebApp):
         """
         self.switch(self._current_name)
 
-        self._driver.execute_javascript("toggle_disp('submenu3','mitigation')")
+        menu = self._driver.get_webelement(u'//div[@id="submenu3"]')
+        if not menu.is_displayed():
+            BuiltIn().log('Executing the javascript to expand the left menu')
+            self._driver.execute_javascript("toggle_disp('submenu3','mitigation')")
+            BuiltIn().log('Executed the javascript to expand the left menu')
+        self.capture_screenshot()
+        self._driver.wait_until_page_contains_element(u"//a[contains(.,'Active Mitigation')]")
         self._driver.click_link("Active Mitigation")
         self._driver.wait_until_page_contains_element(u"//input[@value='Guard実行']")
         self._driver.click_button(u"//input[@value='Guard実行']")
@@ -339,9 +344,7 @@ class Samurai(WebApp):
         self._driver.click_button(u"//input[@value='追加']")
 
         # device check
-        # self._driver.page_should_not_contain_textfield(u"デバイスがありません")
         self._driver.element_should_not_be_visible(u"//span[contains(.,'有効な mitigation デバイスがありません')]")
-        # self._driver.wait_until_page_contains_element(u"//*[text()[contains(.,'Mitigation ID')]]")
 
         # device selection
         title = self._driver.get_title()
@@ -358,17 +361,14 @@ class Samurai(WebApp):
             raise("Selected device is `%s` which does not contain `%s`" % (applied_device,device))
        
         self._driver.input_text("name=comment",comment)
-        # time.sleep(5)
 
         # execute
         self._driver.click_button(u"//input[@value='Mitigation 実行']")
-        # time.sleep(5)
         id = self._driver.get_text("xpath=//*[text()[contains(.,'Mitigation ID')]]")
         search = re.search(".*:(.+) .*$", id)
         result = search.group(1)
         
         self._driver.click_button(u"//input[@value='閉じる']")
-        # time.sleep(5)
         self._driver.select_window("title= Active Mitigation") 
         self._driver.reload_page()
         time.sleep(5)
@@ -378,8 +378,11 @@ class Samurai(WebApp):
  
    
     @with_reconnect 
-    def stop_mitigation(self,id,stop_when_error=True):
+    def stop_mitigation(self,id,raise_error=True):
         """ Stops a mitigation by its ID
+
+        The keyword will raise an error if `raise_error` is ``True``. Otherwise
+        it will ignore any errors.
 
             Example:
             | Samurai.`Stop Mitigation` | 700 |
@@ -681,9 +684,8 @@ class Samurai(WebApp):
         # not all device information is expanded yet
         mo_info = self._driver.get_webelements(u"//div[starts-with(@id,'mo_')]")
         for item in mo_info:
-            id      = item.get_attribute('id')
-            style   = item.get_attribute('style')
-            if 'none' in style:
+            id = item.get_attribute('id')
+            if not item.is_displayerd():
                 self._driver.execute_javascript("toggle_disp('%s','%s_img')" % (id,id))
 
         BuiltIn().log("Showed mitigation setting of the policy `%s`" % policy_name)
@@ -908,6 +910,7 @@ class Samurai(WebApp):
         if 'basic_direction' in policy and policy['basic_direction'].lower() in ['incoming', 'in'] :
                 basic_direction = 'Incoming'
         self._driver.select_from_list_by_label("direction", basic_direction) 
+
         self._driver.click_button("submitbutton")
         self._driver.wait_until_page_contains(u"ポリシーを追加しました。")
         self._driver.click_button(u"//button[.='進む']") 
@@ -990,7 +993,7 @@ class Samurai(WebApp):
                         self._driver.select_checkbox(check)
                         self._driver.input_text(comm_input,comm) 
         self._driver.click_button(u"//button[.='次へ']")
-      
+
         # MO
         # When peers have been configured, there are no places to set community
         if mitigation_mo_enabled == 'true':
@@ -1000,9 +1003,8 @@ class Samurai(WebApp):
             # not all device information is expanded yet
             mo_info = self._driver.get_webelements(u"//div[starts-with(@id, 'mo_')]")
             for item in mo_info:
-                id      = item.get_attribute('id')
-                style   = item.get_attribute('style')
-                if 'none' in style:
+                id = item.get_attribute('id')
+                if not item.is_displayed():
                     self._driver.execute_javascript("toggle_disp('%s','%s_img')" % (id,id))
 
             items = self._driver.get_webelements(u"//tr/td[2][.='%s']/../td[1]" % mo_name)

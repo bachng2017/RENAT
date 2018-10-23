@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1433 $
+# $Rev: 1456 $
 # $Ver: $
-# $Date: 2018-10-08 10:09:35 +0900 (Mon, 08 Oct 2018) $
+# $Date: 2018-10-12 08:48:53 +0900 (Fri, 12 Oct 2018) $
 # $Author: $
 
 import os,re,sys
@@ -57,27 +57,6 @@ def _dump_screen(channel):
     return ''
 
 
-def _flush_all(channels):
-    for name in  channels:
-        channel = channels[name]
-        output = ""
-        if channel['screen']:
-            # read from the session and log the result
-            channel['stream'].feed(channel['connection'].read())
-            try:
-                output = _dump_screen(channel) + Common.newline
-            except UnicodeDecodeError as err:
-                BuiltIn().log('ERROR: Unicode error in read output')
-                output = err.args[1].decode('utf-8','replace')
-        else:
-            try:
-                output = channel['connection'].read() 
-            except UnicodeDecodeError as err:
-                output = err.args[1].decode('utf-8','replace')
-        _log(channel,output)
-        if 'logger' in channel: channel['logger'].flush()
-
-
 def _log(channel,msg):
     """ log for a channel
     """
@@ -89,7 +68,8 @@ def _log(channel,msg):
             if channel['screen']: logger.write(Common.newline)
             logger.write(Common.newline + separator + Common.newline)
         # remove some special control char before write to file
-        logger.write(re.sub(r"[\x07]", "", msg))
+        escaped_msg = re.sub(r'(\x9B|\x1B\[)[0-?]*[ -/]*[@-~]','',msg) 
+        logger.write(escaped_msg)
         logger.flush()
 
 
@@ -539,7 +519,7 @@ class VChannel(object):
             return  self._get_history(channel['screen']) + self._get_screen(channel['screen'])
         return ''
 
- 
+    @with_reconnect 
     def switch(self,name):
         """ Switches the current active channel to ``name``. 
         There only one active channel at any time
@@ -552,22 +532,23 @@ class VChannel(object):
 
         for item in self._channels:
             output = ""
-            channel_info = self._channels[item]
-            channel_info['connection'].switch_connection(channel_info['local_id'])
-            if channel_info['screen']:
-                screen = channel_info['screen']
-                channel_info['stream'].feed(channel_info['connection'].read())
+            channel = self._channels[item]
+            channel['connection'].switch_connection(channel['local_id'])
+            if channel['screen']:
+                # read from the session and log the result
+                channel['stream'].feed(channel['connection'].read())
                 try:
-                    output = self._get_history(screen) + self._get_screen(screen) + Common.newline
+                    output = _dump_screen(channel) + Common.newline
                 except UnicodeDecodeError as err:
                     BuiltIn().log('ERROR: Unicode error in read output')
                     output = err.args[1].decode('utf-8','replace')
             else:
                 try:
-                    output = channel_info['connection'].read() 
+                    output = channel['connection'].read() 
                 except UnicodeDecodeError as err:
                     output = err.args[1].decode('utf-8','replace')
-            self.log(output)
+            _log(channel,output)
+            if 'logger' in channel: channel['logger'].flush()
 
         if name in self._channels: 
             channel_info = self._channels[name]
@@ -672,7 +653,7 @@ class VChannel(object):
             else:
                 self.log(cmd + Common.newline)
 
-        BuiltIn().log("Wrote '%s',screen_mode=`%s`" % (str_cmd,is_screen_mode))
+        BuiltIn().log("Wrote '%s', screen_mode=`%s`" % (str_cmd,is_screen_mode))
         return result
 
 
@@ -707,29 +688,6 @@ class VChannel(object):
         return  old_prompt
         
 
-    @with_reconnect
-    def _cmd(self,str_cmd,str_prompt):
-        output = ""
-        channel = self._channels[self._current_name]
-
-        if channel['screen']: raise Exception("``Cmd`` keyword is prohibitted in ``screen  mode``")
-        access      = channel['access-type']
-        cur_prompt  = channel['prompt']
-
-        # in case something left in the buffer
-        output  = channel['connection'].read()
-        self.log(output)
-        
-        channel['connection'].write(str_cmd)
-        self.log(str_cmd + Common.newline)
-       
-        if str_prompt == '' :    
-            output  = channel['connection'].read_until_regexp(cur_prompt)
-        else:
-            output  = channel['connection'].read_until_regexp('.*' + str_prompt)
-        self.log(output)
-        return output
-
 #        # experimentally implement VChannel without using prompt
 #        result = ''
 #        old_output = ''
@@ -749,23 +707,76 @@ class VChannel(object):
 #    
 #        return result
 
+    def cmd_more(self,cmd=u'',wait_prompt=u'.*---\(more.*\)---',press_key=u' ',prompt=None):
+        """ Execute a command and press `press_key` when `wait_prompt` is
+        displayed until the prompt
+        """
+        BuiltIn().log("Execute command: `%s` and wait until prompt" % cmd)
+        output = ''
+        channel = self._channels[self._current_name]
+        if channel['screen']: raise Exception("``Cmd`` keyword is prohibitted in ``screen mode``")
+        # in case something left in the buffer
+        output  = channel['connection'].read()
+        self.log(output)
+        
+        channel['connection'].write(cmd)
+        self.log(cmd + Common.newline)
 
-    def cmd(self,command='',prompt='',match_err='\r\n(unknown command.|syntax error, expecting <command>.)\r\n'):
+        default_prompt  = channel['prompt']
+        if prompt is None :    
+            last_prompt = default_prompt
+            cur_prompt = '.*(%s|%s)' % (default_prompt,wait_prompt)
+        else:
+            last_prompt = '.*%s' % prompt
+            cur_prompt = '.*(%s|%s)' % (prompt,wait_prompt)
+        output = '' 
+        BuiltIn().log('prompt = %s' % cur_prompt)
+        while True:
+            output = channel['connection'].read_until_regexp(cur_prompt)
+            self.log(output)
+            if re.match('.*' + last_prompt,output,re.DOTALL): break
+            BuiltIn().log('Continue...')
+            self.write(' ')
+            time.sleep(1)
+        
+        BuiltIn().log("Executed command: `%s` and wait until prompt")
+
+
+
+    @with_reconnect
+    def cmd(self,command='',prompt=None,match_err='\r\n(unknown command.|syntax error, expecting <command>.)\r\n'):
         """Executes a ``command`` and wait until for the prompt. 
   
         This is a blocking keyword. Execution of the test case will be postponed until the prompt appears.
         If ``prompt`` is a null string (default), its value is defined in the ``./config/template.yaml``
 
+        The keyword returns error when the output matches the ``match_err`` and
+        the default config value `cmd-auto-check` is ``True``
+
         Output will be automatically logged to the channel current log file.
 
         See [./Common.html|Common] for details about the config files.
         """
-
         BuiltIn().log("Execute command: `%s`" % (command))
-        output = self._cmd(command,prompt)
+        output = ''
+        channel = self._channels[self._current_name]
+        if channel['screen']: raise Exception("``Cmd`` keyword is prohibitted in ``screen  mode``")
+        # in case something left in the buffer
+        output  = channel['connection'].read()
+        self.log(output)
+        
+        channel['connection'].write(command)
+        self.log(command + Common.newline)
+
+        cur_prompt  =  channel['prompt']
+        if prompt is not None :    
+            cur_prompt = '.*' + prompt
+        output  = channel['connection'].read_until_regexp(cur_prompt)
+        self.log(output)
 
         # result checking
-        if Common.GLOBAL['default']['cmd-auto-check'] and match_err != '' and re.search(match_err, output):
+        cmd_auto_check = Common.get_config_value('cmd-auto-check')
+        if cmd_auto_check and match_err != '' and re.search(match_err, output):
             err_msg = "ERROR: error while execute command `%s`" % command
             BuiltIn().log(err_msg)
             BuiltIn().log(output)
@@ -968,6 +979,7 @@ class VChannel(object):
         BuiltIn().log("Executed commands in file %s" % file_name)
 
 
+    @with_reconnect
     def cmd_and_wait_for_regex(self,command,pattern,interval=u'30s',max_num=u'10',error_with_max_num=True):
         """ Execute a command and expect ``pattern`` occurs in the output.
         If not wait for ``interval`` and repeat the process again
@@ -988,7 +1000,7 @@ class VChannel(object):
                 num = num + 1
                 time.sleep(DateTime.convert_time(interval))
                 BuiltIn().log_to_console('.','STDOUT',True)
-        if error_with_max_num and num > max_num:
+        if error_with_max_num and num > int(max_num):
             msg = "ERROR: Could not found pattern `%s`" % pattern
             BuiltIn().log(msg)
             raise Exception(msg)
@@ -1005,7 +1017,7 @@ class VChannel(object):
 
         num = 1
         BuiltIn().log("Execute command `%s` and wait for `%s`" % (command,keyword))
-        while num <= max_num:
+        while num <= int(max_num):
             BuiltIn().log("    %d: command is `%s`" % (num,command))
             output = self.cmd(command)
             if keyword in output:
@@ -1015,7 +1027,7 @@ class VChannel(object):
                 num = num + 1
                 time.sleep(DateTime.convert_time(interval))
                 BuiltIn().log_to_console('.','STDOUT',True)
-        if error_with_max_num and num > max_num:
+        if error_with_max_num and num > int(max_num):
             msg = "ERROR: Could not found keyword `%s`" % keyword
             BuiltIn().log(msg)
             raise Exception(msg)

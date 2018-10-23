@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-10-06 20:12:33 +0900 (Sat, 06 Oct 2018) $
-# $Rev: 1420 $
+# $Date: 2018-10-23 16:52:30 +0900 (Tue, 23 Oct 2018) $
+# $Rev: 1473 $
 # $Ver: $
 # $Author: $
 
@@ -278,6 +278,7 @@ class Arbor(WebApp):
         self._driver.input_text("search_string_id",search_str)
         self._driver.click_button("search_button")
         self._driver.wait_until_page_contains_element("xpath=//div[@class='sp_page_content']") 
+        self._driver.wait_until_page_contains('Page generation took')
 
         self._driver.wait_until_element_is_visible(xpath)
         self._driver.click_link(xpath)
@@ -346,6 +347,7 @@ class Arbor(WebApp):
         mitigation_id = href.split('&')[1].split('=')[1] 
         self._driver.click_link(xpath)
         time.sleep(5)
+        self._driver.wait_until_page_contains('Page generation took')
         BuiltIn().log("Displayed detail of `%s`th mitigation in the list" % order)
         return mitigation_name,mitigation_id
 
@@ -379,10 +381,14 @@ class Arbor(WebApp):
         for item in items:
             BuiltIn().log("    Access to menu item %s" % item)
             index +=1
-            if partial_match:
-                xpath = "xpath=//a[contains(.,'%s')]" % item
+            if index > 1:
+                menu = '//li[not(contains(@class,\'top_level\'))]'
             else:
-                xpath = "xpath=//a[.='%s']" % item
+                menu = '' 
+            if partial_match:
+                xpath = "xpath=%s//a[contains(.,'%s')]" % (menu,item)
+            else:
+                xpath = "xpath=%s//a[.='%s']" % (menu,item)
             self._driver.mouse_over(xpath)
             self._driver.wait_until_element_is_visible(xpath)
             if capture_all:
