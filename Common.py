@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1476 $
+# $Rev: 1477 $
 # $Ver: $
-# $Date: 2018-10-23 21:34:18 +0900 (Tue, 23 Oct 2018) $
+# $Date: 2018-10-24 07:38:48 +0900 (Wed, 24 Oct 2018) $
 # $Author: $
 
 """ Common library for RENAT
@@ -1403,7 +1403,7 @@ def csv_create(pathname, *header):
     The CSV file is opend with `UTF-8` encoding mode
     """
     if sys.version_info[0] > 2:
-        with open(pathname, 'w', 'utf-8') as f:
+        with open(pathname, 'w', encoding='utf-8') as f:
             f.write(','.join(header))
     else:
         with codecs.open(pathname, 'w', 'utf-8') as f:
@@ -1418,7 +1418,7 @@ def csv_add(pathname, *items):
     number
     """
     if sys.version_info[0] > 2:
-        with open(pathname, 'a', 'utf-8') as f:
+        with open(pathname, 'a', encoding='utf-8') as f:
             f.write("\r\n")
             f.write(','.join(items))
     else:

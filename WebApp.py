@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-10-12 10:36:47 +0900 (Fri, 12 Oct 2018) $
-# $Rev: 1457 $
+# $Date: 2018-10-27 14:42:23 +0900 (Sat, 27 Oct 2018) $
+# $Rev: 1498 $
 # $Ver: $
 # $Author: $
 
@@ -32,7 +32,7 @@ import robot.libraries.DateTime as DateTime
 def _with_reconnect(keyword, self, *args, **kwargs):
     count = 0
     max_count = int(Common.GLOBAL['default']['max-retry-for-connect'])
-    while count < max_count:
+    while count <= max_count:
         try:
             return keyword(self,*args,**kwargs)
         except (AssertionError,ElementNotFound) as err:
@@ -45,6 +45,7 @@ def _with_reconnect(keyword, self, *args, **kwargs):
                 BuiltIn().log('WARN: Failed to execute the keyword: %d'  % count)
                 self.reconnect()
             else:
+                self.capture_screenshot("last_screen.png") # save the last available screen
                 BuiltIn().log('ERROR: Gave up retry for keyword `%s`' % keyword.__name__)
                 raise
 
@@ -115,7 +116,6 @@ class WebApp(object):
         self._type                  = None
         self._ajax_wait             = 2
         try:
-            # self._driver = BuiltIn().get_library_instance('Selenium2Library')
             self._driver = BuiltIn().get_library_instance('SeleniumLibrary')
         except RobotNotRunningError as e:
             Common.err("WARN: RENAT is not running")
@@ -186,9 +186,15 @@ class WebApp(object):
             self._browsers[name]['capture_counter'] = new_counter
         else:
             capture_name = filename
-        total_width = self._driver.execute_javascript("return document.body.offsetWidth")
-        total_height = self._driver.execute_javascript("return document.body.parentNode.scrollHeight")
-        self._driver.set_window_size(int(total_width), int(total_height))
+        total_width = int(self._driver.execute_javascript("return document.body.offsetWidth"))
+        total_height = int(self._driver.execute_javascript("return document.body.parentNode.scrollHeight"))
+        display_info = Common.get_config_value('display')
+
+        if total_width < int(display_info['width']):
+            total_width = int(display_info['width'])
+        if total_height < int(display_info['height']):
+            total_height = int(display_info['height'])
+        self._driver.set_window_size(total_width, total_height)
         time.sleep(2)
         self._driver.capture_page_screenshot(capture_name)
         # self._driver.driver.save_screenshot(capture_name)

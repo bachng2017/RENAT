@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1456 $
+# $Rev: 1492 $
 # $Ver: $
-# $Date: 2018-10-12 08:48:53 +0900 (Fri, 12 Oct 2018) $
+# $Date: 2018-10-25 13:12:41 +0900 (Thu, 25 Oct 2018) $
 # $Author: $
 
 import os,re,sys
@@ -984,6 +984,9 @@ class VChannel(object):
         """ Execute a command and expect ``pattern`` occurs in the output.
         If not wait for ``interval`` and repeat the process again
 
+        When the keyword contains ``not:`` at the beginning, the matching logic
+        is revsersed.
+
         After ``max_num``, if ``error_with_max_num`` is ``True`` then the
         keyword will fail. Ortherwise the test continues.
         """
@@ -1017,18 +1020,29 @@ class VChannel(object):
 
         num = 1
         BuiltIn().log("Execute command `%s` and wait for `%s`" % (command,keyword))
+
+        tmp = keyword.split('not:')
+        if len(tmp)==2 and tmp[0]=='':
+            logic = 'not'
+            m_keyword = tmp[1]
+        else:
+            logic = ''
+            m_keyword = keyword
+        BuiltIn().log('    Using matching logic `%s`' % logic)
+        
         while num <= int(max_num):
             BuiltIn().log("    %d: command is `%s`" % (num,command))
             output = self.cmd(command)
-            if keyword in output:
-                BuiltIn().log("Found keyword `%s` and stopped the loop" % keyword)
+            matching = '%s(m_keyword in output)' % logic
+            if eval(matching) :
+                BuiltIn().log("    Matched keyword `%s` and stopped the loop" % keyword)
                 break;
             else:
                 num = num + 1
                 time.sleep(DateTime.convert_time(interval))
                 BuiltIn().log_to_console('.','STDOUT',True)
         if error_with_max_num and num > int(max_num):
-            msg = "ERROR: Could not found keyword `%s`" % keyword
+            msg = "ERROR: Could not match keyword `%s`" % keyword
             BuiltIn().log(msg)
             raise Exception(msg)
 
