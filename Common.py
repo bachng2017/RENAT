@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1477 $
+# $Rev: 1514 $
 # $Ver: $
-# $Date: 2018-10-24 07:38:48 +0900 (Wed, 24 Oct 2018) $
+# $Date: 2018-10-29 16:34:14 +0900 (Mon, 29 Oct 2018) $
 # $Author: $
 
 """ Common library for RENAT
@@ -307,6 +307,7 @@ import hashlib
 import pandas
 import sys,select
 import subprocess
+import pyscreenshot as pyscreenshot
 from pyvirtualdisplay import Display
 from selenium.webdriver.common.keys import Keys
 try:
@@ -1384,17 +1385,35 @@ def start_display():
     global DISPLAY
     display_info = get_config_value('display')
     DISPLAY = Display(visible=0, size=(display_info['width'],display_info['height']))
+    # DISPLAY = Display(visible=0, size=(display_info['width'],display_info['height']),fbdir=get_result_path())
     DISPLAY.start()
-    BuiltIn().log('Started a virtual display')
+    BuiltIn().log('Started a virtual display as `%s`' % DISPLAY.new_display_var)
 
 
 def close_display():
     """ Closes the opened display
     """
     global DISPLAY
+    # tmpfile = '/tmp/xvfb.%s' % DISPLAY.new_display_var.replace(':','')
+    # cmd = '/usr/bin/xwd -display %s -root -out %s' % (DISPLAY.new_display_var, tmpfile)
+    # BuiltIn().log_to_console(cmd)
+    # subprocess.Popen(cmd,shell=True)
+    # screenshot.grab(childprocess=True).save('/tmp/test.png')
     DISPLAY.stop()
     DISPLAY.sendstop()
     BuiltIn().log('Closed the virtual display')
+
+
+def screenshot(file_path):
+    """ Capture whole display to a file specified by ``file_path``
+
+    *Notes*: This keyword saves the whole virtual screen(monitor), while the
+    familiar WebApp.`Screenshot Capture` only saves the portion of the web
+    browser. But in contrast, the WebApp.`Screenshot Capture` could do `fullpage
+    capture` depending on the content of the browser.
+    """
+    pyscreenshot.grab(childprocess=True).save(file_path)
+    BuiltIn().log("Saved current display to file `%s`" % file_path)
 
 
 def csv_create(pathname, *header):

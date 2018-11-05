@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1492 $
+# $Rev: 1527 $
 # $Ver: $
-# $Date: 2018-10-25 13:12:41 +0900 (Thu, 25 Oct 2018) $
+# $Date: 2018-11-02 18:37:34 +0900 (金, 02 11月 2018) $
 # $Author: $
 
 import os,re,sys
@@ -772,6 +772,7 @@ class VChannel(object):
         if prompt is not None :    
             cur_prompt = '.*' + prompt
         output  = channel['connection'].read_until_regexp(cur_prompt)
+        # output  = channel['connection'].read_until_regexp(cur_prompt,loglevel='DEBUG')
         self.log(output)
 
         # result checking

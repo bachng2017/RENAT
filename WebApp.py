@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-10-27 14:42:23 +0900 (Sat, 27 Oct 2018) $
-# $Rev: 1498 $
+# $Date: 2018-11-02 18:49:57 +0900 (金, 02 11月 2018) $
+# $Rev: 1528 $
 # $Ver: $
 # $Author: $
 
@@ -25,6 +25,7 @@ from robot.libraries.BuiltIn import BuiltIn
 from robot.libraries.BuiltIn import RobotNotRunningError
 from SeleniumLibrary import SeleniumLibrary
 from SeleniumLibrary.errors import ElementNotFound
+from selenium.common.exceptions import WebDriverException
 import robot.libraries.DateTime as DateTime
 
 
@@ -186,8 +187,8 @@ class WebApp(object):
             self._browsers[name]['capture_counter'] = new_counter
         else:
             capture_name = filename
-        total_width = int(self._driver.execute_javascript("return document.body.offsetWidth"))
-        total_height = int(self._driver.execute_javascript("return document.body.parentNode.scrollHeight"))
+        total_width = int(self._driver.execute_javascript("return document.body.offsetWidth;"))
+        total_height = int(self._driver.execute_javascript("return document.body.parentNode.scrollHeight;"))
         display_info = Common.get_config_value('display')
 
         if total_width < int(display_info['width']):

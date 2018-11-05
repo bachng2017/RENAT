@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1420 $
+# $Rev: 1514 $
 # $Ver: $
-# $Date: 2018-10-06 20:12:33 +0900 (Sat, 06 Oct 2018) $
+# $Date: 2018-10-29 16:34:14 +0900 (Mon, 29 Oct 2018) $
 # $Author: $
 
 RENAT(Robotframework Extension for Network Automation Testing)
@@ -23,7 +23,9 @@ RENAT(Robotframework Extension for Network Automation Testing)
 == What's new ==
 
 === 0.1.10 ===
-- added Hypervisor module
+- add more keyword to Samurai module
+- add support to some FF profile settings (to download files)
+- add Hypervisor module
 - add Wait keyword to Common module
 - fix error when SSHlibrary is not patched for proxy command
 - add option -B to item/run.sh to backup result folder

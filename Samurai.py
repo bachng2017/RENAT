@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-10-27 14:42:23 +0900 (Sat, 27 Oct 2018) $
-# $Rev: 1498 $
+# $Date: 2018-11-02 19:19:56 +0900 (金, 02 11月 2018) $
+# $Rev: 1529 $
 # $Ver: $
 # $Author: $
 
@@ -26,7 +26,6 @@ from WebApp import WebApp,with_reconnect
 from robot.libraries.BuiltIn import BuiltIn
 import robot.libraries.DateTime as DateTime
 from robot.libraries.BuiltIn import RobotNotRunningError
-# from Selenium2Library import Selenium2Library
 from SeleniumLibrary import SeleniumLibrary
 from selenium import webdriver
 from selenium.webdriver.common.proxy import Proxy, ProxyType
@@ -102,7 +101,6 @@ class Samurai(WebApp):
         |     http:   10.128.8.210:8080     | optional |
         |     ssl:    10.128.8.210:8080     | optional | 
         |     socks:  10.128.8.210:8080     | optional |
-        | profile_dir | ./config/samurai.profile | optional |  
 
         """
         if name in self._browsers:
@@ -111,9 +109,9 @@ class Samurai(WebApp):
 
         login_url       = '/'
         browser         = 'firefox'
-        proxy = None
+        proxy           = None
+        fp              = None
         capabilities    = None 
-        ff_profile_dir  = None
 
         # collect information about the application
         app_info = Common.LOCAL['webapp'][app]
@@ -121,8 +119,8 @@ class Samurai(WebApp):
             login_url = app_info['login_url']
         if 'browser' in app_info and app_info['browser']:         
             browser  = app_info['browser']
-        if 'profile_dir' in app_info and app_info['profile_dir']:     
-            ff_profile_dir  = os.getcwd() + 'config/' + app_info['profile_dir']
+        # if 'profile_dir' in app_info and app_info['profile_dir']:     
+        #    ff_profile_dir  = os.getcwd() + 'config/' + app_info['profile_dir']
         if 'proxy' in app_info and app_info['proxy']:
             proxy = Proxy()
             proxy.proxy_type = ProxyType.MANUAL
@@ -141,11 +139,28 @@ class Samurai(WebApp):
         device_info = Common.GLOBAL['device'][device]
         ip = device_info['ip']
         #
-        # fp = webdriver.FirefoxProfile()
-        # fp.set_preference("browser.download.folderList",0)
-        # fp.set_preference("browser.download.dir",Common.get_result_path())
-        # fp.update_preferences()
+        if browser == 'firefox':
+            fp = webdriver.FirefoxProfile()
+            # 0:デスクトップ、1:
+            # システム規定のフォルダ、2:ユーザ定義フォルダ（"browser.download.dir"で定義）
+            if 'profile' in app_info and 'download-dir' in app_info['profile']:
+                download_dir = app_info['profile']['download-dir']
+            else:
+                download_dir = Common.get_result_path()
+            if 'profile' in app_info and 'auto-save-mime' in app_info['profile']:
+                auto_save_mime = app_info['profile']['auto-save-mime']
+                fp.set_preference("browser.helperApps.neverAsk.saveToDisk", app_info['profile']['auto-save-mime'])
+            fp.set_preference("browser.download.folderList",2)
+            fp.set_preference("browser.download.dir",download_dir)
+            fp.set_preference("browser.download.manager.showWhenStarting",False);
+            fp.set_preference("browser.download.useDownloadDir",True);
+            fp.set_preference("browser.download.panel.shown",False);
 
+            fp.set_preference("gfx.canvas.azure.backends","cairo");
+            fp.set_preference("gfx.content.azure.backends","cairo");
+
+            fp.update_preferences()
+        
         # currently, only plain-text authentication is supported
         auth = {}
         auth['username']    = Common.GLOBAL['auth']['plain-text']['samurai']['user']
@@ -153,8 +168,22 @@ class Samurai(WebApp):
         url = 'https://' + ip + '/' + login_url
     
         # open a browser
-        self._driver.open_browser(url,browser,'_samurai_'+name,False,capabilities,ff_profile_dir)
-        # self._driver.open_browser(url,browser,'_samurai_'+name,False,capabilities,fp.path)
+        retry = 0
+        while retry <= 1:
+            try: 
+                self._driver.open_browser(url,browser,'_samurai_'+name,False,capabilities,fp.path)
+                break
+            except WebDriverException as err:
+                BuiltIn().log(err)
+                BuiltIn().log('Will retry one more time for browser session')
+                retry += 1
+                if retry == 2: raise 
+
+        if fp is None:
+            BuiltIn().log("Opened browser(%s) for Samurai app" % (browser))
+        else:
+            BuiltIn().log("Opened browser(%s) for Samurai app with profile `%s`" % (browser,fp.path))
+
         self._driver.wait_until_element_is_visible('name=username')
         
         # login
@@ -168,7 +197,7 @@ class Samurai(WebApp):
         browser_info['url'] = url
         browser_info['auth'] = auth
         browser_info['capabilities'] = capabilities
-        browser_info['ff_profile_dir'] = ff_profile_dir
+        # browser_info['ff_profile_dir'] = ff_profile_dir
         browser_info['capture_counter'] = 0
         browser_info['capture_format']  = 'samurai_%010d'
         browser_info['browser']         = browser
@@ -820,21 +849,21 @@ class Samurai(WebApp):
         self.show_policy_mitigation(policy_name)
         if 'mitigation_auto_enabled' in policy:
             changing = True
-            if ['mitigation_auto_enabled']:
+            if policy['mitigation_auto_enabled']:
                 mitigation_auto_enabled = "true" 
             else:
                 mitigation_auto_enabled = "false" 
             self._driver.select_radio_button("auto_enable",mitigation_auto_enabled)
         if 'mitigation_auto_stop_enabled' in policy:
             changing = True
-            if ['mitigation_auto_stop_enabled']:
+            if policy['mitigation_auto_stop_enabled']:
                 mitigation_auto_stop_enabled = "true" 
             else:
                 mitigation_auto_stop_enabled = "false" 
             self._driver.select_radio_button("auto_stop",mitigation_auto_enabled)
         if 'mitigation_zone_prefix' in policy:
             changing = True
-            self._driver.input_text("prefix0",policy['zone_prefix'])
+            self._driver.input_text("prefix0",policy['mitigation_zone_prefix'])
         if 'mitigation_thr_bps' in policy:
             changing = True
             self._driver.input_text("thr_bps",policy['mitigation_thr_bps'])
@@ -869,18 +898,24 @@ class Samurai(WebApp):
             if ('nw_monitor_gre1' in policy) or ('nw_monitor_gre2' in policy):
                 changing = True
                 gre_elements = self._driver.get_webelements('//input[contains(@id,"gre_addr")]')
-                self._driver.input_text(gre_elements[0],policy['nw_monitor_gre1'])
-                self._driver.input_text(gre_elements[1],policy['nw_monitor_gre2'])
+                if 'nw_monitor_gre1' in policy:
+                    self._driver.input_text(gre_elements[0],policy['nw_monitor_gre1'])
+                if 'nw_monitor_gre2' in policy:
+                    self._driver.input_text(gre_elements[1],policy['nw_monitor_gre2'])
             if ('nw_monitor_pe1' in policy) or ('nw_monitor_ce1' in policy):
                 changing = True
                 pe_elements = self._driver.get_webelements('//select[contains(@name,"pe_id")]')
-                self._driver.select_from_list_by_label(pe_elements[0],policy['nw_monitor_pe1'])
-                self._driver.select_from_list_by_label(pe_elements[1],policy['nw_monitor_pe2'])
+                if 'nw_monitor_pe1' in policy:
+                    self._driver.select_from_list_by_label(pe_elements[0],policy['nw_monitor_pe1'])
+                if 'nw_monitor_pe2' in policy:
+                    self._driver.select_from_list_by_label(pe_elements[1],policy['nw_monitor_pe2'])
             if ('nw_monitor_ce1' in policy) or ('nw_monitor_ce2' in policy):
                 changing = True
                 ce_elements = self._driver.get_webelements('//input[contains(@id,"ce_addr")]')
-                self._driver.input_text(ce_elements[0],policy['nw_monitor_ce1'])
-                self._driver.input_text(ce_elements[1],policy['nw_monitor_ce2'])
+                if 'nw_monitor_ce1' in policy:
+                    self._driver.input_text(ce_elements[0],policy['nw_monitor_ce1'])
+                if 'nw_monitor_ce2' in policy:
+                    self._driver.input_text(ce_elements[1],policy['nw_monitor_ce2'])
             if changing:
                 changing = True
                 self._driver.click_button("submitbutton")
@@ -1362,8 +1397,8 @@ class Samurai(WebApp):
         time.sleep(2)
         self._driver.wait_until_page_contains_element("//button[@id='submitbutton']")
         self._driver.click_button(u'TMS情報取得')
-        self._driver.handle_alert()
         time.sleep(DateTime.convert_time(wait))
+        self._driver.handle_alert()
         BuiltIn().log("Updated mitigation controller information")
         
 
