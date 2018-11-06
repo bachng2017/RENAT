@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1527 $
+# $Rev: 1544 $
 # $Ver: $
-# $Date: 2018-11-02 18:37:34 +0900 (金, 02 11月 2018) $
+# $Date: 2018-11-06 09:52:43 +0900 (火, 06 11月 2018) $
 # $Author: $
 
 import os,re,sys
@@ -523,6 +523,13 @@ class VChannel(object):
     def switch(self,name):
         """ Switches the current active channel to ``name``. 
         There only one active channel at any time
+
+        Returns the current `channel_id`, `local_channel_id` and the output of
+        current terminal.
+
+        *Notes:* There is no assurance that the output of previous `Write`
+        command will be in the retur output because keywords like
+        Logger.`Log All` will update every channels.
     
         Examples:
         | VChannel.`Switch` | vmx12 | 
@@ -530,34 +537,32 @@ class VChannel(object):
         BuiltIn().log('Switching current vchannel to `%s`' % name)
         old_name = self._current_name
 
-        for item in self._channels:
-            output = ""
-            channel = self._channels[item]
-            channel['connection'].switch_connection(channel['local_id'])
-            if channel['screen']:
+        output = ""
+        if name in self._channels: 
+            self._current_name = name
+            channel_info = self._channels[name]
+            self._current_channel_info = channel_info
+            self._current_id = channel_info['id']
+
+            channel_info['connection'].switch_connection(channel_info['local_id'])
+            if channel_info['screen']:
                 # read from the session and log the result
-                channel['stream'].feed(channel['connection'].read())
+                channel_info['stream'].feed(channel_info['connection'].read())
                 try:
-                    output = _dump_screen(channel) + Common.newline
+                    output = _dump_screen(channel_info) + Common.newline
                 except UnicodeDecodeError as err:
                     BuiltIn().log('ERROR: Unicode error in read output')
                     output = err.args[1].decode('utf-8','replace')
             else:
                 try:
-                    output = channel['connection'].read() 
+                    output = channel_info['connection'].read() 
                 except UnicodeDecodeError as err:
                     output = err.args[1].decode('utf-8','replace')
-            _log(channel,output)
-            if 'logger' in channel: channel['logger'].flush()
+            _log(channel_info,output)
+            if 'logger' in channel_info: channel_info['logger'].flush()
 
-        if name in self._channels: 
-            channel_info = self._channels[name]
-            self._current_name = name
-            self._current_channel_info = channel_info
-            self._current_id = channel_info['id']
-            channel_info['connection'].switch_connection(channel_info['local_id'])
             BuiltIn().log("Switched current channel to `%s(%s)`" % (name,channel_info['ip']))
-            return channel_info['id'], channel_info['local_id']
+            return channel_info['id'], channel_info['local_id'], output
         else:
             err_msg = "ERROR: Could not find `%s` in current channels" % name
             BuiltIn().log(err_msg)
@@ -651,7 +656,10 @@ class VChannel(object):
                 time.sleep(wait)
                 result = self.read()
             else:
-                self.log(cmd + Common.newline)
+                # self.log(cmd + Common.newline)
+                # pass
+                time.sleep(1)
+                result = self.read()
 
         BuiltIn().log("Wrote '%s', screen_mode=`%s`" % (str_cmd,is_screen_mode))
         return result
@@ -846,6 +854,7 @@ class VChannel(object):
 
         # close
         channels[self._current_name]['connection'].switch_connection(self._current_name)
+        channels[self._current_name]['logger'].flush()
         channels[self._current_name]['connection'].close_connection() 
         del(channels[self._current_name])
 
@@ -876,10 +885,6 @@ class VChannel(object):
         # for name in self._channels:
         while len(self._channels) > 0:
             self.close()
-            # output = self.read() 
-
-        # self._telnet.close_all_connections()    
-        # self._ssh.close_all_connections()    
 
         self._current_id = 0
         self._max_id = 0
