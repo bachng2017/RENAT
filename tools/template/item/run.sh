@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# $Date: 2018-09-29 20:15:21 +0900 (Sat, 29 Sep 2018) $
-# $Rev: 1382 $
+# $Date: 2018-11-15 10:05:47 +0900 (木, 15 11月 2018) $
+# $Rev: 1590 $
 # $Author: $
 # usage: ./runsh [-n <num>] <other robot argument>
 
@@ -129,7 +129,7 @@ process() {
 
     PWD=$(pwd)
     echo "### Entering $PWD ###"
-    if [ -f ./.ignore ] && [ ! -z $FORCE ]; then
+    if [ -f ./.ignore ] && [ -z $FORCE ]; then
         echo "   .ignore found, ignore this folder"
         cat .ignore
     elif [ -f ./main.robot ]; then

@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-10-06 20:12:33 +0900 (Sat, 06 Oct 2018) $
-# $Rev: 1420 $
+# $Date: 2018-11-14 10:34:55 +0900 (水, 14 11月 2018) $
+# $Rev: 1589 $
 # $Ver: $
 # $Author: $
 
@@ -651,23 +651,25 @@ def get_all_test_result(self,prefix=u"stat_"):
     BuiltIn().log("Got all available test data")
    
 
-def loss_from_file(self,file_name='Flow_Statistics.csv',tx_frame_i=3,frame_delta_i=5,time1_i=23,time2_i=24):
+def loss_from_file(self,file_name='Flow_Statistics.csv',tx_frame='4',frame_delta='6',time1='21',time2='22'):
     """ Returns ``packet loss`` by miliseconds and delta frame.
+
+    `tx_frame`, `frame_delta`,`time1`,`time2` is indexes of `TX frame`, `Frame
+    Delta`, `Start Time`, `Stop Time` in the csv (counted from zero)
 
     The calculation should be performed when traffic is stopped.
     The calculation supposed traffic is configured by frame per second
     """
-
     result_path = os.getcwd() + '/' + Common.get_result_folder()
     file_path = result_path + '/'  + file_name
     with open(file_path,'r') as file: lines = file.readlines()
     BuiltIn().log("    Read data from %s" % (file_path))
   
     data = lines[1].split(',') # read 2nd line
-    frame_delta = int(data[frame_delta_i])
-    tx_frame    = int(data[tx_frame_i])
-    time_str1   = data[time1_i].strip()
-    time_str2   = data[time2_i].strip()
+    frame_delta = int(data[int(frame_delta)])
+    tx_frame    = int(data[int(tx_frame)])
+    time_str1   = data[int(time1)].strip()
+    time_str2   = data[int(time2)].strip()
     time1       = datetime.strptime(time_str1,"%H:%M:%S.%f")
     time2       = datetime.strptime(time_str2,"%H:%M:%S.%f")
 

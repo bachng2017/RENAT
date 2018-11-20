@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-10-23 16:52:30 +0900 (Tue, 23 Oct 2018) $
-# $Rev: 1473 $
+# $Date: 2018-11-20 10:01:31 +0900 (火, 20 11月 2018) $
+# $Rev: 1617 $
 # $Ver: $
 # $Author: $
 
@@ -26,7 +26,7 @@ from robot.libraries.BuiltIn import RobotNotRunningError
 from selenium import webdriver
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 import robot.libraries.DateTime as DateTime
-
+from selenium.common.exceptions import WebDriverException
 
 
 class Arbor(WebApp):
@@ -82,114 +82,36 @@ class Arbor(WebApp):
         | login_url   | /         |
         | profile_dir | ./config/samurai.profile |
         """
-        if name in self._browsers:
-            BuiltIn().log("Browser `%s` already existed. Reconnect to it" % name)
-            self.close()
-            # return
-
-        login_url   = '/'
-        browser     = 'firefox'
-        profile_dir = None
-
-        # collect information about the application
-        app_info = Common.LOCAL['webapp'][app]
-        if 'login_url' in app_info and app_info['login_url']:    
-            login_url = app_info['login_url']
-        if 'browser'  in app_info and app_info['browser']:    
-            browser  = app_info['browser']
-        if 'profile_dir' in app_info and app_info['profile_dir']:    
-            ff_profile_dir  = os.getcwd() + 'config/' + app_info['profile_dir']
-        if 'proxy' in app_info and app_info['proxy']:
-            proxy = Proxy()
-            proxy.proxy_type = ProxyType.MANUAL
-            if 'http' in app_info['proxy']:
-                proxy.http_proxy    = app_info['proxy']['http']
-            # if 'socks' in app_info['proxy']:
-            #     proxy.socks_proxy   = app_info['proxy']['socks']
-            if 'ssl' in app_info['proxy']:
-                proxy.ssl_proxy     = app_info['proxy']['ssl']
-            if 'ftp' in app_info['proxy']:
-                proxy.ftp_proxy   = app_info['proxy']['ftp']
-            capabilities = webdriver.DesiredCapabilities.FIREFOX
-            proxy.add_to_capabilities(capabilities)
-
-        device = app_info['device']
-        device_info = Common.GLOBAL['device'][device]
-        ip = device_info['ip']
-        type = device_info['type']
-
-        template = Common.GLOBAL['access-template'][type]
-        profile = template['profile']   
-
-        # currently, only plain-text authentication is supported
-        # auth = {}
-        self.auth['username']    = Common.GLOBAL['auth']['plain-text'][profile]['user']
-        self.auth['password']    = Common.GLOBAL['auth']['plain-text'][profile]['pass']
-        url = 'https://%s/%s' %  (ip,login_url)
-
-        ignore_dead_node = Common.get_config_value('ignore-dead-node')
-
-        # open a browser
-        try:
-            self._driver.open_browser(url,browser,'_arbor_' + name,False,None,profile_dir)
-            self._driver.wait_until_element_is_visible('name=username')
-            # login
-            self._driver.input_text('name=username', self.auth['username'])
-            self._driver.input_text('name=password', self.auth['password'])
-            self._driver.click_button('name=Submit')
-            time.sleep(5)
-    
-            self._current_name = name
-            self._current_app  = app
-            browser_info = {}
-            browser_info['capture_counter'] = 0
-            browser_info['capture_format']  = 'arbor_%010d'
-            browser_info['browser']         = browser
-            self._browsers[name] = browser_info
-
-            #
-            self._driver.maximize_browser_window()
-
-            BuiltIn().log("Connected to `%s` with name `%s`" % (app,name))
-        except Exception as err:
-            if not ignore_dead_node:
-                err_msg = "ERROR: Error occured when connecting to `%s`" % (name)
-                BuiltIn().log(err_msg)
-                raise
-            else:
-                warn_msg = "WARN: Error occured when connect to `%s` but was ignored" % (name)
-
-                BuiltIn().log(warn_msg)
-                BuiltIn().log_to_console(warn_msg)
-                # del Common.LOCAL['node'][name]            
+        self.open_ff_with_profile(app,name)
+        # login 
+        auth = self._browsers[name]['auth']
+        self._driver.input_text('name=username', auth['username'])
+        self._driver.input_text('name=password', auth['password'])
+        self._driver.click_button('name=Submit')
+        time.sleep(5)
 
 
     def reconnect(self):
         """ Reconnect to server if necessary
         """
-        login_element_count = 0
+        name = self._current_name
+        auth            = self._browsers[name]['auth']
+        url             = self._browsers[name]['url']
+        self._driver.go_to(url)
+        self._driver.wait_until_element_is_visible('name=username')
         
-        self._driver.reload_page()
-        login_element_count = self._driver.get_element_count("//button[@value='Log In']")
-
-        if login_element_count > 0: 
-            BuiltIn().log("Try to reconnect to the system")
-            browser_info = self._browsers[self._current_name]
-            self.connect(self._current_app, self._current_name)
-            # reconstruct old information
-            self._browsers[self._current_name] = browser_info
-            BuiltIn().log("Reconnected to the system by `%s`" % self._current_name)
-        BuiltIn().log("Reload the page without any reconnection")
+        # login
+        self._driver.input_text('name=username', auth['username'])
+        self._driver.input_text('name=password', auth['password'])
+        self._driver.click_button('name=Submit')
+        time.sleep(5)
+        BuiltIn().log("Reconnected to the Arbor application(%s)" % name)     
     
 
     def login(self):
         """ Logs into the Arbor application
         """
-        self.switch(self._current_name) 
-        self._driver.input_text('name=username', self.auth['username'])
-        self._driver.input_text('name=password', self.auth['password'])
-        self._driver.click_button('name=Submit')
-        time.sleep(5)
+        return self.reconnect()
 
     @with_reconnect 
     def logout(self):
@@ -203,54 +125,6 @@ class Arbor(WebApp):
         BuiltIn().log("Exited Arbor application")
     
     
-    def switch(self,name):
-        """ Switches the current browser to ``name``
-        """
-        self._driver.switch_browser('_arbor_' + name)
-        self._current_name = name
-        # a reconnect here is not good
-        # it clears the previous change of any keyword
-        # self.reconnect()
-        BuiltIn().log("Switched the current browser to `%s`" % name)
-
-    
-    def close(self):
-        """ Closes the current active browser
-        """
-        ignore_dead_node = Common.get_config_value('ignore-dead-node')
-
-        try: 
-            old_name = self._current_name
-            self._driver.close_browser()
-            del(self._browsers[old_name])
-            if len(self._browsers) > 0:
-                self._current_name = list(self._browsers.keys())[-1]
-            else:
-                self._current_name = None
-        
-            BuiltIn().log("Closed the browser '%s', current acttive browser is `%s`" % (old_name,self._current_name))
-            return old_name
-        except Exception as err:
-            if not ignore_dead_node:
-                err_msg = "ERROR: Error occured when connecting to `%s`" % (name)
-                BuiltIn().log(err_msg)
-                raise
-            else:
-                warn_msg = "WARN: Error occured when connect to `%s` but was ignored" % (name)
-
-                BuiltIn().log(warn_msg)
-                BuiltIn().log_to_console(warn_msg)
-    
-    
-    def close_all(self):
-        """ Closes all current opened applications
-        """
-        for entry in self._browsers:
-            self.switch(entry)
-            self._driver.close_browser()
-        BuiltIn().log("Closed all Arbor applications")
-    
-   
     @with_reconnect 
     def show_all_mitigations(self):
         """ Shows all mitigations
@@ -353,6 +227,38 @@ class Arbor(WebApp):
 
 
     @with_reconnect
+    def get_status_msg(self):
+        """ Get current status message
+
+        Return null string if no message exists
+        """
+        msg = ''
+        xpath = u"//ul[@id='statusmessage_content']//div"
+        count = self._driver.get_element_count(xpath)
+        if count > 0:
+            msg = self._driver.get_webelement(xpath).text
+        BuiltIn().log('Got current status message. Msg is `%s`' % msg)
+        return msg
+
+
+    @with_reconnect
+    def clean_status_msg(self):
+        """ Disposes any alert or status messgae at the top of the current page
+        """
+        BuiltIn().log('Cleans aler/status message')
+        msg = ''
+        # close any current open status message
+        xpath = u"//a[@id='statusmessage_link' and @class='collapselink']"
+        msg_count = self._driver.get_element_count(xpath)
+        if msg_count > 0:
+            msg = self.get_status_msg()
+            self._driver.click_link(xpath)
+        self._driver.wait_until_page_does_not_contain_element(xpath)
+
+        BuiltIn().log('Closed status message `%s`' % msg)
+
+
+    @with_reconnect
     def menu(self,order,wait='2s',capture_all=False,prefix='menu_',suffix='.png',partial_match=False):
         """ Access to Arbor menu
 
@@ -376,6 +282,9 @@ class Arbor(WebApp):
         | Arbor.`Capture Screenshot` |
         """
         self.switch(self._current_name)
+
+        self.clean_status_msg()    
+
         index = 0
         items = order.split('/')
         for item in items:
@@ -390,11 +299,42 @@ class Arbor(WebApp):
             else:
                 xpath = "xpath=%s//a[.='%s']" % (menu,item)
             self._driver.mouse_over(xpath)
-            self._driver.wait_until_element_is_visible(xpath)
+            # self._driver.click_element(xpath)
+            time.sleep(1)
+            # self._driver.wait_until_element_is_visible(xpath)
             if capture_all:
                 capture_name='%s%s%s' % (prefix,item,suffix)
                 self._driver.capture_page_screenshot(capture_name)
+            self.verbose_capture()
             if index == len(items):
                 self._driver.click_link(xpath)
                 time.sleep(DateTime.convert_time(wait))
 
+
+    def commit(self,strict=True):
+        """ Commit the current changes
+
+        If `strict` is ``${TRUE}`` then the keyword fails if there is not change
+        to commit. Otherwise, it does nothing
+        """
+        xpath = u"//button[@name='open_commit' and not(starts-with(@class,'no'))]"
+        count = self._driver.get_element_count(xpath)
+        BuiltIn().log('Found %d elements' % count)
+        if strict and count == 0:
+            raise Exception('ERROR: no changes to commit')
+        
+        if count > 0:
+            self.verbose_capture()
+            self._driver.click_button(xpath)
+            main_window = self._driver.select_window('NEW')
+            self.verbose_capture()
+            self._driver.click_button(u'commit')
+            
+            self._driver.select_window(main_window)
+            self._driver.wait_until_element_is_not_visible(xpath,timeout='20s')
+            self.verbose_capture()
+            BuiltIn().log('Committed changes')
+        else:
+            BuiltIn().log('WARN:No changes to commit')
+
+        

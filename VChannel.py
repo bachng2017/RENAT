@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1544 $
+# $Rev: 1598 $
 # $Ver: $
-# $Date: 2018-11-06 09:52:43 +0900 (火, 06 11月 2018) $
+# $Date: 2018-11-16 18:06:12 +0900 (金, 16 11月 2018) $
 # $Author: $
 
 import os,re,sys
@@ -174,8 +174,8 @@ class VChannel(object):
 
     def __init__(self):
         # initialize instance of Telnet and SSH lib
-        self._telnet = Telnet()
-        self._ssh = SSHLibrary.SSHLibrary()
+        self._telnet = Telnet(timeout='3m')
+        self._ssh = SSHLibrary.SSHLibrary(timeout='3m')
         self._current_id = 0
         self._current_name = None
         self._max_id = 0
@@ -300,7 +300,8 @@ class VChannel(object):
         else:
             _proxy_cmd      = None
         _profile        = _access_tmpl['profile']
-        _prompt         = _access_tmpl['prompt'] + '$' # automatically append <dollar> to the prompt from yaml config 
+        # _prompt         = _access_tmpl['prompt'] + '$' # automatically append <dollar> to the prompt from yaml config 
+        _prompt         = _access_tmpl['prompt']
         _auth           = Common.GLOBAL['auth'][_auth_type][_profile]
         if 'init' in _access_tmpl:
             _init           = _access_tmpl['init'] # initial command 
@@ -750,13 +751,16 @@ class VChannel(object):
         BuiltIn().log("Executed command: `%s` and wait until prompt")
 
 
-
     @with_reconnect
-    def cmd(self,command='',prompt=None,match_err='\r\n(unknown command.|syntax error, expecting <command>.)\r\n'):
+    def cmd(self,command='',prompt=None,timeout=None,match_err='\r\n(unknown command.|syntax error, expecting <command>.)\r\n'):
         """Executes a ``command`` and wait until for the prompt. 
   
         This is a blocking keyword. Execution of the test case will be postponed until the prompt appears.
         If ``prompt`` is a null string (default), its value is defined in the ``./config/template.yaml``
+
+        `timeout` is the timeout for this `Cmd`. If `timeout` is not define, the
+        local `vchannel/cmd-timeout` or global `vchannel/cmd-timeout` will be
+        used.
 
         The keyword returns error when the output matches the ``match_err`` and
         the default config value `cmd-auto-check` is ``True``
@@ -778,8 +782,43 @@ class VChannel(object):
 
         cur_prompt  =  channel['prompt']
         if prompt is not None :    
-            cur_prompt = '.*' + prompt
-        output  = channel['connection'].read_until_regexp(cur_prompt)
+            # cur_prompt = '.*' + prompt
+            cur_prompt = prompt
+            # output  = channel['connection'].read_until_regexp(cur_prompt)
+       
+        # implement read_until_regexp by ourselve 
+        output = ''
+        tmp = ''
+        prompt_check = ''
+        prompt_check_count = 0
+        time_count = 0.0
+        total_count = 0.0
+        # time_out = float(DateTime.convert_time(Common.GLOBAL['vchannel']['read-timeout']))
+        # time_interval = float(DateTime.convert_time(Common.GLOBAL['vchannel']['read-interval']))
+        if not timeout:
+            cmd_timeout = float(DateTime.convert_time(Common.get_config_value('read-timeout','vchannel')))
+        else:
+            cmd_timeout = float(DateTime.convert_time(timeout)) 
+        time_interval   = float(DateTime.convert_time(Common.get_config_value('read-interval','vchannel')))
+        # repeat until timeout or using last N output to check the prompt
+        while (time_count <  cmd_timeout) and (not re.search(cur_prompt,prompt_check,re.MULTILINE)):
+            if prompt_check_count > 2:
+                prompt_check_count = 0
+                prompt_check = ''
+            tmp = channel['connection'].read()
+            if tmp != '':
+                output += tmp
+                prompt_check += tmp
+                prompt_check_count += 1
+                time_count = 0
+            else:
+                time.sleep(time_interval)
+                time_count += time_interval
+                total_count += time_interval
+        if time_count > cmd_timeout:
+            raise Exception('Cmd timeout after `%d` seconds' % total_count)
+            
+        
         # output  = channel['connection'].read_until_regexp(cur_prompt,loglevel='DEBUG')
         self.log(output)
 
@@ -792,7 +831,7 @@ class VChannel(object):
             raise Exception(err_msg)
 
             
-        BuiltIn().log("Executed command `%s`" % (command))
+        BuiltIn().log("Executed command `%s` (%d sec)" % (command,total_count))
         return output
     
 

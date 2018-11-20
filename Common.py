@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1514 $
+# $Rev: 1603 $
 # $Ver: $
-# $Date: 2018-10-29 16:34:14 +0900 (Mon, 29 Oct 2018) $
+# $Date: 2018-11-18 02:20:49 +0900 (日, 18 11月 2018) $
 # $Author: $
 
 """ Common library for RENAT
@@ -399,22 +399,27 @@ if _folder == '': _folder = '.'
 ### load global setting
 with open(_folder + '/config/config.yaml') as f:
     file_content = f.read()
-    # GLOBAL.update(yaml.load(f))
     GLOBAL.update(yaml.load(os.path.expandvars(file_content)))
 
 ### copy config file from maser to tmp
 ### overwrite the current files
 _tmp_folder = _folder + '/tmp/'
+# _tmp_folder = os.getcwd() + '/tmp/'
 _renat_master_folder    = GLOBAL['default']['renat-master-folder']
-# if _renat_master_folder:
-#    _renat_master_folder = os.path.expandvars(_renat_master_folder)
-shutil.copy2(_renat_master_folder+'/device.yaml',_tmp_folder)
-shutil.copy2(_renat_master_folder+'/auth.yaml',_tmp_folder)
-shutil.copy2(_renat_master_folder+'/template.yaml',_tmp_folder)
+
+#lock_file = _renat_master_folder + '/tmp.lock'
+#with open(lock_file,'r') as lock:
+#    while True:
+#        try:
+#            fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+#            shutil.copy2(_renat_master_folder+'/device.yaml',_tmp_folder)
+#            shutil.copy2(_renat_master_folder+'/auth.yaml',_tmp_folder)
+#            shutil.copy2(_renat_master_folder+'/template.yaml',_tmp_folder)
+#            break
+#        except IOError as e:
+#            time.sleep(1)
 
 _calient_master_path    = GLOBAL['default']['calient-master-path']
-# if _calient_master_path:
-#    _calient_master_path = os.path.expandvars(_calient_master_path)
 if _calient_master_path:
     newest_calient = max(glob.iglob(_calient_master_path))
     shutil.copy2(newest_calient,_tmp_folder + "/calient.xlsm")
@@ -429,7 +434,8 @@ if _ntm_master_path:
 
 ### expand environment variable and update GLOBAL config
 for entry in ['auth.yaml', 'device.yaml','template.yaml']:
-    with open(_tmp_folder + '/' + entry) as f:
+    with open(_renat_master_folder + '/' + entry) as f:
+    # with open(_tmp_folder + '/' + entry) as f:
         file_content = f.read()
         retry = 0
         if len(file_content) == 0 and retry < 3:
@@ -1387,6 +1393,7 @@ def start_display():
     DISPLAY = Display(visible=0, size=(display_info['width'],display_info['height']))
     # DISPLAY = Display(visible=0, size=(display_info['width'],display_info['height']),fbdir=get_result_path())
     DISPLAY.start()
+    time.sleep(2)
     BuiltIn().log('Started a virtual display as `%s`' % DISPLAY.new_display_var)
 
 
