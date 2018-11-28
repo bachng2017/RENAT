@@ -21,6 +21,10 @@ default:
         width:  1921
         height: 1080
 
+vchannel:
+    read-timeout:   180s
+    read-interval:  0.3s
+
 extra-lib:
     - Tester
     - Hypervisor 
