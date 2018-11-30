@@ -9,7 +9,7 @@ default:
     interval-between-retry: 15s
     terminal-timeout: 20m
     cmd-auto-check: False
-    newline: "\r"
+    newline: "\n"
     slack-cmd:  $RENAT_PATH/tools/slack.sh
     slack-proxy: 127.0.0.1
     log-level: TRACE

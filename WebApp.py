@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-11-20 10:01:31 +0900 (火, 20 11月 2018) $
-# $Rev: 1617 $
+# $Date: 2018-11-23 20:54:38 +0900 (金, 23 11月 2018) $
+# $Rev: 1622 $
 # $Ver: $
 # $Author: $
 
@@ -43,15 +43,24 @@ def _with_reconnect(keyword, self, *args, **kwargs):
             count += 1
             if count < max_count:
                 BuiltIn().log('WARN: Failed to execute the keyword `%s` %d time(s)'  % (keyword.__name__,count))
-                self.reconnect()
+                safe_reconnect(self)
             else:
                 BuiltIn().log('ERROR: Gave up retry for keyword `%s`' % keyword.__name__)
                 BuiltIn().log(type(err))
                 BuiltIn().log(traceback.format_exc())
-                self.capture_screenshot("last_screen.png") # save the last available screen
+                self.capture_screenshot(extra="_err") # save the last available screen
                 raise
+        except Exception as err:
+            self.capture_screenshot(extra="_err") # save the last available screen
+            raise 
 
-
+def safe_reconnect(self):
+    try:
+        self.reconnect()
+    except:
+        self.capture_screenshot(extra="last") # save the last available screen
+        raise 
+        
 def with_reconnect(f):
     return decorate(f, _with_reconnect)
 

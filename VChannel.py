@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1598 $
+# $Rev: 1640 $
 # $Ver: $
-# $Date: 2018-11-16 18:06:12 +0900 (金, 16 11月 2018) $
+# $Date: 2018-11-30 13:34:04 +0900 (金, 30 11月 2018) $
 # $Author: $
 
 import os,re,sys
@@ -82,7 +82,7 @@ def _with_reconnect(keyword,self,*args,**kwargs):
     while count < max_count:
         try:
             return keyword(self,*args,**kwargs)
-        except (RuntimeError,EOFError,KeyError,SSHException) as err:
+        except (RuntimeError,EOFError,OSError,KeyError,SSHException) as err:
             BuiltIn().log('Error while trying keyword `%s`' % keyword.__name__)
             count = count + 1
             if count < max_count:
@@ -307,6 +307,10 @@ class VChannel(object):
             _init           = _access_tmpl['init'] # initial command 
         else:
             _init = None
+        if 'finish' in _access_tmpl:
+            _finish         = _access_tmpl['finish'] #finish  command 
+        else:
+            _finish = None
         _timeout        = timeout
         if 'login_prompt' in _access_tmpl: 
             _login_prompt = _access_tmpl['login_prompt']
@@ -321,7 +325,6 @@ class VChannel(object):
         
 
         try:
-    
             channel_info = {}
             ### TELNET 
             ### _login_prompt could be None but not the _password_prompt
@@ -398,6 +401,7 @@ class VChannel(object):
             channel_info['auth']        = _auth
             channel_info['ip']          = _ip
             channel_info['separator']   = ""
+            channel_info['finish']      = _finish
        
             # extra 
             channel_info['screen']      = None
@@ -652,7 +656,8 @@ class VChannel(object):
                 result = self.read()
         else:
             # by default, always add a `newline` to the cmd
-            channel['connection'].write_bare(cmd + Common.newline)
+            # channel['connection'].write_bare(cmd + Common.newline)
+            channel['connection'].write_bare(cmd + "\r")
             if wait > 0:
                 time.sleep(wait)
                 result = self.read()
@@ -802,7 +807,7 @@ class VChannel(object):
         time_interval   = float(DateTime.convert_time(Common.get_config_value('read-interval','vchannel')))
         # repeat until timeout or using last N output to check the prompt
         while (time_count <  cmd_timeout) and (not re.search(cur_prompt,prompt_check,re.MULTILINE)):
-            if prompt_check_count > 2:
+            if prompt_check_count > 3:      # using last 4 ouput for prompt check
                 prompt_check_count = 0
                 prompt_check = ''
             tmp = channel['connection'].read()
@@ -890,10 +895,22 @@ class VChannel(object):
         """
         channels = self.get_channels()
         old_name = self._current_name
+        channel = channels[old_name]
+        finish_cmd = channel['finish']
 
         # close
         channels[self._current_name]['connection'].switch_connection(self._current_name)
+        ### execute command before close the connection
+        BuiltIn().log("Closing the connection for channel `%s`" % old_name)
+        if finish_cmd is not None: 
+            for item in finish_cmd:
+                BuiltIn().log("Executing finish command: %s" % (item))
+                # channel['connection'].write_bare(item + '\r')
+                channel['connection'].write_bare("users\r")
+                time.sleep(1)
         channels[self._current_name]['logger'].flush()
+
+
         channels[self._current_name]['connection'].close_connection() 
         del(channels[self._current_name])
 
@@ -912,7 +929,7 @@ class VChannel(object):
             self._current_name     = channels[first_key]['name'] 
             self._current_id       = channels[first_key]['id']
 
-        BuiltIn().log("Closed the connection for channel '%s', current channel is `%s`" % (old_name,self._current_name))
+        BuiltIn().log("Closed the connection for channel `%s`, current channel is `%s`" % (old_name,self._current_name))
         return self._current_name
 
 

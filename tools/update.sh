@@ -62,6 +62,9 @@ else
   find . -name "main.robot" -exec sed -i 's/chibalab.robot/lab.robot/' {} \;
   find . -name "main.robot" -exec sed -i 's/\.\.\/lab\.robot/lab\.robot/' {} \;
   echo "updated main.robot"
+
+  find . -name "local.yaml" -exec sed -i '/    result_folder: result/d' {} \;
+  echo "updateed local.yaml"
 fi
 
   

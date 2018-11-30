@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-11-14 10:34:55 +0900 (水, 14 11月 2018) $
-# $Rev: 1589 $
+# $Date: 2018-11-27 09:23:23 +0900 (火, 27 11月 2018) $
+# $Rev: 1629 $
 # $Ver: $
 # $Author: $
 
@@ -897,7 +897,7 @@ def stop_quicktest(self,test_index='0'):
 
 
 def add_port(self,force=True,time_out='2m',learn_time='2m'):
-    """ Add ports using the information from active local config
+    """ Add ports using the ``real-port`` information from active local config
 
     - ``time_out`` is the wait time until port is connected (default is 2m)
     - ``learn_time`` is the time waiting for arp to be learned (default is 2m)
@@ -907,7 +907,7 @@ def add_port(self,force=True,time_out='2m',learn_time='2m'):
 |    tester:
 |        device: ixnet03_8009
 |        config: quicktest.ixncfg
-|        real_port:
+|        real-port:
 |            -   chassis: 10.128.4.41
 |                card: 4
 |                port: 3
@@ -930,7 +930,7 @@ def add_port(self,force=True,time_out='2m',learn_time='2m'):
 
     real_ports = []
     vports = []
-    port_data = Common.LOCAL['tester'][self._cur_name]['real_port']
+    port_data = Common.LOCAL['tester'][self._cur_name]['real-port']
     for item in port_data:
         chassis = item['chassis']
         card    = item['card']

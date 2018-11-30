@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-11-20 10:01:31 +0900 (火, 20 11月 2018) $
-# $Rev: 1617 $
+# $Date: 2018-11-23 21:16:12 +0900 (金, 23 11月 2018) $
+# $Rev: 1625 $
 # $Ver: $
 # $Author: $
 
@@ -135,9 +135,7 @@ class Arbor(WebApp):
         self._driver.wait_until_element_is_visible("xpath=//a[contains(.,'All Mitigations')]")
         self._driver.click_link("xpath=//a[contains(.,'All Mitigations')]")
         self._driver.wait_until_element_is_visible("//div[@class='sp_page_content']")
-        # time.sleep(5) 
-        # self._driver.reload_page()
-        # time.sleep(5) 
+        self.verbose_capture()
         BuiltIn().log("Displayed all current mitigations")
 
 
@@ -151,12 +149,13 @@ class Arbor(WebApp):
         xpath = "//a[contains(.,'%s')]" %  search_str
         self._driver.input_text("search_string_id",search_str)
         self._driver.click_button("search_button")
+        time.sleep(2)
         self._driver.wait_until_page_contains_element("xpath=//div[@class='sp_page_content']") 
-        self._driver.wait_until_page_contains('Page generation took')
-
-        self._driver.wait_until_element_is_visible(xpath)
+        time.sleep(2)
+        self._driver.wait_until_element_is_visible("search_button")
         self._driver.click_link(xpath)
         time.sleep(5)
+        self.verbose_capture()
         BuiltIn().log("Showed details of a mitigation searched by `%s`" % search_str)    
 
 
@@ -181,6 +180,7 @@ class Arbor(WebApp):
             target = self._driver.get_webelement(xpath)
             target.click()
             time.sleep(2)
+        self.verbose_capture()
         BuiltIn().log('Showed detail information for %d countermesure of mitigation `%s`' %(len(method_list),name)) 
 
 
@@ -203,7 +203,7 @@ class Arbor(WebApp):
     def show_detail_mitigation_with_order(self,order):
         """ Shows details about the `order`(th) mitigation in the current list
 
-        `order` is counted from 1. 
+        `order` is counted from ``1``. 
         The keyword returns the mitigation_id and its name
         
         Example:
@@ -211,7 +211,6 @@ class Arbor(WebApp):
         | Log To Console  |   ${NAME}:${ID} |
         | Arbor.`Capture Screenshot` |
         """
-        self.switch(self._current_name)
         self.show_all_mitigations() 
         # ignore the header line
         xpath = '//table[1]//tr[%s]/td[%s]//a[1]' % (int(order)+1,2)
@@ -221,8 +220,8 @@ class Arbor(WebApp):
         mitigation_id = href.split('&')[1].split('=')[1] 
         self._driver.click_link(xpath)
         time.sleep(5)
-        self._driver.wait_until_page_contains('Page generation took')
         BuiltIn().log("Displayed detail of `%s`th mitigation in the list" % order)
+        self.verbose_capture()
         return mitigation_name,mitigation_id
 
 
