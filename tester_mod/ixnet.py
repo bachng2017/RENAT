@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-12-02 19:42:33 +0900 (日, 02 12月 2018) $
-# $Rev: 1652 $
+# $Date: 2018-12-03 08:06:23 +0900 (月, 03 12月 2018) $
+# $Rev: 1655 $
 # $Ver: $
 # $Author: $
 
@@ -1462,11 +1462,11 @@ def csv_snapshot(self,prefix='snapshot_',*views):
     opt[1]='Snapshot.View.Csv.Location: "%s"' % remote_path
     opt[2]='Snapshot.View.Csv.GeneratingMode: "kOverwriteCSVFile"'
     opt[8]='Snapshot.Settings.Name: "%s"' % setting_name
-    if len(views) == 0:
-        system_views=ix.getList(ix.getRoot() + 'statistics','view')
-        current_views=map(lambda x: x.split(':')[-1].replace('"',''),system_views)
-    else:
+    if views:
         current_views = views
+    else:
+        system_views=ix.getList(ix.getRoot() + 'statistics','view')
+        current_views=list(map(lambda x: x.split(':')[-1].replace('"',''),system_views))
     result = ix.execute('TakeViewCSVSnapshot',current_views,opt)
     if result != '::ixNet::OK' :
         raise result
