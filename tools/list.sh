@@ -13,7 +13,7 @@ fi
 
 BASE=$(basename $1)
 
-echo "all item list in '$BASE':"
+echo "### all item list in '$BASE' ###"
 echo "----------"
 COUNT=0
 # find all run.sh script
@@ -32,7 +32,8 @@ echo "---"
 echo "total items: $COUNT"
 echo ""
 echo ""
-echo "ignored item list in '$BASE':"
+
+echo "### ignored item list in '$BASE' ###"
 echo "------------"
 COUNT=0
 for item in $(find $1 -depth -type f -name ".ignore" | sort); do
@@ -43,6 +44,22 @@ for item in $(find $1 -depth -type f -name ".ignore" | sort); do
 done
 echo "---"
 echo "ignored items: $COUNT"
+echo ""
+echo ""
 
+echo "### item last run status in '$BASE' ###"
+for item in $(find $1 -depth -type f -name "run.sh" | sort); do
+    ITEM=$(echo $item | sed "s/^$BASE\///g" | sed "s/\/run.sh//g")
+    RESULT=$(echo $item | sed "s/run.sh/result.log/g")
+    ROBOT=$(echo $item | sed "s/run.sh/main.robot/g")
+    if [ -f $ROBOT ]; then
+        if [ -f $RESULT ]; then
+            INFO=$(cat $RESULT | grep -A3 'Main ::' | tail -n2 | grep -v '===')
+            printf "%-64s %s %s\n" "$ITEM" "$INFO"
+        else
+            printf "%-64s %s %s\n" "$ITEM" "N/A"
+        fi
+    fi
+done    
 
 

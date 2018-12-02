@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1638 $
+# $Rev: 1641 $
 # $Ver: $
-# $Date: 2018-11-29 18:23:21 +0900 (木, 29 11月 2018) $
+# $Date: 2018-12-01 12:38:18 +0900 (土, 01 12月 2018) $
 # $Author: $
 
 """ Common library for RENAT
@@ -1341,7 +1341,7 @@ def get_myid():
     return BuiltIn().get_variable_value('${MYID}')
 
 
-def get_config_value(key,base=u'default'):
+def get_config_value(key,base=u'default',default=None):
     """ Returns value of a key for renat configuration with this other
         LOCAL[base][key] > GLOBAL[base][key] > None
     """
@@ -1349,6 +1349,8 @@ def get_config_value(key,base=u'default'):
         return LOCAL[base][key]
     if base in GLOBAL and key in GLOBAL[base]:
         return GLOBAL[base][key]
+    else:
+        return default
     return None
 
 

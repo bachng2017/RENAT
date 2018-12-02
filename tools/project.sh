@@ -31,5 +31,6 @@ else
   find $PROJECT_PATH -name ".svn" -prune -name ".svn" -exec rm -rf {} \;
 fi
 echo "$(eval_gettext "created test project: ")" "$PROJECT_PATH"
+echo "$(eval_gettext "entered project folder: ")" "$PROJECT_PATH"
 echo "$(eval_gettext "use item.sh to create test case")"
 

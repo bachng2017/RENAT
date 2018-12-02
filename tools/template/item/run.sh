@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# $Date: 2018-11-15 10:05:47 +0900 (木, 15 11月 2018) $
-# $Rev: 1590 $
+# $Date: 2018-12-01 18:34:55 +0900 (土, 01 12月 2018) $
+# $Rev: 1644 $
 # $Author: $
 # usage: ./runsh [-n <num>] <other robot argument>
 
@@ -168,7 +168,7 @@ process() {
     fi
 }
 
-process
+process > >(tee run.log) 2>&1
 
 TIME2=$(date +"%s")
 

@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1640 $
+# $Rev: 1641 $
 # $Ver: $
-# $Date: 2018-11-30 13:34:04 +0900 (金, 30 11月 2018) $
+# $Date: 2018-12-01 12:38:18 +0900 (土, 01 12月 2018) $
 # $Author: $
 
 import os,re,sys
@@ -429,7 +429,8 @@ class VChannel(object):
                 self.cmd(_auth['enable'])
     
             ### execute 1st command after login
-            if _init is not None: 
+            flag = Common.get_config_value('ignore-init-finish','vchannel',False)
+            if not flag and _init is not None: 
                 for item in _init: 
                     BuiltIn().log("Executing init command: %s" % (item))
                     self.cmd(item)
@@ -902,7 +903,8 @@ class VChannel(object):
         channels[self._current_name]['connection'].switch_connection(self._current_name)
         ### execute command before close the connection
         BuiltIn().log("Closing the connection for channel `%s`" % old_name)
-        if finish_cmd is not None: 
+        flag = Common.get_config_value('ignore-init-finish','vchannel',False)
+        if not flag and finish_cmd is not None: 
             for item in finish_cmd:
                 BuiltIn().log("Executing finish command: %s" % (item))
                 # channel['connection'].write_bare(item + '\r')

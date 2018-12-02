@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-11-27 09:23:23 +0900 (火, 27 11月 2018) $
-# $Rev: 1629 $
+# $Date: 2018-12-02 19:42:33 +0900 (日, 02 12月 2018) $
+# $Rev: 1652 $
 # $Ver: $
 # $Author: $
 
@@ -37,6 +37,7 @@ import re
 import csv
 import yaml
 import time,traceback
+import pandas as pd
 import Common
 import IxNetwork
 from datetime import datetime
@@ -299,30 +300,37 @@ def change_frame_rate_dynamic(self,value,pattern='.*'):
 
 
 
-def change_frame_rate(self,value,pattern='.*'):
+def change_frame_rate(self,value,pattern='.*',flow_pattern='.*'):
     """ Changes the frame rate 
 
     Parameter:
         - ``value``: value to set. Depends on the current configuration, this
           could be ``percent line rate`` or ``bit per second`` etc.
-        - ``traffic_pattern`: a regular expression to identify traffic item
+        - ``pattern`: a regular expression to identify ``traffic item``
           name, default is everything ``.*``
+        - ``flow_pattern``: a regular expression to identify ``flow group``
+          inside the item
     """
 
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
    
     traffic_item_list = ix.getList(ix.getRoot() + 'traffic', 'trafficItem')
-    target_list = []
+    item_list = []
     for item in traffic_item_list:
         name = ix.getAttribute(item,'-name')
-        if re.match(pattern,name): target_list.append(item)
-    # target_list = [ item for item in traffic_item_list if re.match(pattern,item) ]
+        if re.match(pattern,name): item_list.append(item)
 
-    for  item in target_list:
-        stream      = ix.getList(item, 'highLevelStream')[0]
-        frame_rate  = ix.getList(stream, 'frameRate')[0] 
-        ix.setAttribute(frame_rate,'-rate',value)
+    count = 0
+    for item in item_list:
+        flow_list   = ix.getList(item, 'highLevelStream')
+        for flow in flow_list:
+            name = ix.getAttribute(flow,'-name')
+            if re.match(flow_pattern,name):
+                count += 1
+                BuiltIn().log('    Modify flow `%s`' % name)
+                frame_rate  = ix.getList(flow, 'frameRate')[0] 
+                ix.setAttribute(frame_rate,'-rate',value)
 
     result1 = ix.commit()
     result2 = ix.execute('apply', ix.getRoot() + 'traffic')
@@ -330,43 +338,49 @@ def change_frame_rate(self,value,pattern='.*'):
         raise Exception("Failed to change frame rate: (%s)(%s)" % (result1,result2))
         return False 
 
-    BuiltIn().log("Changed frame rate of %d items" % (len(target_list)))
+    BuiltIn().log("Changed frame rate of %d items" % count)
     return True
 
 
-def change_frame_size(self,type,value,pattern='.*'):
+def change_frame_size(self,type,value,pattern='.*',flow_pattern='.*'):
     """ Changes the frame size
 
     Parameter:
         - ``type``: could be ``fixed size``, ``increment_from``,``increment_step`` or
         ``increment_to`` 
         - ``value``: value to set
-        - ``traffic_pattern``: a regular expression to identify traffic item
+        - ``pattern``: a regular expression to identify traffic item
           name, default is everything ``.*``
+        - ``flow_pattern``: a regular expression to identify ``flow group``
+          inside the item
     """
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
    
     traffic_item_list = ix.getList(ix.getRoot() + 'traffic', 'trafficItem')
-    target_list = []
+    item_list = []
     for item in traffic_item_list:
         name = ix.getAttribute(item,'-name')
-        if re.match(pattern,name): target_list.append(item)
-    # target_list = [ item for item in traffic_item_list if re.match(pattern,item) ]
+        if re.match(pattern,name): item_list.append(item)
 
-    for  item in target_list:
-        stream_list      = ix.getList(item, 'highLevelStream')
-        for stream in stream_list:
-            frame_size_list  = ix.getList(stream, 'frameSize') 
-            for frame_size in frame_size_list:
-                if type == 'increment_from' :
-                    ix.setAttribute(frame_size,'-incrementFrom',value)
-                elif type == 'increment_step' :
-                    ix.setAttribute(frame_size,'-incrementStep',value)
-                elif type == 'increment_to' :
-                    ix.setAttribute(frame_size,'-incrementTo',value)
-                else:
-                    ix.setAttribute(frame_size,'-fixedSize',value)
+    count = 0
+    for item in item_list:
+        flow_list = ix.getList(item, 'highLevelStream')
+        for flow in flow_list:
+            name = ix.getAttribute(flow,'-name')
+            if re.match(flow_pattern,name):
+                BuiltIn().log('    Modify flow `%s`' % name)
+                count += 1
+                frame_size_list  = ix.getList(flow, 'frameSize') 
+                for frame_size in frame_size_list:
+                    if type == 'increment_from' :
+                        ix.setAttribute(frame_size,'-incrementFrom',value)
+                    elif type == 'increment_step' :
+                        ix.setAttribute(frame_size,'-incrementStep',value)
+                    elif type == 'increment_to' :
+                        ix.setAttribute(frame_size,'-incrementTo',value)
+                    else:
+                        ix.setAttribute(frame_size,'-fixedSize',value)
 
     result1 = ix.commit()
     result2 = ix.execute('apply', ix.getRoot() + 'traffic')
@@ -374,7 +388,7 @@ def change_frame_size(self,type,value,pattern='.*'):
         raise Exception("Failed to change frame sizce: (%s)(%s)" % (result1,result2))
         return False 
 
-    BuiltIn().log("Changed frame size of %d items" % (len(target_list)))
+    BuiltIn().log("Changed frame size of %d items" % count)
     return True
 
 
@@ -651,34 +665,38 @@ def get_all_test_result(self,prefix=u"stat_"):
     BuiltIn().log("Got all available test data")
    
 
-def loss_from_file(self,file_name='Flow_Statistics.csv',tx_frame='4',frame_delta='6',time1='21',time2='22'):
+def loss_from_file(self,file_name='Flow_Statistics.csv',index='0'):
     """ Returns ``packet loss`` by miliseconds and delta frame.
-
-    `tx_frame`, `frame_delta`,`time1`,`time2` is indexes of `TX frame`, `Frame
-    Delta`, `Start Time`, `Stop Time` in the csv (counted from zero)
+    
+    Parameters:
+    - `file_name`: flow information (csv format). Default is
+      ``Flow_Statistics.csv``
+    - `index`: row index of the result(counted from zero)
 
     The calculation should be performed when traffic is stopped.
     The calculation supposed traffic is configured by frame per second
     """
+    index_int=int(index)
     result_path = os.getcwd() + '/' + Common.get_result_folder()
     file_path = result_path + '/'  + file_name
-    with open(file_path,'r') as file: lines = file.readlines()
+    data = pd.read_csv(file_path,header=0)
+    # data = data[data['First TimeStamp'].notnull()] # ignore null rows
     BuiltIn().log("    Read data from %s" % (file_path))
   
-    data = lines[1].split(',') # read 2nd line
-    frame_delta = int(data[int(frame_delta)])
-    tx_frame    = int(data[int(tx_frame)])
-    time_str1   = data[int(time1)].strip()
-    time_str2   = data[int(time2)].strip()
-    time1       = datetime.strptime(time_str1,"%H:%M:%S.%f")
-    time2       = datetime.strptime(time_str2,"%H:%M:%S.%f")
+    frame_delta = int(data.filter(like='Frames Delta').loc[index_int])
+    tx_frame    = int(data['Rx Frame Rate'].loc[index_int])
+    time1       = datetime.strptime(data['First TimeStamp'].loc[index_int],"%H:%M:%S.%f")
+    time2       = datetime.strptime(data['Last TimeStamp'].loc[index_int],"%H:%M:%S.%f")
 
     msec_delta  = (time2-time1).total_seconds()*1000
     BuiltIn().log("    Delta sec   = %d" % msec_delta) 
     BuiltIn().log("    Delta frame = %d" % frame_delta)
-    msec_loss   = int(frame_delta * msec_delta / tx_frame)
-
-    BuiltIn().log("Loss was %d frames, %d miliseconds" % (frame_delta,msec_loss))
+    if tx_frame != 0:
+        msec_loss   = int(frame_delta * msec_delta / tx_frame)
+        BuiltIn().log("Loss was %d frames, %d miliseconds" % (frame_delta,msec_loss))
+    else:
+        msec_loss   = None
+        BuiltIn().log("Loss was %d frames, N/A miliseconds" % (frame_delta))
     return msec_loss,frame_delta
 
 
@@ -1425,3 +1443,44 @@ def get_test_composer_result(self,result_file=u'composer.log'):
         BuiltIn().log("No composer runner found")
  
 
+def csv_snapshot(self,prefix='snapshot_',*views):
+    """ Get current CSV snapshot
+
+    Parameters:
+    - `prefix`: prefix that be added to the filename. Default is ``snapshot_``
+    - `views`: list of target views (eg: ``Port Statistics``, ``Flow Statistics``
+      ...). If `view` is ``None``, all current available views will be target
+    """
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+    setting_name='%s_%s' % (Common.get_myid(),time.strftime('%Y%m%d%H%M%S'))
+    # remote path
+    remote_path='%s/%s' % (Common.get_config_value('ix-remote-tmp'),os.getcwd().replace('/','_'))
+    # first get the default setting
+    opt = ix.execute('GetDefaultSnapshotSettings')
+    # then customize the setting
+    opt[1]='Snapshot.View.Csv.Location: "%s"' % remote_path
+    opt[2]='Snapshot.View.Csv.GeneratingMode: "kOverwriteCSVFile"'
+    opt[8]='Snapshot.Settings.Name: "%s"' % setting_name
+    if len(views) == 0:
+        system_views=ix.getList(ix.getRoot() + 'statistics','view')
+        current_views=map(lambda x: x.split(':')[-1].replace('"',''),system_views)
+    else:
+        current_views = views
+    result = ix.execute('TakeViewCSVSnapshot',current_views,opt)
+    if result != '::ixNet::OK' :
+        raise result
+
+    for item in current_views:
+        src_path = '%s/%s.csv' % (remote_path,item)
+        dst_path = '%s/%s%s.csv' % (Common.get_result_path(),prefix,item)
+        BuiltIn().log(item)
+        BuiltIn().log(src_path)
+        BuiltIn().log(dst_path)
+        result = ix.execute('copyFile',ix.readFrom(src_path,'-ixNetRelative'),ix.writeTo(dst_path,'-overwrite'))
+        if result != '::ixNet::OK' :
+            raise result
+
+    BuiltIn().log('Took snapshots of %d views' % (len(current_views)))
+ 
+ 

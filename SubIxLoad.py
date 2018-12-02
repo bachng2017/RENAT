@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-09-15 09:15:12 +0900 (Sat, 15 Sep 2018) $
-# $Rev: 1313 $
+# $Date: 2018-12-02 19:42:33 +0900 (日, 02 12月 2018) $
+# $Rev: 1652 $
 # $Ver: $
 # $Author: $
 
@@ -66,7 +66,7 @@ class SubIxLoad(Process):
     def _ixload_tmp_dir(self):
         """ Returns a temporary folder for this test
         """ 
-        result_base = Common.GLOBAL['default']['ixload-tmp-remote']
+        result_base = Common.GLOBAL['default']['ix-remote-tmp']
 
         tmp = os.getcwd().split('/')
         folder_name = "%s_%s" % (tmp[-2],tmp[-1])
