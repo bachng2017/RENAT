@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1641 $
+# $Rev: 1660 $
 # $Ver: $
-# $Date: 2018-12-01 12:38:18 +0900 (土, 01 12月 2018) $
+# $Date: 2018-12-03 19:42:47 +0900 (月, 03 12月 2018) $
 # $Author: $
 
 import os,re,sys
@@ -841,13 +841,13 @@ class VChannel(object):
         return output
     
 
-    def cmd_yesno(self,cmd,ans='yes',question='? [yes,no] '):
+    def cmd_yesno(self,cmd,ans='yes',question='? [yes,no] ',timeout='5s'):
         """ Executes a ``cmd``, waits for ``question`` and answers that by
         ``ans``
         """
         channel = self._channels[self._current_name]
 
-        output = self.write(cmd,'5s')
+        output = self.write(cmd,timeout)
         if not question in output:
             raise Exception("Unexpected output: %s" % output)
 
