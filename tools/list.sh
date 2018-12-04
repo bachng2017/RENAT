@@ -50,7 +50,7 @@ echo ""
 echo "### item last run status in '$BASE' ###"
 for item in $(find $1 -depth -type f -name "run.sh" | sort); do
     ITEM=$(echo $item | sed "s/^$BASE\///g" | sed "s/\/run.sh//g")
-    RESULT=$(echo $item | sed "s/run.sh/result.log/g")
+    RESULT=$(echo $item | sed "s/run.sh/run.log/g")
     ROBOT=$(echo $item | sed "s/run.sh/main.robot/g")
     if [ -f $ROBOT ]; then
         if [ -f $RESULT ]; then
