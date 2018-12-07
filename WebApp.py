@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-11-23 20:54:38 +0900 (金, 23 11月 2018) $
-# $Rev: 1622 $
+# $Date: 2018-12-06 17:03:14 +0900 (木, 06 12月 2018) $
+# $Rev: 1674 $
 # $Ver: $
 # $Author: $
 
@@ -40,6 +40,11 @@ def _with_reconnect(keyword, self, *args, **kwargs):
             return keyword(self,*args,**kwargs)
         except (AssertionError,ElementNotFound) as err:
             BuiltIn().log(err)
+    
+            logout_count = self._driver.get_matching_xpath_count("//h1[.='Timeout']")
+            if logout_count == 0: # this is not time out
+                raise
+
             count += 1
             if count < max_count:
                 BuiltIn().log('WARN: Failed to execute the keyword `%s` %d time(s)'  % (keyword.__name__,count))
@@ -84,21 +89,27 @@ class WebApp(object):
     Where ``<device name>`` is defined in master ``device.yaml``, ``proxy``
     section could be optional.
 
+    In order to download files from link, a `dowload-path` and MIME of that
+    download need to be listed in `profile` section of the application setting.
+    Default `download-path` is the current active result folder.
+
     Samples:
 | ...
 | webapp:
 |     samurai-1:
 |         device: samurai-b
+          profile:
+            auto-save-mime: application/octet-stream
 |         proxy:
 |             http:   10.128.8.210:8080
 |             ssl:    10.128.8.210:8080
-|             socks:  10.128.8.210:8080
 |     arbor-1:
 |         device: arbor-sp-a
+          profile:
+            auto-save-mime: application/xml,application/octet-stream
 |         proxy:
 |             http:   10.128.8.210:8080
 |             ssl:    10.128.8.210:8080
-|             socks:  10.128.8.210:8080
 | ...
 
     `Selenium2Library` keywords still could be used along with this library like
@@ -324,14 +335,14 @@ class WebApp(object):
         # create a new profile and adjust it
         fp = webdriver.FirefoxProfile()
         if 'profile' in app_info and 'download-dir' in app_info['profile']:
-            download_dir = app_info['profile']['download-dir']
+            download_path = app_info['profile']['download-path']
         else:
-            download_dir = Common.get_result_path()
+            download_path = Common.get_result_path()
         if 'profile' in app_info and 'auto-save-mime' in app_info['profile']:
             auto_save_mime = app_info['profile']['auto-save-mime']
             fp.set_preference("browser.helperApps.neverAsk.saveToDisk", app_info['profile']['auto-save-mime'])
         fp.set_preference("browser.download.folderList",2)
-        fp.set_preference("browser.download.dir",download_dir)
+        fp.set_preference("browser.download.dir",download_path)
         fp.set_preference("browser.download.manager.showWhenStarting",False);
         fp.set_preference("browser.download.useDownloadDir",True);
         fp.set_preference("browser.download.panel.shown",False);
@@ -394,3 +405,40 @@ class WebApp(object):
         while len(self._browsers) > 0:
             self.close()
         BuiltIn().log("Closed all the browsers for %s" % self.__class__.__name__)
+
+
+    def mark_element(self,xpath):
+        """ Marking an element to check its stattus later
+        """
+        element = self._driver.get_webelement(xpath)
+        name = self._current_name
+        self._browsers[name]['mark_element_id'] = element.id
+        self._browsers[name]['mark_element_xpath'] = xpath
+        BuiltIn().log('Marked element with id `%s`' % element.id)
+
+
+    def wait_until_element_changes(self,interval='5s',timeout='180s',error_on_timeout=False):
+        """ Wait until the marked element has been changed
+        """
+        timeout_sec = DateTime.convert_time(timeout)
+        name = self._current_name
+        count = 0
+        id      = self._browsers[name]['mark_element_id']
+        xpath   = self._browsers[name]['mark_element_xpath']
+        element = self._driver.get_webelement(xpath)
+        element_id = element.id
+        while count < timeout_sec and element_id == id:
+            BuiltIn().log_to_console('.','STDOUT',True)
+            delta = DateTime.convert_time(interval)
+            time.sleep(delta)
+            count += delta
+            element = self._driver.get_webelement(xpath)
+            element_id = element.id
+           
+        if count >= timeout_sec:
+            BuiltIn().log('Timeout happened but element is still not changed')
+            if error_on_timeout:
+                raise('ERR: Timeout while waiting for element status changed')
+
+        BuiltIn().log('Waited for element status changed')
+  

@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-11-19 14:46:55 +0900 (月, 19 11月 2018) $
-# $Rev: 1609 $
+# $Date: 2018-12-06 13:58:26 +0900 (木, 06 12月 2018) $
+# $Rev: 1672 $
 # $Ver: $
 # $Author: $
 
@@ -881,9 +881,10 @@ class Samurai(WebApp):
         | basic_intf_list | list of router and interface pair, separated by comma | yes | _10.128.18.31:xe-0/0/0.1_ | 
         | basic_cidr_list | list of CIDR separate by comma | | |
         | basic_option_filter | optinal filter | | |
-        | basic_direction | direction of the traffic (``incoming`` or ``outgoing``) | | _Incoming_ |
+        | basic_direction | direction of the traffic (``incoming`` or ``outgoing``) | | _incoming_ |
         | traffic_enabled | Enable traffic monitoring or not | yes | _${TRUE}_ or _${FALSE}_ | 
         | detection_enabled | Enable detection or not | yes | _${TRUE}_ or _${FALSE}_ |
+        | detection_direction | change detect direction fo all attack type | ``incomming`,``outgoing``,``both`` || _both:check_ |
         | mitigation_enabled | Enable Mitigation or not | yes | _${TRUE}_ or _${FALSE}_ |
         | mitigation_zone_name | Name of the zone for mitigation | | _zone001_ |
         | mitigation_zone_prefix | Prefixes that could mitigate | | _1.1.1.1/32_ |
@@ -984,8 +985,26 @@ class Samurai(WebApp):
         BuiltIn().log("### Detection setting ###")
         detection_enabled = 'false'
         if 'detection_enabled' in policy and policy['detection_enabled']:
-                detection_enabled = 'true'
+            detection_enabled = 'true'
         self._driver.select_radio_button("misuse_enabled_flag",detection_enabled) 
+
+        # clear all items by default
+        items = self._driver.get_webelements("//td/input[contains(@id,'available')]")
+        for item in items:
+            self._driver.click_element(item)
+        # only check necessary 
+        if 'detection_direction' in policy and policy['detection_direction']:
+            direction_config = policy['detection_direction'].lower()
+            for config in direction_config.split(','):
+                tmp = config.strip().split(':')
+                direction = tmp[0]
+                check = tmp[1]
+                if direction == 'incoming':
+                    items = self._driver.get_webelements("//td[contains(.,'Incoming')]/input[contains(@id,'available')]")
+                elif direction == 'outgoing':
+                    items = self._driver.get_webelements("//td[contains(.,'Outgoing')]/input[contains(@id,'available')]")
+                for item in items:
+                    self._driver.click_element(item)
         self.verbose_capture()
         self._driver.click_button(u"//button[.='次へ']")
 
@@ -1045,12 +1064,19 @@ class Samurai(WebApp):
             if 'mitigation_comm_list' in policy: 
                 BuiltIn().log("### Diversion Community setting ###")
                 for entry in [x.strip() for x in policy['mitigation_comm_list'].split(',')]:
-                    (peer,comm) = [x.strip() for x in entry.split('/')]
+                    tmp = entry.split('/')
+                    peer = tmp[0].strip()
+                    comm = tmp[1].strip()
+                    if len(tmp) > 2:
+                        check = tmp[2].strip()
+                    else:
+                        check = 'check' 
                     if peer in table_map:
                         item = table_map[peer] 
-                        check =         item.find_element_by_xpath("../td[1]")
+                        check_input = item.find_element_by_xpath("../td[1]/input")
                         comm_input =    item.find_element_by_xpath("../td[3]/input")
-                        self._driver.select_checkbox(check)
+                        if check == 'check':
+                            self._driver.select_checkbox(check_input)
                         self._driver.input_text(comm_input,comm) 
         self.verbose_capture()
         self._driver.click_button(u"//button[.='次へ']")
@@ -1352,9 +1378,12 @@ class Samurai(WebApp):
         self._driver.click_button(edit_button)
         time.sleep(2)
         self._driver.wait_until_page_contains_element("//button[@id='submitbutton']")
+        self.mark_element("//form[@name='FORM_TMS']")
         self._driver.click_button(u'TMS情報取得')
         time.sleep(DateTime.convert_time(wait))
         self._driver.handle_alert()
+        time.sleep(10) 
+        self.wait_until_element_changes()
         BuiltIn().log("Updated mitigation controller information")
         
 

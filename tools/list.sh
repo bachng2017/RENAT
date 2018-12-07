@@ -54,7 +54,10 @@ for item in $(find $1 -depth -type f -name "run.sh" | sort); do
     ROBOT=$(echo $item | sed "s/run.sh/main.robot/g")
     if [ -f $ROBOT ]; then
         if [ -f $RESULT ]; then
-            INFO=$(cat $RESULT | grep -A3 'Main ::' | tail -n2 | grep -v '===')
+            INFO=$(cat $RESULT | grep -B3 'Output: ' | grep total)
+            if [ "$INFO" == "" ]; then
+                INFO='running...'
+            fi
             printf "%-64s %s %s\n" "$ITEM" "$INFO"
         else
             printf "%-64s %s %s\n" "$ITEM" "N/A"
