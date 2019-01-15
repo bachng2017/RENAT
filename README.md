@@ -16,6 +16,7 @@ implied warranty.
 
 All product names and trademarks are the property of their respective owners, which are in no way associated or affiliated with this software. Use of these names does not imply any co-operation or endorsement.
 - Ixia, IxiaNetwork, IxiaLoad are trademarks of IXIA 
+- Spirent, Avalanche are trademarks of Spirent
 - Calient is a trademark of CALIENT NETWORKS, INC.
 - Junos, Juniper are trademarks of Junipter Networks.
 - Cisco is a trademark of Cisco Systems, Inc.
@@ -52,10 +53,13 @@ RENAT features:
 - currently supported platforms:
     - routers/switches: Cisco, Junipers, GR, Alcatel Lucent, Yamaha
     - L1 switches: Calient, G4NMT
-    - testers: IxiaNetwork, IxiaLoad, IxiaBreakingPoint
+    - testers: IxiaNetwork, IxiaLoad, IxiaBreakingPoint, Spirent Avalanche
     - hypervisors: VMware
     - servers: *unix system
     - others platforms: SmartCS, ArborSP, Samurai (a NTTCOM product)
+
+*Notes*: Supports could be variant on os versions
+
 
 ![Renat scenario sample](doc/renat_sample.png)
 
