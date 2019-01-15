@@ -16,6 +16,7 @@ $PYTHON_CMD -m robot.libdoc $RENAT_PATH/router_mod/gr.py html/router_mod_gr.html
 $PYTHON_CMD -m robot.libdoc $RENAT_PATH/tester_mod/ixnet.py html/tester_mod_ixnet.html
 $PYTHON_CMD -m robot.libdoc $RENAT_PATH/tester_mod/ixload.py html/tester_mod_ixload.html
 $PYTHON_CMD -m robot.libdoc $RENAT_PATH/tester_mod/ixbps.py html/tester_mod_ixbps.html
+$PYTHON_CMD -m robot.libdoc $RENAT_PATH/tester_mod/avaproxy.py html/tester_mod_avaproxy.html
 $PYTHON_CMD -m robot.libdoc $RENAT_PATH/optic_mod/calient.py html/optic_mod_calient.html
 $PYTHON_CMD -m robot.libdoc $RENAT_PATH/optic_mod/g4ntm.py html/optic_mod_g4ntm.html
 $PYTHON_CMD -m robot.libdoc $RENAT_PATH/WebApp.py html/WebApp.html

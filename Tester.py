@@ -13,12 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-09-15 13:44:31 +0900 (Sat, 15 Sep 2018) $
-# $Rev: 1315 $
+# $Date: 2019-01-14 15:17:16 +0900 (月, 14  1月 2019) $
+# $Rev: 1693 $
 # $Ver: $
 # $Author: $
 
-import sys
+import sys,socket
 import os,glob
 import re
 import csv
@@ -55,7 +55,9 @@ class Tester(object):
     stop traffic flows. It also could generate traffic reports and support
     QuickTest for IxNetwork.
 
-    Tester information is stored in the active ``local.yaml`` likes this:
+    Tester information is stored in the active ``local.yaml``. The syntax is
+slightly different depending on the tester platform. Below is sample for
+IxNetwork.
 
 | tester:
 |     tester01:
@@ -187,6 +189,20 @@ module.
             tasks.put(['ixload::connect',ip])
             tasks.join()
             results.get()
+        ### Avalanche
+        elif type == 'avaproxy':
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+            sock.connect((ip,port))
+            auth = Common.GLOBAL['auth']['plain-text'][type]
+            license_server= Common.GLOBAL['device'][dname]['license-server']
+            # sock.send('ava::login/%s' % auth['user'])
+            # session_id = sock.recv(1024)
+            session_id = Common.send(sock,'ava::login/%s' % auth['user'])
+            # sock.send('ava::add_license_server/%s' % license_server) 
+            # session_id = sock.recv(1024) 
+            res = Common.send(sock,'ava::add_license_server/%s' % license_server)
+            client['connection'] = sock
+
         ### Breaking point
         elif type == 'ixbps': 
             self._base_url = 'https://%s/api/v1' % ip

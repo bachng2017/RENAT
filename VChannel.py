@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1660 $
+# $Rev: 1691 $
 # $Ver: $
-# $Date: 2018-12-03 19:42:47 +0900 (月, 03 12月 2018) $
+# $Date: 2019-01-13 12:26:08 +0900 (日, 13  1月 2019) $
 # $Author: $
 
 import os,re,sys
@@ -643,7 +643,12 @@ class VChannel(object):
             self.start_screen_mode()
             # because we've just start the screen mode but the node has not yet
             # be in screen mode, a newline is necessary here
-            cmd = str_cmd + Common.newline
+
+            # cmd = str_cmd + Common.newline
+            # tricky hack assuming that the system only receive the 1st char in
+            # defined by `newline` item in global/config.yaml
+            # There are some systems do not allow 2 char likes `\r\n`
+            cmd = str_cmd + Common.newline[0]
         else:
             cmd = str_cmd
 

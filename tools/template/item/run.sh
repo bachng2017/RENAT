@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# $Date: 2018-12-01 18:34:55 +0900 (土, 01 12月 2018) $
-# $Rev: 1644 $
+# $Date: 2019-01-13 00:58:33 +0900 (日, 13  1月 2019) $
+# $Rev: 1688 $
 # $Author: $
 # usage: ./runsh [-n <num>] <other robot argument>
 
@@ -33,10 +33,10 @@ usage () {
     echo "  -i TAG                  execute only steps tagged with TAG"
     echo "  -B                      automatically backup result folder with current date information"
     echo "  -r, --dry-run           same meaning with the original --dryrun"
-    echo ""
     echo "Predefinded global variables:"
     echo "  -v CLEAN                execute CleanUp Result keyword before in Setup step"
     echo "  -v FORCE                run case started by Run Explicit"
+    echo ""
 }
 
 # apply the resource

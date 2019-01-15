@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-12-06 13:58:26 +0900 (木, 06 12月 2018) $
-# $Rev: 1672 $
+# $Date: 2018-12-17 17:32:09 +0900 (月, 17 12月 2018) $
+# $Rev: 1681 $
 # $Ver: $
 # $Author: $
 
@@ -312,7 +312,7 @@ class Samurai(WebApp):
             self._driver.wait_until_element_is_visible(u"//span[contains(.,'削除を開始しました')]")
             BuiltIn().log("Stopped the mitigation id=%s" % id)
         except Exception as err:
-            if stop_when_error:
+            if raise_error:
                 raise err
             else:
                 BuiltIn().log_to_console("WARN: failed to stop mitgation %s but continue" % id)

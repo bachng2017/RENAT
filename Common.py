@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1641 $
+# $Rev: 1700 $
 # $Ver: $
-# $Date: 2018-12-01 12:38:18 +0900 (土, 01 12月 2018) $
+# $Date: 2019-01-15 12:28:58 +0900 (火, 15  1月 2019) $
 # $Author: $
 
 """ Common library for RENAT
@@ -289,7 +289,7 @@ the test and remove the node from its active node list.
 
 ROBOT_LIBRARY_VERSION = 'RENAT 0.1.11'
 
-import os
+import os,socket
 import glob,fnmatch
 import re
 import yaml
@@ -550,9 +550,9 @@ def set_result_folder(folder):
     # BuiltIn().set_variable('${OUTPUT DIR}', folder_path)
     # BuiltIn().set_variable('${OUTPUT DIR}', folder_path)
     # BuiltIn().set_variable('${LOG_FODER}', folder)
-    BuiltIn().set_global_variable('${RESULT_FOLDER}', folder)
     BuiltIn().set_global_variable('${LOG_FODER}', folder)
     BuiltIn().set_global_variable('${RESULT_FOLDER}', folder)
+    BuiltIn().set_global_variable('${RESULT_PATH}', folder_path)
 
     BuiltIn().log("Changed current result folder to `%s`" % (folder_path))
     return old_folder
@@ -1455,6 +1455,44 @@ def csv_add(pathname, *items):
             f.write(','.join(items))
     BuiltIn().log('Added more data to CSV file `%s`' % pathname)
     
+
+def send(sock,data,recv_buffer_size=1024,encode='utf-8'):
+    """ Sends bytes of `data` by socket `sock` and reicve the response
+
+    When `recv_buffer_size` is zero, the function does not execpt a response
+    from the remote.
+    """
+    if (sys.version_info > (3, 0)):
+        data_buffer = bytes(data,encode)
+        sock.send(data_buffer)
+        if recv_buffer_size != 0:
+            recv_buffer = sock.recv(recv_buffer_size)
+            return recv_buffer.decode(encode) 
+    else:
+        sock.send(data)
+        if recv_buffer_size != 0:
+            recv_buffer = sock.recv(recv_buffer_size)
+            return recv_buffer 
+
+
+def convert_xml(style,src,dst):
+    """ Converts XML by using XLS stylesheet
+
+    Predefined stylesheets are store in `tools/xls` under current active RENAT
+    folder
+
+    Parameters:
+    - style: path to stylesheet
+    - src: path to the XML source
+    - dst: path to the output file
+    """
+    output = subprocess.check_output(['xsltproc',style,src])
+    with open(dst,'w') as f:
+        if (sys.version_info > (3, 0)):
+            f.write(output.decode('utf-8').strip("\n"))
+        else:
+            f.write(output.strip("\n"))
+    BuiltIn().log('Converted from `%s` to `%s` use stylesheet `%s`' % (src,dst,style)) 
     
 
 # set RF global variables and load libraries
@@ -1484,4 +1522,4 @@ try:
 
 except:
     log("ERROR: Error happened  while setting global configuration")
-
+    
