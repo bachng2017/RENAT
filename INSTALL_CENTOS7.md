@@ -177,6 +177,11 @@ Install a typical Centos7 with following parameters:
         
         *Note*: Do not for get the `<Directory>` section
             
+    - add robot to mime type in file `/etc/mime.types`
+        ```
+        # text/plain            txt asc text pm el c h cc hh cxx hxx f90 conf log
+        text/plain              txt asc text pm el c h cc hh cxx hxx f90 conf log robot
+        ```
     - prepare the document folder
     
         ```  
