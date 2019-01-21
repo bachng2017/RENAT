@@ -44,9 +44,9 @@ Install a typical Centos7 with following parameters:
 - install extra libraries
 
     ```
-    yum install -y numpy net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python35u-tkinter xorg-x11-server-Xvfb  vim httpd xorg-x11-fonts-75dpi  nfs samba4 samba-client samba-winbind cifs-utils tcpdump hping3 telnet nmap wireshark java-1.8.0-openjdk firefox-52.8.0-1.el7.centos.x86_64 telnet ld-linux.so.2 ghostscript ImageMagick vlgothic-fonts vlgothic-p-fonts
+    yum install -y numpy net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python35u-tkinter xorg-x11-server-Xvfb  vim httpd xorg-x11-fonts-75dpi  nfs samba4 samba-client samba-winbind cifs-utils tcpdump hping3 telnet nmap wireshark java-1.8.0-openjdk firefox-52.8.0-1.el7.centos.x86_64 telnet ld-linux.so.2 ghostscript ImageMagick vlgothic-fonts vlgothic-p-fonts ntp
     pip3.6 install pytest-runner
-    pip3.6 install numpy pyte PyYAML openpyxl Jinja2 pandas lxml requests netsnmp-py pdfkit robotframework robotframework-selenium2library robotframework-sshlibrary docutils pyvmomi PyVirtualDisplay pyscreenshot pillow
+    pip3.6 install numpy pyte PyYAML openpyxl Jinja2 pandas lxml requests netsnmp-py pdfkit robotframework robotframework-selenium2library robotframework-sshlibrary docutils pyvmomi PyVirtualDisplay pyscreenshot pillow decorator
     ```
     
 - add just selenium version
@@ -78,6 +78,19 @@ Install a typical Centos7 with following parameters:
     ```
         
 ### configuration 
+- modify NTP server
+    - modify /etc/ntp.conf for favourite NTP server
+    - activate and make the service auto start
+       ```
+       service ntpd start
+       chkconfig ntpd on
+       ```
+    - check the current NTP
+       ```
+       ntpq -p
+       ```
+
+
 - sudo privilege
     - add a file named `renat` (persion 0440) to folder `/etc/sudoers.d`
     
@@ -113,7 +126,6 @@ Install a typical Centos7 with following parameters:
 
         
     *Note*: the password of this `robot` account is set in the RENAT config file `${RENAT_PATH}/config/config.yaml`
-    
     
 
 - configure jenkins:
@@ -160,6 +172,7 @@ Install a typical Centos7 with following parameters:
 
         # <Directory "/home/*/public_html">
          <Directory "/home/*/work">
+           IndexOptions +NameWidth=*
         ```
         
         *Note*: Do not for get the `<Directory>` section
@@ -178,13 +191,18 @@ Install a typical Centos7 with following parameters:
         systemctl restart httpd
         ```
 
+- make skeleton for users
+    - create a folder call `work` under `/etc/skel` with mode `0750`
+
 ### add a renat user
 - add a user to the group `techno`
 
     ```
-    useradd bachng -g techno
-    passwd bachng
+    useradd user -g techno
+    passwd user
     ```
+
+- login as the new user
     
 - create a key for the account `robot` that would be used for using with SSH proxy. Enter when asked for password (2 times)
 
@@ -213,7 +231,7 @@ Install a typical Centos7 with following parameters:
     ./IxOS6.80.1100.9Linux64.bin -i console
     ```
     
-- install IxNetwork. Choose `/opt/ixia/ixnet/7.41-EA` for default destination folder and `1-Yes` for `HTLAPI` when asked
+- install IxNetwork. Choose `/opt/ixia/ixnet/7.41-EA` for default destination folder and `1-Yes` for `HTLAPI` when asked (let other option as default)
 
     ```
     tar xzvf IxNetworkTclClient7.41.945.9Linux.bin.tgz
@@ -225,4 +243,13 @@ Install a typical Centos7 with following parameters:
     tar xzvf IxLoadTclApi8.01.99.14Linux_x64.bin.tgz
     ./IxLoadTclApi8.01.99.14Linux_x64.bin -i console
     ```
+*Note*: if it is necessary remove the folder if you chose wrong destination folder and reinstall
 
+### install Avalanche related (optional)
+- install avalanch api
+    
+    ```
+    pip3.6 install avalancheapi
+    ```
+
+-
