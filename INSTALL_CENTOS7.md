@@ -185,10 +185,11 @@ Install a typical Centos7 with following parameters:
         chmod 0775 /var/www/html/renat-doc/
         ```
             
-    - restart the service
+    - enable and restart the service
     
         ```
         systemctl restart httpd
+        systemctl enable httpd
         ```
 
 - make skeleton for users
