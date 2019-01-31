@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1691 $
+# $Rev: 1744 $
 # $Ver: $
-# $Date: 2019-01-13 12:26:08 +0900 (日, 13  1月 2019) $
+# $Date: 2019-01-30 22:30:41 +0900 (水, 30  1月 2019) $
 # $Author: $
 
 import os,re,sys
@@ -300,6 +300,10 @@ class VChannel(object):
         else:
             _proxy_cmd      = None
         _profile        = _access_tmpl['profile']
+        if 'port' in _access_tmpl:
+            _port = _access_tmpl['port']
+        else:
+            _port = None
         # _prompt         = _access_tmpl['prompt'] + '$' # automatically append <dollar> to the prompt from yaml config 
         _prompt         = _access_tmpl['prompt']
         _auth           = Common.GLOBAL['auth'][_auth_type][_profile]
@@ -352,18 +356,23 @@ class VChannel(object):
             ### SSH
             if _access == 'ssh':
                 out = ""
-                local_id = self._ssh.open_connection(_ip,alias=name,term_type='vt100',width=w,height=h,timeout=_timeout)
+                local_id = self._ssh.open_connection(_ip,alias=name,term_type='vt100',width=w,
+                                                    height=h,timeout=_timeout,prompt="REGEXP:%s" % _prompt)
                 # SSH with plaintext
                 if _auth_type == 'plain-text':
                     if _proxy_cmd:
                         user        = os.environ.get('USER')
                         home_folder = os.environ.get('HOME')
-                        port = 22
+                        if _port is None: 
+                            port = 22
+                        else:
+                            port = _port
                         _cmd = _proxy_cmd.replace('%h',_ip).replace('%p',str(port)).replace('%u',user).replace('~',home_folder)
                         out = self._ssh.login(_auth['user'],_auth['pass'],proxy_cmd=_cmd)
                     else:
                         _cmd = None
-                        out = self._ssh.login(_auth['user'],_auth['pass'],False)
+                        # out = self._ssh.login(_auth['user'],_auth['pass'],False)
+                        out = self._ssh.login(_auth['user'],_auth['pass'])
 
                 # SSH with publick-key
                 if _auth_type == 'public-key':
@@ -381,8 +390,8 @@ class VChannel(object):
                 channel_info['prompt']      = _prompt
                 channel_info['connection']  = self._ssh
                 channel_info['local_id']    = local_id
-    
-    
+   
+            # common for both TELNET and SSH 
             # open/create a log file for this connection in result_folder
             result_folder = Common.get_result_folder()
             if log_file == '':
@@ -415,12 +424,11 @@ class VChannel(object):
             self._channels[name]   = channel_info 
             self._current_channel_info = channel_info
     
-            # logging the ouput 
-            self.log(out)
-
-
             # by default switch to the connected device
             self.switch(name)
+
+            # logging the ouput 
+            self.log(out)
         
             # enable
             if 'enable' in _auth:

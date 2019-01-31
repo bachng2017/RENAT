@@ -190,6 +190,7 @@ export IXL_libs
 export PYTHONPATH
 ```
 
+*Important*:
 Depending on your install order, sometims following lines are inserted at the end of `etc/profile`.
 These will override the TCCLLIBPATH configured in the above ixia.sh.
 Remember to comment them out if not IxLoad module will not work correctly.

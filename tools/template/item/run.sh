@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# $Date: 2019-01-13 00:58:33 +0900 (日, 13  1月 2019) $
-# $Rev: 1688 $
+# $Date: 2019-01-28 00:50:29 +0900 (月, 28  1月 2019) $
+# $Rev: 1729 $
 # $Author: $
 # usage: ./runsh [-n <num>] <other robot argument>
 
@@ -112,28 +112,42 @@ fi
 # export display variable for Selenium
 export DISPLAY=:1
 
-
 RESULT=0
 
-process() {
+###  
+run() {
+    # $1: item path
+    # $2: prefix
+    local ITEM_PATH=$1
+    local PREFIX=$2
+    local PWD=""
+    local NAME=""
+
+    # change working folder
+    cd $ITEM_PATH
+    PWD=$(pwd)
+    echo "### Current folder is $PWD ###"
+
+    # name of the test
+    if [ "$PREFIX" = '.' ]; then
+        NAME="$(basename $PWD)"
+    else
+        NAME="$PREFIX/$(basename $PWD)"
+    fi
 
     if [ ! -z $RUN_ALL ]; then    
         for folder in $(find . -mindepth 1 -maxdepth 1 -type d | sort); do
             if [ -f $folder/run.sh ]; then
-                cd $folder
-                process
-                cd ..
+                run $folder "$NAME"
             fi
         done
     fi
 
-    PWD=$(pwd)
-    echo "### Entering $PWD ###"
     if [ -f ./.ignore ] && [ -z $FORCE ]; then
         echo "   .ignore found, ignore this folder"
         cat .ignore
     elif [ -f ./main.robot ]; then
-        if [ "$NUM" == "1" ]; then
+        if [ "$NUM" = "1" ]; then
             echo "Run only once"
         else
             echo "Run $NUM times"
@@ -151,8 +165,8 @@ process() {
             # backup result folder if it exists
             if [ ! -z $BACKUP ] && [ -d $RESULT_FOLDER ]; then
                 echo "Found result folder and make a backup of it"
-                NAME=$(date '+%Y%m%d_%H%M%S')
-                tar czf ${RESULT_FOLDER}_$NAME.tar.gz ${RESULT_FOLDER}
+                DATE=$(date '+%Y%m%d_%H%M%S')
+                tar czf ${RESULT_FOLDER}_$DATE.tar.gz ${RESULT_FOLDER}
             fi
 
             OPTION=''
@@ -160,15 +174,20 @@ process() {
                 OPTION="$OPTION --dryrun"
             fi
 
-            robot $PARAM -d ${RESULT_FOLDER} -v MYID:$MYID -v RESULT_FOLDER:$RESULT_FOLDER -v RENAT_PATH:$RENAT_PATH $OPTION -K off main.robot
+            robot --name $NAME $PARAM -d ${RESULT_FOLDER} -v MYID:$MYID -v RESULT_FOLDER:$RESULT_FOLDER -v RENAT_PATH:$RENAT_PATH $OPTION -K off main.robot
             CODE=$?
             RESULT=$(expr $RESULT + $CODE)
             echo
           done
     fi
+    if [ "$ITEM_PATH" = "." ]; then
+        cd .
+    else
+        cd ..
+    fi
 }
 
-process > >(tee run.log) 2>&1
+run . . > >(tee run.log) 2>&1
 
 TIME2=$(date +"%s")
 

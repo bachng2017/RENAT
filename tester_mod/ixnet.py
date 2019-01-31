@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-12-03 08:06:23 +0900 (月, 03 12月 2018) $
-# $Rev: 1655 $
+# $Date: 2019-01-31 10:24:10 +0900 (木, 31  1月 2019) $
+# $Rev: 1747 $
 # $Ver: $
 # $Author: $
 
@@ -580,14 +580,19 @@ def get_test_result(self,view,prefix=u"stat_"):
     If there is no valid data, view will be silently ignored
 
     The prefix ``prefix`` is appended to the view name for the CSV file.
+    
+    *Note*: the name of the result files are modified so that `space` will
+    become `underbar`, `hyphen` will be deleted.
     """
-
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
     BuiltIn().log("Collecting data for view `%s`" % view)
 
     if not "::ixNet::OBJ" in view:
         view = ix.getRoot()+'/statistics/view:"%s"' % view
+
+    # underbar in view name will be converted to space
+    view = view.replace('_',' ')
     
     result_path = os.getcwd() + '/' + Common.get_result_folder()
     result_id = ix.setAsync().getAttribute(view+'/page','-isReady')
@@ -666,15 +671,19 @@ def get_all_test_result(self,prefix=u"stat_"):
    
 
 def loss_from_file(self,file_name='Flow_Statistics.csv',index='0'):
-    """ Returns ``packet loss`` by miliseconds and delta frame.
+    """ Returns ``packet loss`` by miliseconds and `delta frame`.
     
     Parameters:
     - `file_name`: flow information (csv format). Default is
       ``Flow_Statistics.csv``
     - `index`: row index of the result(counted from zero)
 
-    The calculation should be performed when traffic is stopped.
-    The calculation supposed traffic is configured by frame per second
+    Samples:
+    | ${LOSS} | ${DELTA}= | Tester.`Loss From File` | Flow_Statistics.csv |
+    | ${LOSS} | ${DELTA}= | Tester.`Loss From File` | Flow_Statistics.csv | index=1 |
+
+    *Note*: The calculation should be performed when traffic is stopped.
+    The calculation supposed traffic is configured by frame per second.
     """
     index_int=int(index)
     result_path = os.getcwd() + '/' + Common.get_result_folder()
@@ -684,7 +693,7 @@ def loss_from_file(self,file_name='Flow_Statistics.csv',index='0'):
     BuiltIn().log("    Read data from %s" % (file_path))
   
     frame_delta = int(data.filter(like='Frames Delta').loc[index_int])
-    tx_frame    = int(data['Rx Frame Rate'].loc[index_int])
+    tx_frame    = int(data['Tx Frames'].loc[index_int])
     time1       = datetime.strptime(data['First TimeStamp'].loc[index_int],"%H:%M:%S.%f")
     time2       = datetime.strptime(data['Last TimeStamp'].loc[index_int],"%H:%M:%S.%f")
 
@@ -801,7 +810,8 @@ saves data packet
     ix.execute('closeAllTabs')
     port = vports[int(port_index)]
     desc = ix.getAttribute(port,'-name')
-    ix.setAttribute(port,'-rxMode','capture')
+    # ix.setAttribute(port,'-rxMode','capture')
+    ix.setAttribute(port,'-rxMode','captureAndMeasure')
     ix.setAttribute(port+'/capture', '-hardwareEnabled', data_mode)
     ix.setAttribute(port+'/capture', '-softwareEnabled', control_mode)
     ix.commit()
@@ -854,7 +864,7 @@ def stop_and_save_capture(self,prefix='',wait_until_finish=True,monitor_interval
                 mode = ix.getAttribute(port,'-rxMode')
                 data_mode       = ix.getAttribute(port + '/capture','-hardwareEnabled') == 'true'
                 control_mode    = ix.getAttribute(port + '/capture','-softwareEnabled') == 'true'
-                if mode == 'capture':
+                if mode == 'capture' or mode == 'captureAndMeasure':
                     if data_mode:
                         ready = ix.getAttribute(port + '/capture', '-dataCaptureState')
                         all_ready = all_ready and (ready == 'ready')
@@ -870,7 +880,7 @@ def stop_and_save_capture(self,prefix='',wait_until_finish=True,monitor_interval
     count = 0 
     for port in vports:
         mode = ix.getAttribute(port,'-rxMode')
-        if mode== 'capture':
+        if mode == 'capture' or mode == 'captureAndMeasure':
             name = ix.getAttribute(port,'-name')
             src1 = folder + '/' + name + '_HW.cap'
             src2 = folder + '/' + name + '_SW.cap'
@@ -1450,6 +1460,16 @@ def csv_snapshot(self,prefix='snapshot_',*views):
     - `prefix`: prefix that be added to the filename. Default is ``snapshot_``
     - `views`: list of target views (eg: ``Port Statistics``, ``Flow Statistics``
       ...). If `view` is ``None``, all current available views will be target
+
+    Samples:
+    | Tester.`CSV Snapshot`  | snapshot03_  |  # collect all views | 
+    | Tester.`CSV Snapshot`  | snapshot03_  |  Port Statistics  | Flow Statistics | # collect specific views | 
+
+    *Note*: the name of result file will be modified so `space` will be replaced
+    by `underbar`.
+
+    Depending on the traffic status, the available views could be varied. For
+    example, the view `Flow Statistics` is not available when there is no traffic.
     """
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
@@ -1463,7 +1483,8 @@ def csv_snapshot(self,prefix='snapshot_',*views):
     opt[2]='Snapshot.View.Csv.GeneratingMode: "kOverwriteCSVFile"'
     opt[8]='Snapshot.Settings.Name: "%s"' % setting_name
     if views:
-        current_views = views
+        # in case user use under for space in view name
+        current_views = list(map(lambda x: x.replace('_',' '),views))
     else:
         system_views=ix.getList(ix.getRoot() + 'statistics','view')
         current_views=list(map(lambda x: x.split(':')[-1].replace('"',''),system_views))
@@ -1473,7 +1494,7 @@ def csv_snapshot(self,prefix='snapshot_',*views):
 
     for item in current_views:
         src_path = '%s/%s.csv' % (remote_path,item)
-        dst_path = '%s/%s%s.csv' % (Common.get_result_path(),prefix,item)
+        dst_path = '%s/%s%s.csv' % (Common.get_result_path(),prefix,item.replace(' ','_'))
         BuiltIn().log(item)
         BuiltIn().log(src_path)
         BuiltIn().log(dst_path)
@@ -1483,4 +1504,138 @@ def csv_snapshot(self,prefix='snapshot_',*views):
 
     BuiltIn().log('Took snapshots of %d views' % (len(current_views)))
  
- 
+
+def csv_logging(self, enabled=True, *views):
+    """ Toggles enable/disable CSV loggin for a view
+
+    Parameters:
+    - `views`: is a list of views. `None` means all views.
+
+    Result files will have format <View name>.index.csv, when index is
+    automatically increased everytime the view is disable and re-enable again in the
+    same test.
+
+    Samples:
+    | Tester.`CSV Logging`  | ${TRUE}  |  Flow Statistics |
+    | Sleep    | 10s |
+    | Tester.`CSV Logging`  | ${FALSE} |  Flow Statistics |
+
+    *Note*:
+       Long time enable fof CSV loggin could returns in very big file 
+    """
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+    count = 0
+    
+    if enabled:
+        value = 'true'
+    else:
+        value = 'false'
+
+    if views:
+        current_views = list(map(lambda x: x.replace('_',' '),views))
+    else:
+        system_views=ix.getList(ix.getRoot() + 'statistics','view')
+        current_views=list(map(lambda x: x.split(':')[-1].replace('"',''),system_views))
+        
+    for item in current_views:
+        view = '%sstatistics/view:\"%s\"' % (ix.getRoot(),item.replace('_',' '))
+
+        filename = ix.getAttribute(view,'-csvFileName')
+        m = re.match(r'(.+)\.(\d+)\.csv', filename)
+        if m: 
+            index = int(m.group(2))+1
+            new_filename = '%s.%d.csv' % (m.group(1).replace(' ','_'),index)
+        else:
+            new_filename = '%s.1.csv' % (filename.split('.')[0].replace(' ','_'))
+
+        stat = ix.getAttribute(view,'-enableCsvLogging')
+        if stat == 'false': 
+            ix.setAttribute(view,'-csvFileName', new_filename)
+
+        ix.setAttribute(view,'-enableCsvLogging',value)
+        BuiltIn().log('    set CSV logging for %s to %s' % (view,value))
+        count += 1
+    ix.commit()
+    BuiltIn().log('Enabled CSV logging for %d views' % count) 
+    
+
+def get_csv_log(self, prefix='', index=0, *views):
+    """ Gets all CSV log for a specific views or all from current test folder
+
+    Parameters:
+    - `views` is a list of views. `None` is all views.
+    - `prefix` will be appended automatically to the beginning of the result
+    - `range`: number of files from the newest data. `0` for only 1 newest and
+      `-1` for all files.
+
+    Samples:
+    | Tester.`Get CSV Log` |  all_ | 0 | # get the newest CSV logging data for all views |
+    | Tester.`Get CSV Log` |  single_  | -1 |  Flow Statistics | # get all CSV logging data for one view |
+
+    """
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+    src_folder = ix.getAttribute(ix.getRoot() + 'statistics','-csvFilePath')
+    if views:
+        # in case user use under for space in view name
+        current_views = list(map(lambda x: x.replace('_',' '),views))
+    else:
+        system_views=ix.getList(ix.getRoot() + 'statistics','view')
+        current_views=list(map(lambda x: x.split(':')[-1].replace('"',''),system_views))
+    
+    count = 0 
+    for item in current_views:
+        view = '%s%s:\"%s\"' % (ix.getRoot(),'statistics/view', item)
+        filename = ix.getAttribute(view,'-csvFileName')
+        BuiltIn().log('Current CSV log file is `%s`' % filename)
+        m = re.match(r'(.+)\.(\d+)\.csv', filename)
+        if m :
+            view_name = m.group(1)
+            current_index = int(m.group(2))
+            if int(index) == -1:
+                start_index = 0
+            else:
+                start_index = current_index-1-int(index)
+            if start_index < 0: start_index=0
+            for i in range(start_index,current_index):
+                dst_file = '%s//%s%s.%d.csv' % (Common.get_result_path(),prefix,item.replace(' ','_'), i+1)
+                src_file = '%s\%s.%d.csv' % (src_folder,item.replace(' ','_'),i+1)
+                BuiltIn().log('copy from %s to %s' % (src_file,dst_file))
+                result = ix.execute('copyFile',ix.readFrom(src_file,'-ixNetRelative'),ix.writeTo(dst_file,'-overwrite'))
+                count += 1
+                if result != '::ixNet::OK' : raise result
+        else:
+            view_name = item
+            dst_file = '%s//%s%s.csv' % (Common.get_result_path(),prefix,item.replace(' ','_'))
+            src_file = '%s\%s.csv' % (src_folder,item.replace(' ','_'))
+            BuiltIn().log('copy from %s to %s' % (src_file,dst_file))
+            result = ix.execute('copyFile',ix.readFrom(src_file,'-ixNetRelative'),ix.writeTo(dst_file,'-overwrite'))
+            count += 1
+            if result != '::ixNet::OK' : raise result
+    BuiltIn().log('Got %d CSV log files' % count)        
+
+
+def get_view_csv_log(self,view,prefix=''):
+    """ Gets the newest CSV log file of the specific view
+    """
+    self.get_csv_log(prefix,0,view)
+
+
+def get_view_all_csv_logs(self,view,prefix=''):
+    """ Gets the newest CSV log file of *ALL* available views
+    """
+    self.get_csv_log(prefix,-1,view)
+
+
+def get_all_views_csv_log(self,prefix=''):
+    """ Gets the newest CSV log of all available views
+    """
+    self.get_csv_log(prefix,0)
+
+
+def get_all_views_all_csv_logs(self,prefix=''):
+    """ Gets all CSV logs for all available views
+    """
+    self.get_csv_log(prefix,-1)
+           
