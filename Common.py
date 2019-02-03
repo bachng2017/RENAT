@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1729 $
+# $Rev: 1764 $
 # $Ver: $
-# $Date: 2019-01-28 00:50:29 +0900 (月, 28  1月 2019) $
+# $Date: 2019-02-04 08:52:38 +0900 (月, 04  2月 2019) $
 # $Author: $
 
 """ Common library for RENAT
@@ -1421,7 +1421,8 @@ def screenshot(file_path):
     browser. But in contrast, the WebApp.`Screenshot Capture` could do `fullpage
     capture` depending on the content of the browser.
     """
-    pyscreenshot.grab(childprocess=True).save(file_path)
+    # pyscreenshot.grab(childprocess=True).save(file_path)
+    pyscreenshot.grab().save(file_path)
     BuiltIn().log("Saved current display to file `%s`" % file_path)
 
 
@@ -1495,7 +1496,18 @@ def convert_xml(style,src,dst):
     BuiltIn().log('Converted from `%s` to `%s` use stylesheet `%s`' % (src,dst,style)) 
     
 
+def get_multi_lines(data,index):
+    """ Returns multiple lines from text data using `index`
+    
+    `index` uses python rule.
+    """
+    tmp = data.splitlines()
+    result = eval('\'\\n\'.join(tmp[%s])' % index)
+    return result 
+
+
 # set RF global variables and load libraries
+# in doc create mode, there is not RF context, so we need to bypass the errors
 try:
     
 
@@ -1516,10 +1528,14 @@ try:
         BuiltIn().set_global_variable('${Keys.%s}' % key, getattr(Keys,key))
     BuiltIn().set_global_variable('${Keys.WIN}', u'\u00FF')
     BuiltIn().set_global_variable('${Keys.WINDOWS}', u'\u00FF')
+    BuiltIn().set_global_variable('${Keys.CTRL_ALT_DEL}',Keys.CONTROL + Keys.ALT + Keys.DELETE)
+    BuiltIn().set_global_variable('${CTRL_ALT_DEL}',Keys.CONTROL + Keys.ALT + Keys.DELETE)
 
     # set log level
-    BuiltIn().set_log_level(self.GLOBAL['default']['log-level'])
+    BuiltIn().set_log_level(GLOBAL['default']['log-level'])
 
-except:
+except Exception as e:
+    # incase need to debug uncomment following
+    # raise 
     log("ERROR: Error happened  while setting global configuration")
     

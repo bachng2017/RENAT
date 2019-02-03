@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-10-04 07:25:11 +0900 (Thu, 04 Oct 2018) $
-# $Rev: 1397 $
+# $Date: 2019-02-03 01:28:42 +0900 (日, 03  2月 2019) $
+# $Rev: 1762 $
 # $Ver: $
 # $Author: $
 
@@ -140,6 +140,8 @@ def send_mks_key(self,key,wait='1s'):
 
     Examples:
     | `Send MKS Key`   |     ${CTRL_L} |
+
+    *Notes*: For other usable key value, see Selenium document
     """ 
     driver = BuiltIn().get_library_instance('SeleniumLibrary')
     canvas = driver.get_webelement('mainCanvas')

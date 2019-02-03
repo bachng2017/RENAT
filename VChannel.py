@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1744 $
+# $Rev: 1758 $
 # $Ver: $
-# $Date: 2019-01-30 22:30:41 +0900 (水, 30  1月 2019) $
+# $Date: 2019-02-01 20:45:39 +0900 (金, 01  2月 2019) $
 # $Author: $
 
 import os,re,sys
@@ -771,7 +771,7 @@ class VChannel(object):
 
 
     @with_reconnect
-    def cmd(self,command='',prompt=None,timeout=None,match_err='\r\n(unknown command.|syntax error, expecting <command>.)\r\n'):
+    def cmd(self,command='',prompt=None,timeout=None,remove_prompt=False,match_err='\r\n(unknown command.|syntax error, expecting <command>.)\r\n'):
         """Executes a ``command`` and wait until for the prompt. 
   
         This is a blocking keyword. Execution of the test case will be postponed until the prompt appears.
@@ -783,6 +783,10 @@ class VChannel(object):
 
         The keyword returns error when the output matches the ``match_err`` and
         the default config value `cmd-auto-check` is ``True``
+
+        When `remove_prompt` is ``${TRUE}``, the last line (usually the prompt
+        line) will be remove from the return value. But still in this case, the log
+        information is unchanged.
 
         Output will be automatically logged to the channel current log file.
 
@@ -849,6 +853,10 @@ class VChannel(object):
             BuiltIn().log(output)
             raise Exception(err_msg)
 
+        # 
+        if remove_prompt:
+            tmp = output.splitlines()
+            output = "\r\n".join(tmp[:-1])
             
         BuiltIn().log("Executed command `%s` (%d sec)" % (command,total_count))
         return output
