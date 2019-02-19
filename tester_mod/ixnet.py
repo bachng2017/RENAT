@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-01-31 10:24:10 +0900 (木, 31  1月 2019) $
-# $Rev: 1747 $
+# $Date: 2019-02-18 10:42:14 +0900 (月, 18  2月 2019) $
+# $Rev: 1806 $
 # $Ver: $
 # $Author: $
 
@@ -43,7 +43,7 @@ import IxNetwork
 from datetime import datetime
 from robot.libraries.BuiltIn import BuiltIn
 import robot.libraries.DateTime as DateTime
-
+import xml.etree.ElementTree as ET
 
 def reset_config(self):
     """ Clears current config and creates new blank config
@@ -1540,102 +1540,143 @@ def csv_logging(self, enabled=True, *views):
         
     for item in current_views:
         view = '%sstatistics/view:\"%s\"' % (ix.getRoot(),item.replace('_',' '))
-
-        filename = ix.getAttribute(view,'-csvFileName')
-        m = re.match(r'(.+)\.(\d+)\.csv', filename)
-        if m: 
-            index = int(m.group(2))+1
-            new_filename = '%s.%d.csv' % (m.group(1).replace(' ','_'),index)
-        else:
-            new_filename = '%s.1.csv' % (filename.split('.')[0].replace(' ','_'))
-
-        stat = ix.getAttribute(view,'-enableCsvLogging')
-        if stat == 'false': 
-            ix.setAttribute(view,'-csvFileName', new_filename)
-
-        ix.setAttribute(view,'-enableCsvLogging',value)
+        ix.setMultiAttribute(view,'-enabled',value,'-enableCsvLogging',value)
         BuiltIn().log('    set CSV logging for %s to %s' % (view,value))
         count += 1
     ix.commit()
     BuiltIn().log('Enabled CSV logging for %d views' % count) 
     
 
-def get_csv_log(self, prefix='', index=0, *views):
+def get_csv_log(self, prefix='', index=u'-1', *views):
     """ Gets all CSV log for a specific views or all from current test folder
 
     Parameters:
     - `views` is a list of views. `None` is all views.
     - `prefix` will be appended automatically to the beginning of the result
-    - `range`: number of files from the newest data. `0` for only 1 newest and
-      `-1` for all files.
+    - `range`: number of files from the newest data. `-1` for only 1 newest and
+      `:` for all files.
 
     Samples:
-    | Tester.`Get CSV Log` |  all_ | 0 | # get the newest CSV logging data for all views |
-    | Tester.`Get CSV Log` |  single_  | -1 |  Flow Statistics | # get all CSV logging data for one view |
+    | Tester.`Get CSV Log` |  single_ | -1 | # get the newest CSV logging data for all views |
+    | Tester.`Get CSV Log` |  all_  | : |  Flow Statistics | # get all CSV logging data for one view |
 
     """
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
     src_folder = ix.getAttribute(ix.getRoot() + 'statistics','-csvFilePath')
+    # collect target views by their name
     if views:
         # in case user use under for space in view name
         current_views = list(map(lambda x: x.replace('_',' '),views))
     else:
         system_views=ix.getList(ix.getRoot() + 'statistics','view')
         current_views=list(map(lambda x: x.split(':')[-1].replace('"',''),system_views))
+
+    # get file list
+    tmp_file = '%s/tmp/aptixia_reporter_xmd.xml' % (os.getcwd())
+    filelist = '%s/aptixia_reporter_xmd.xml' % src_folder
+    result = ix.execute('copyFile',ix.readFrom(filelist,'-ixNetRelative'),ix.writeTo(tmp_file,'-overwrite'))
+    if result != '::ixNet::OK' : raise result
     
+    #
+    root = ET.parse(tmp_file).getroot()
     count = 0 
-    for item in current_views:
-        view = '%s%s:\"%s\"' % (ix.getRoot(),'statistics/view', item)
-        filename = ix.getAttribute(view,'-csvFileName')
-        BuiltIn().log('Current CSV log file is `%s`' % filename)
-        m = re.match(r'(.+)\.(\d+)\.csv', filename)
-        if m :
-            view_name = m.group(1)
-            current_index = int(m.group(2))
-            if int(index) == -1:
-                start_index = 0
-            else:
-                start_index = current_index-1-int(index)
-            if start_index < 0: start_index=0
-            for i in range(start_index,current_index):
-                dst_file = '%s//%s%s.%d.csv' % (Common.get_result_path(),prefix,item.replace(' ','_'), i+1)
-                src_file = '%s\%s.%d.csv' % (src_folder,item.replace(' ','_'),i+1)
+    for view in current_views:
+        # make file list
+        csv_list = [x.attrib['scope'] for x in root.findall('.//Source[@entity_name="%s"]' % view) ]
+        if index.lower() in [':','all']:
+            for csv_file in csv_list:
+                dst_file = '%s//%s%s' % (Common.get_result_path(),prefix,csv_file.replace(' ','_'))
+                src_file = '%s\\%s' % (src_folder,csv_file)
                 BuiltIn().log('copy from %s to %s' % (src_file,dst_file))
                 result = ix.execute('copyFile',ix.readFrom(src_file,'-ixNetRelative'),ix.writeTo(dst_file,'-overwrite'))
-                count += 1
                 if result != '::ixNet::OK' : raise result
+                count += 1
         else:
-            view_name = item
-            dst_file = '%s//%s%s.csv' % (Common.get_result_path(),prefix,item.replace(' ','_'))
-            src_file = '%s\%s.csv' % (src_folder,item.replace(' ','_'))
+            csv_file = csv_list[int(index)]
+            dst_file = '%s//%s%s' % (Common.get_result_path(),prefix,csv_file.replace(' ','_'))
+            src_file = '%s\\%s' % (src_folder,csv_file)
             BuiltIn().log('copy from %s to %s' % (src_file,dst_file))
             result = ix.execute('copyFile',ix.readFrom(src_file,'-ixNetRelative'),ix.writeTo(dst_file,'-overwrite'))
-            count += 1
             if result != '::ixNet::OK' : raise result
+            count += 1
     BuiltIn().log('Got %d CSV log files' % count)        
 
 
 def get_view_csv_log(self,view,prefix=''):
     """ Gets the newest CSV log file of the specific view
     """
-    self.get_csv_log(prefix,0,view)
+    self.get_csv_log(prefix,u'-1',view)
 
 
 def get_view_all_csv_logs(self,view,prefix=''):
     """ Gets the newest CSV log file of *ALL* available views
     """
-    self.get_csv_log(prefix,-1,view)
+    self.get_csv_log(prefix,u':',view)
 
 
 def get_all_views_csv_log(self,prefix=''):
     """ Gets the newest CSV log of all available views
     """
-    self.get_csv_log(prefix,0)
+    self.get_csv_log(prefix,u'-1')
 
 
 def get_all_views_all_csv_logs(self,prefix=''):
     """ Gets all CSV logs for all available views
     """
-    self.get_csv_log(prefix,-1)
-           
+    self.get_csv_log(prefix,u':')
+
+
+def link_up_down_by_index(self,port_index=u'0',state=u'up'):
+    """ Simulates a LinkUpDown by port index
+
+    Parameters:
+        - `port_index`: zero-started port index
+        - `state`: is `up` or `down`
+
+    Samples:
+    | Tester.`Link Up Down By Index` | 0 | down |
+    | Sleep | 5s |
+    | Tester.`Link Up Down By Index` | 0 | up |
+    """
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+    vport_list  = ix.getList(ix.getRoot(),'vport')
+    target_port = vport_list[int(port_index)]
+    port_name = ix.getAttribute(target_port,'-name')
+    result = ix.execute('linkUpDn',target_port,state.lower())
+    if result != '::ixNet::OK' :
+        raise result
+    BuiltIn().log('Simulate a link `%s` on port `%s`' % (state.lower(),port_name))
+
+
+def link_up_down_by_name(self,port_name,state=u'up'):
+    """ Simulates a LinkUpDown by port name 
+
+    Parameters:
+        - `port_index`: zero-started port index
+        - `state`: is `up` or `down`
+
+    Samples:
+    | Tester.`Link Up Down By Name` | Ethernet - 001 | down |
+    | Sleep | 5s |
+    | Tester.`Link Up Down By Name` | Ethernet - 001 | up |
+    """
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+    vport_list  = ix.getList(ix.getRoot(),'vport')
+    target_port_list = list(filter(lambda x: ix.getAttribute(x,'-name')==port_name, vport_list))
+    if len(target_port_list) > 0 :
+        result = ix.execute('linkUpDn',target_port_list[0],state.lower())
+        if result != '::ixNet::OK' :
+            raise result
+    else:
+        raise Exception('ERROR: could not found port name: `%s`' % port_name)
+    BuiltIn().log('Simulate a link `%s` on port `%s`' % (state.lower(),port_name))
+    
+
+
+
+
+
+

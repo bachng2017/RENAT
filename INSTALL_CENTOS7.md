@@ -20,7 +20,7 @@ Install a typical Centos7 with following parameters:
     - disable the feature
 
         ```
-        set enforce 0
+        $ set enforce 0
         ```
 
     - configure `SELINUX=disabled` in the `/etc/selinux/config` file:
@@ -36,45 +36,45 @@ Install a typical Centos7 with following parameters:
 - install python3 and related library
 
     ```
-    yum install -y https://centos7.iuscommunity.org/ius-release.rpm
-    yum install -y python36u python36u-libs python36u-devel python36u-pip
-    pip3.6 install --upgrade pip 
+    $ yum install -y https://centos7.iuscommunity.org/ius-release.rpm
+    $ yum install -y python36u python36u-libs python36u-devel python36u-pip
+    $ pip3.6 install --upgrade pip 
     ```
 
 - install extra libraries
 
     ```
-    yum install -y numpy net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python35u-tkinter xorg-x11-server-Xvfb  vim httpd xorg-x11-fonts-75dpi  nfs samba4 samba-client samba-winbind cifs-utils tcpdump hping3 telnet nmap wireshark java-1.8.0-openjdk firefox-52.8.0-1.el7.centos.x86_64 telnet ld-linux.so.2 ghostscript ImageMagick vlgothic-fonts vlgothic-p-fonts ntp
-    pip3.6 install pytest-runner
-    pip3.6 install numpy pyte PyYAML openpyxl Jinja2 pandas lxml requests netsnmp-py pdfkit robotframework robotframework-selenium2library robotframework-sshlibrary docutils pyvmomi PyVirtualDisplay pyscreenshot pillow decorator
+    $ yum install -y numpy net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python35u-tkinter xorg-x11-server-Xvfb  vim httpd xorg-x11-fonts-75dpi  nfs samba4 samba-client samba-winbind cifs-utils tcpdump hping3 telnet nmap wireshark java-1.8.0-openjdk firefox-52.8.0-1.el7.centos.x86_64 telnet ld-linux.so.2 ghostscript ImageMagick vlgothic-fonts vlgothic-p-fonts ntp
+    $ pip3.6 install pytest-runner
+    $ pip3.6 install numpy pyte PyYAML openpyxl Jinja2 pandas lxml requests netsnmp-py pdfkit robotframework robotframework-selenium2library robotframework-sshlibrary docutils pyvmomi PyVirtualDisplay pyscreenshot pillow decorator imgurscrot
     ```
     
 - add just selenium version
 
     ```
-    pip3.6 uninstall selenium
-    pip3.6 install selenium==2.53.6
+    $ pip3.6 uninstall selenium
+    $ pip3.6 install selenium==2.53.6
     ```
     
 - install libraries (besides yum)
 
     ```
-    cd /root
-    mkdir -p work/download
-    cd work/download        
+    $ cd /root
+    $ mkdir -p work/download
+    $ cd work/download        
 
-    sudo wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
+    $ sudo wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
     
-    sudo rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key
-    yum install -y jenkins
+    $ sudo rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key
+    $ yum install -y jenkins
     
-    cd /root/work/download
-    wget https://github.com/mozilla/geckodriver/releases/download/v0.21.0/geckodriver-v0.21.0-linux64.tar.gz
-    tar xzvf /root/work/download/geckodriver-v0.21.0-linux64.tar.gz -C /usr/local/bin
+    $ cd /root/work/download
+    $ wget https://github.com/mozilla/geckodriver/releases/download/v0.21.0/geckodriver-v0.21.0-linux64.tar.gz
+    $ tar xzvf /root/work/download/geckodriver-v0.21.0-linux64.tar.gz -C /usr/local/bin
 
-    cd /root/work/download
-    wget https://downloads.wkhtmltopdf.org/0.12/0.12.5/wkhtmltox-0.12.5-1.centos7.x86_64.rpm
-    rpm -Uvh wkhtmltox-0.12.5-1.centos7.x86_64.rpm
+    $ cd /root/work/download
+    $ wget https://downloads.wkhtmltopdf.org/0.12/0.12.5/wkhtmltox-0.12.5-1.centos7.x86_64.rpm
+    $ rpm -Uvh wkhtmltox-0.12.5-1.centos7.x86_64.rpm
     ```
         
 ### configuration 
@@ -82,12 +82,12 @@ Install a typical Centos7 with following parameters:
     - modify /etc/ntp.conf for favourite NTP server
     - activate and make the service auto start
        ```
-       service ntpd start
-       chkconfig ntpd on
+       $ service ntpd start
+       $ chkconfig ntpd on
        ```
     - check the current NTP
        ```
-       ntpq -p
+       $ ntpq -p
        ```
 
 
@@ -119,9 +119,9 @@ Install a typical Centos7 with following parameters:
 - add a default group and user and set its password
 
     ```
-    groupadd techno -o -g 1000
-    useradd robot -g techno
-    passwd robot
+    $ groupadd techno -o -g 1000
+    $ useradd robot -g techno
+    $ passwd robot
     ```
 
         
@@ -139,18 +139,18 @@ Install a typical Centos7 with following parameters:
     - enable the service
     
         ```
-        systemctl enable jenkins
-        systemctl start jenkins
+        $ systemctl enable jenkins
+        $ systemctl start jenkins
         ```
 
 - configure iptables:
     By default, Centos7 does not support saving iptables from `service` command. 
     ```
-    systemctl stop firewalld
-    systemctl disable firewalld
-    yum install -y iptables-services
-    systemctl enable iptables.service
-    systemctl start iptables.service
+    $ systemctl stop firewalld
+    $ systemctl disable firewalld
+    $ yum install -y iptables-services
+    $ systemctl enable iptables.service
+    $ systemctl start iptables.service
     ```
     
     Then configure `iptables` to allow necessary ports like `80`,`8082`,`22` and traffic from IxiaAppServer.
@@ -185,16 +185,16 @@ Install a typical Centos7 with following parameters:
     - prepare the document folder
     
         ```  
-        mkdir -p /var/www/html/renat-doc
-        chown apache:techno /var/www/html/renat-doc/
-        chmod 0775 /var/www/html/renat-doc/
+        $ mkdir -p /var/www/html/renat-doc
+        $ chown apache:techno /var/www/html/renat-doc/
+        $ chmod 0775 /var/www/html/renat-doc/
         ```
             
     - enable and restart the service
     
         ```
-        systemctl restart httpd
-        systemctl enable httpd
+        $ systemctl restart httpd
+        $ systemctl enable httpd
         ```
 
 - make skeleton for users
@@ -204,8 +204,8 @@ Install a typical Centos7 with following parameters:
 - add a user to the group `techno`
 
     ```
-    useradd user -g techno
-    passwd user
+    $ useradd user -g techno
+    $ passwd user
     ```
 
 - login as the new user
@@ -213,13 +213,13 @@ Install a typical Centos7 with following parameters:
 - create a key for the account `robot` that would be used for using with SSH proxy. Enter when asked for password (2 times)
 
     ```
-    mkdir ~/.ssh
-    cd ~/.ssh
-    ssh-keygen -C for_robot_`whoami` -f robot_id_rsa
+    $ mkdir ~/.ssh
+    $ cd ~/.ssh
+    $ ssh-keygen -C for_robot_`whoami` -f robot_id_rsa
     
 - push to key to proxy server using `robot` password
     ```
-    ssh-copy-id -i robot_id_rsa.pub robot@<proxy server IP>
+    $ ssh-copy-id -i robot_id_rsa.pub robot@<proxy server IP>
     ```
 
 ### install Ixia related (optional)
@@ -233,21 +233,21 @@ Install a typical Centos7 with following parameters:
 - install IxOS. Choose `Tcl8.5` and default destination folder `/opt/ixia/ixos/6.80-EA-SP1`
 
     ```
-    tar xzvf IxOS6.80.1100.9Linux64.bin.tar.gz
-    ./IxOS6.80.1100.9Linux64.bin -i console
+    $ tar xzvf IxOS6.80.1100.9Linux64.bin.tar.gz
+    $ ./IxOS6.80.1100.9Linux64.bin -i console
     ```
     
 - install IxNetwork. Choose `/opt/ixia/ixnet/7.41-EA` for default destination folder and `1-Yes` for `HTLAPI` when asked (let other option as default)
 
     ```
-    tar xzvf IxNetworkTclClient7.41.945.9Linux.bin.tgz
-    ./IxNetworkTclClient7.41.945.9Linux.bin -i console
+    $ tar xzvf IxNetworkTclClient7.41.945.9Linux.bin.tgz
+    $ ./IxNetworkTclClient7.41.945.9Linux.bin -i console
     
 - install IOxLoad. Choose `/opt/ixia/ixload/8.01.99.14` for default destination folder.
 
     ```
-    tar xzvf IxLoadTclApi8.01.99.14Linux_x64.bin.tgz
-    ./IxLoadTclApi8.01.99.14Linux_x64.bin -i console
+    $ tar xzvf IxLoadTclApi8.01.99.14Linux_x64.bin.tgz
+    $ ./IxLoadTclApi8.01.99.14Linux_x64.bin -i console
     ```
 *Note*: if it is necessary remove the folder if you chose wrong destination folder and reinstall
 
@@ -255,7 +255,7 @@ Install a typical Centos7 with following parameters:
 - install avalanch api
     
     ```
-    pip3.6 install avalancheapi
+    $ pip3.6 install avalancheapi
     ```
 
 -

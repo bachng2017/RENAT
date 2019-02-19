@@ -12,7 +12,7 @@ default:
     newline: "\n"
     slack-cmd:  $RENAT_PATH/tools/renat_bot.sh
     slack-proxy: 127.0.0.1
-    log-level: TRACE
+    log-level: ERROR
     ignore-dead-node: FALSE
     mks-console:
         width:  1024
@@ -23,6 +23,7 @@ default:
 
 vchannel:
     read-timeout:   180s
+    wait-time-before-close: 3m
     read-interval:  0.3s
     ignore-init-finish: False
 

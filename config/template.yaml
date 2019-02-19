@@ -181,6 +181,14 @@ access-template:
         access: vmware
         auth: plain-text
         profile: vmware-esxi
+    jump-smartcs:
+        access: jump
+        access_base: telnet
+        auth: plain-text
+        profile: default
+        prompt: "tty.*> "
+        password_prompt: "Password:"
+        target: juniper
 
 snmp-template:
        juniper:

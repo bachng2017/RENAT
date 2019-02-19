@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1764 $
+# $Rev: 1790 $
 # $Ver: $
-# $Date: 2019-02-04 08:52:38 +0900 (月, 04  2月 2019) $
+# $Date: 2019-02-17 10:20:35 +0900 (日, 17  2月 2019) $
 # $Author: $
 
 """ Common library for RENAT
@@ -287,7 +287,7 @@ the test and remove the node from its active node list.
 
 """
 
-ROBOT_LIBRARY_VERSION = 'RENAT 0.1.12'
+ROBOT_LIBRARY_VERSION = 'RENAT 0.1.13'
 
 import os,socket
 import glob,fnmatch
@@ -336,6 +336,10 @@ NODE    = []
 WEBAPP  = []
 DISPLAY = None
 START_TIME = datetime.datetime.now()
+
+###
+import logging
+logging.getLogger('Display').setLevel(logging.ERROR)
 
 def log(msg,level=1):
     """ Logs ``msg`` to the current log file (not console)
@@ -926,7 +930,7 @@ def create_sequence(start,end,interval,option='float'):
         result = numpy.arange(int(start),int(end),int(interval)).tolist()
     return result
 
-def change_mod(name,mod,relative=False):
+def change_mod(name,mod,relative=True):
     """ Changes file mod, likes Unix chmod
 
     ``mod`` is a string specifying the privilege mode
@@ -1421,8 +1425,8 @@ def screenshot(file_path):
     browser. But in contrast, the WebApp.`Screenshot Capture` could do `fullpage
     capture` depending on the content of the browser.
     """
-    # pyscreenshot.grab(childprocess=True).save(file_path)
-    pyscreenshot.grab().save(file_path)
+    pyscreenshot.grab(childprocess=True).save(file_path)
+    # pyscreenshot.grab().save(file_path)
     BuiltIn().log("Saved current display to file `%s`" % file_path)
 
 
@@ -1505,6 +1509,28 @@ def get_multi_lines(data,index):
     result = eval('\'\\n\'.join(tmp[%s])' % index)
     return result 
 
+
+def current_username():
+    """ Returns current username
+    """
+    cmd_line = 'id -nu'
+    if sys.version_info[0] > 2:
+        result = subprocess.check_output(cmd_line,stderr=subprocess.STDOUT,shell=True,encoding='utf-8').strip()
+    else:
+        result = subprocess.check_output(cmd_line,stderr=subprocess.STDOUT,shell=True).strip()
+    BuiltIn().log('Current username is `%s`' % result)
+    return result
+
+def current_usergroup():
+    """ Returns current usergroup
+    """
+    cmd_line = 'id -ng'
+    if sys.version_info[0] > 2:
+        result = subprocess.check_output(cmd_line,stderr=subprocess.STDOUT,shell=True,encoding='utf-8').strip()
+    else:
+        result = subprocess.check_output(cmd_line,stderr=subprocess.STDOUT,shell=True).strip()
+    BuiltIn().log('Current usergroup is `%s`' % result)
+    return result
 
 # set RF global variables and load libraries
 # in doc create mode, there is not RF context, so we need to bypass the errors

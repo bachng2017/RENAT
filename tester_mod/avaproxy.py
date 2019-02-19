@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-01-15 10:52:20 +0900 (火, 15  1月 2019) $
-# $Rev: 1698 $
+# $Date: 2019-02-16 01:45:03 +0900 (土, 16  2月 2019) $
+# $Rev: 1788 $
 # $Ver: $
 # $Author: $
 
@@ -118,27 +118,34 @@ def load_config(self,config_name=''):
     # reserve ports
     port_data = []
     if 'real-port' in Common.LOCAL['tester'][self._cur_name]:
+        res = Common.send(avaproxy,'ava::release_all_ports')
+
         port_data = Common.LOCAL['tester'][self._cur_name]['real-port']
+        interface = 0
         for item in port_data:
-            res = Common.send(avaproxy,'ava::reserve_port/%s/%s/%s' % (item['chassis'],item['card'],item['port']))
+            res = Common.send(avaproxy,'ava::reserve_port/%d/%s/%s/%s' % (interface,item['chassis'],item['card'],item['port']))
+            interface += 1
             BuiltIn().log('    reserved port %s/%s/%s with result %s' % (item['chassis'],item['card'],item['port'],res))
+    else:
+        res = Common.send(avaproxy,'ava::reserve_all_ports')
+        BuiltIn().log('    reserved all ports')
 
     BuiltIn().log('Reserved %d ports' % len(port_data))
     return res
 
 
-def start_test(self,timeout='5m'):
+def start_test(self,trial='0',timeout='5m'):
     """ Starts the test and wait until it finishes or timeout
     """
     cli  = self._clients[self._cur_name]
     avaproxy = cli['connection']
-    res = Common.send(avaproxy,'ava::start_test')
-    BuiltIn().log('Started the test')
+    res = Common.send(avaproxy,'ava::start_test/%s' % trial)
+    BuiltIn().log('Started the test with trial mode is `%s`' % trial)
 
     res = Common.send(avaproxy,'ava::wait_until_finish/%d' % DateTime.convert_time(timeout))
     if res != 'ava::ok' :
-        raise 'Error happened before the test finishes `%s`' % res
-    BuiltIn().log('Finished the test')
+        raise Exception('Error happened before the test finishes\n%s' % res)
+    BuiltIn().log('Finished the test with result: %s' % res)
     return res
 
 

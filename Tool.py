@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-08-23 00:00:54 +0900 (Thu, 23 Aug 2018) $
-# $Rev: 1208 $
+# $Date: 2019-02-14 23:25:17 +0900 (木, 14  2月 2019) $
+# $Rev: 1778 $
 # $Ver: $
 # $Author: $
 
@@ -83,24 +83,26 @@ class Tool(object):
         return result
 
 
-    def tcpdump(self,params,timeout=''):
+    def tcpdump_to_file(self,filename='capture.pcap',params='', timeout='10s'):
         """ Uses tcpdump (for packet capture) and wait 
     
-        The keyword ignores detail output of the command
+        The keyword ignores detail output of the command.
+        By default, the keyword only captures 10s 
         """
         BuiltIn().log('Run tcpdump command')
-        cmd = 'sudo tcpdump ' + params
+        result_file = '%s/%s' % (Common.get_result_path(),filename)
+        cmd = 'sudo tcpdump %s -w %s' % (params,result_file)
         proc1 = subprocess.Popen(cmd,stderr=subprocess.STDOUT,stdout=subprocess.PIPE,shell=True,preexec_fn=os.setpgrp)
-        # proc1 = subprocess.Popen(cmd,shell=True,stderr=subprocess.STDOUT,preexec_fn=os.setpgrp)
-        if timeout != '': 
-            time.sleep(DateTime.convert_time(timeout))
-        # output1 = proc1.stdout.readline()
-        # output2 = subprocess.check_output('sudo kill %s' % proc1.pid,stderr=subprocess.STDOUT,shell=True)
+        time.sleep(DateTime.convert_time(timeout))
         output2 = subprocess.check_output('sudo kill %s' % proc1.pid,shell=True)
         output1 = b'\n'.join(proc1.stdout.readlines())
 
+        # change owner of the captured file
+        username = Common.current_username()
+        usergroup = Common.current_usergroup()
+        output = subprocess.check_output('sudo chown %s:%s %s' % (username,usergroup,result_file),shell=True)
+
         time.sleep(1)
         BuiltIn().log(output1)
-        # BuiltIn().log(output2)
-        BuiltIn().log('Executed tcpdump command')
+        BuiltIn().log('Executed tcpdump command `%s`' % cmd)
        

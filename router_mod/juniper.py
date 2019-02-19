@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1260 $
+# $Rev: 1813 $
 # $Ver: $
-# $Date: 2018-08-30 06:49:44 +0900 (Thu, 30 Aug 2018) $
+# $Date: 2019-02-19 09:39:06 +0900 (火, 19  2月 2019) $
 # $Author: $
 
 """ Provides keywords for Juniper platform
@@ -75,30 +75,30 @@ def get_current_datetime(self,time_format='%H:%M:%S',delta_time='0s',dir='+',**k
     return result
 
 
-def number_of_ospf_neighbor(self,state="Full"):
+def number_of_ospf_neighbor(self,state="Full",cmd='show ospf neighbor'):
     """ Returns number of OPSF neighbors with status ``state``
     """
-    output  = self._vchannel.cmd("show ospf neighbor").lower()
+    output  = self._vchannel.cmd(cmd).lower()
     count   = output.count(state.lower())
 
     BuiltIn().log("Number of OSPF neighbors in `%s` state is %d" % (state,count))
     return count
 
 
-def number_of_ospf3_neighbor(self,state="Full"):
+def number_of_ospf3_neighbor(self,state="Full",cmd='show ospf3 neighbor'):
     """ Returns number of OPSFv3 neighbors with status ``state``
     """
-    output  = self._vchannel.cmd("show ospf3 neighbor")
+    output  = self._vchannel.cmd(cmd)
     count   = output.count(state)
 
     BuiltIn().log("Number of OSPF neighbors in `%s` state is %d" % (state,count))
     return count
 
 
-def number_of_bgp_neighbor(self,state="Established"):
+def number_of_bgp_neighbor(self,state="Established",cmd='show bgp neighbor | match "Type"'):
     """ Returns number of BGP neighbor in ``state`` state
     """
-    output  = self._vchannel.cmd("show bgp neighbor").lower()
+    output  = self._vchannel.cmd(cmd).lower()
     count   = output.count(state.lower())
 
     BuiltIn().log("Number of BGP neighbors in `%s` state is %d" % (state,count))
@@ -210,9 +210,9 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(
     file_path_replace = file_path_replace.replace('(','\(').replace(')','\)')
     cmd = 'file copy robot@%s:\'//%s\' /var/tmp/%s' % (server,file_path_replace,config_file)
 
-    output = self._vchannel.cmd(cmd,prompt="(yes/no|password:)")
+    output = self._vchannel.cmd(cmd,prompt="\(yes/no\)\? |password: ")
     if "yes/no" in output:
-        output = self._vchannel.cmd("yes",prompt='password:')
+        output = self._vchannel.cmd("yes",prompt='password: ')
     if "password:" in output:
         output = self._vchannel.cmd(password)
 
@@ -263,11 +263,13 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(
 
 
 
-def get_file(self,src_file,dst_file=''):
+def get_file(self,src_file,dst_file=None):
     """ Gets a file from router
 
     - ``src_file`` is a absolute path insides the router
     - ``dst_file`` is a file name under ``result`` folder
+
+    if `dst_file` is not defined, it will be the filename of the `src_file`
     """
  
     cli_mode = self.get_cli_mode()
@@ -278,9 +280,10 @@ def get_file(self,src_file,dst_file=''):
     password    = Common.GLOBAL['default']['robot-password']
 
 
-    if dst_file == '':
-        tmp_path    = os.getcwd() + '/tmp/juniper.conf.gz'
-        dest_path   = os.getcwd() + '/' + Common.get_result_folder() + '/juniper.conf.gz'
+    if dst_file is None:
+        filename = os.path.basename(src_file)
+        tmp_path    = os.getcwd() + '/tmp/%s' % filename
+        dest_path   = os.getcwd() + '/' + Common.get_result_folder() + filename
     else:    
         tmp_path    = os.getcwd() + '/tmp/' + dst_file
         dest_path   = os.getcwd() + '/' + Common.get_result_folder() + '/' + dst_file
@@ -288,11 +291,15 @@ def get_file(self,src_file,dst_file=''):
     dest_path = dest_path.replace('(','\(').replace(')','\)')
     tmp_path = tmp_path.replace('(','\(').replace(')','\)')
 
+    self._vchannel.cmd('start shell',prompt='% ')
+    self._vchannel.cmd('chmod g+rw %s' % src_file, prompt='% ')
+    self._vchannel.cmd('exit')
+
     cmd = 'file copy %s robot@%s:\'//%s\'' % (src_file,server,tmp_path)
-    output = self._vchannel.cmd(cmd,prompt="(yes/no\)\?|password:)")
+    output = self._vchannel.cmd(cmd,prompt="\(yes/no\)\? |password: ")
 
     if "yes/no" in output:
-        output = self._vchannel.cmd("yes",prompt='password:')
+        output = self._vchannel.cmd("yes",prompt='password: ')
     if "password:" in output:
         output = self._vchannel.cmd(password)
     if "error" in output:
@@ -302,12 +309,13 @@ def get_file(self,src_file,dst_file=''):
 
     # copy config from temp folder to result folder
     shutil.copy(tmp_path,dest_path)
+    Common.change_mod(dest_path,'0775',False) 
     
     BuiltIn().log("Get the file `%s` from node `%s`" % (src_file,self._vchannel.current_name))
 
 
 
-def get_config(self,dst_name=''):
+def get_config(self,dst_name=None):
     """ Gets the current configuration file of the router to current ``result``
     folder.
 

@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-10-07 13:30:09 +0900 (Sun, 07 Oct 2018) $
-# $Rev: 1421 $
+# $Date: 2019-02-18 04:46:17 +0900 (月, 18  2月 2019) $
+# $Rev: 1797 $
 # $Ver: $
 # $Author: $
 
@@ -76,7 +76,7 @@ class Logger(object):
         channel = self._vchannel.get_current_channel()
         note = ""
         if with_time :
-            note = datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y: ") + msg
+            note = datetime.datetime.now().strftime("%I:%M:%S%p on %B %d, %Y: ") + msg
         else :
             note = msg
         note = mark + ' ' + note + ' ' + mark

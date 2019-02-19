@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-01-14 15:17:16 +0900 (月, 14  1月 2019) $
-# $Rev: 1693 $
+# $Date: 2019-02-14 17:48:03 +0900 (木, 14  2月 2019) $
+# $Rev: 1777 $
 # $Ver: $
 # $Author: $
 
@@ -194,13 +194,17 @@ module.
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
             sock.connect((ip,port))
             auth = Common.GLOBAL['auth']['plain-text'][type]
-            license_server= Common.GLOBAL['device'][dname]['license-server']
+            if 'license-server' in Common.GLOBAL['device'][dname]:
+                license_server = Common.GLOBAL['device'][dname]['license-server']
+                res = Common.send(sock,'ava::add_license_server/%s' % license_server)
+            # else:
+            #    license_server = None
             # sock.send('ava::login/%s' % auth['user'])
             # session_id = sock.recv(1024)
             session_id = Common.send(sock,'ava::login/%s' % auth['user'])
             # sock.send('ava::add_license_server/%s' % license_server) 
             # session_id = sock.recv(1024) 
-            res = Common.send(sock,'ava::add_license_server/%s' % license_server)
+            # res = Common.send(sock,'ava::add_license_server/%s' % license_server)
             client['connection'] = sock
 
         ### Breaking point

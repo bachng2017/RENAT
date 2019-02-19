@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1758 $
+# $Rev: 1814 $
 # $Ver: $
-# $Date: 2019-02-01 20:45:39 +0900 (金, 01  2月 2019) $
+# $Date: 2019-02-19 13:08:41 +0900 (火, 19  2月 2019) $
 # $Author: $
 
 import os,re,sys
@@ -290,8 +290,9 @@ class VChannel(object):
             raise Exception("Channel `%s` already existed. Use different name instead" % name)
     
         _device         = Common.LOCAL['node'][node]['device']
-        _ip             = Common.GLOBAL['device'][_device]['ip']
-        _type           = Common.GLOBAL['device'][_device]['type']    
+        _device_info    = Common.GLOBAL['device'][_device]
+        _ip             = _device_info['ip']
+        _type           = _device_info['type']    
         _access_tmpl    = Common.GLOBAL['access-template'][_type] 
         _access         = _access_tmpl['access']
         _auth_type      = _access_tmpl['auth']
@@ -304,8 +305,15 @@ class VChannel(object):
             _port = _access_tmpl['port']
         else:
             _port = None
+
         # _prompt         = _access_tmpl['prompt'] + '$' # automatically append <dollar> to the prompt from yaml config 
-        _prompt         = _access_tmpl['prompt']
+        if 'prompt' in _access_tmpl:
+            _prompt  = _access_tmpl['prompt']
+        else:
+            _prompt  = '.*'        
+        if _prompt[-1] != '$':
+            _prompt += '$'
+
         _auth           = Common.GLOBAL['auth'][_auth_type][_profile]
         if 'init' in _access_tmpl:
             _init           = _access_tmpl['init'] # initial command 
@@ -325,7 +333,7 @@ class VChannel(object):
         else:
             _password_prompt = 'Password:'
         
-        BuiltIn().log("Opening connection to `%s(%s)` by name `%s`" % (node,_ip,name))
+        BuiltIn().log("Opening connection to `%s(%s)` by name `%s` by `%s`" % (node,_ip,name,_access))
         
 
         try:
@@ -390,8 +398,106 @@ class VChannel(object):
                 channel_info['prompt']      = _prompt
                 channel_info['connection']  = self._ssh
                 channel_info['local_id']    = local_id
-   
-            # common for both TELNET and SSH 
+
+            ### JUMP
+            if _access == 'jump':
+                _access_base        = _access_tmpl['access_base']
+                _target_name        = _access_tmpl['target']
+                _target_tmpl        = Common.GLOBAL['access-template'][_target_name] 
+                _target_auth_type   = _target_tmpl['auth']
+                _target_profile     = _target_tmpl['profile']
+                _target_auth        = Common.GLOBAL['auth'][_target_auth_type][_target_profile]
+
+                if 'password_prompt' in _target_tmpl:
+                    _password_prompt = _target_tmpl['password_prompt']
+                else:
+                    _password_prompt = 'Password:'
+
+
+                if _access_base == 'telnet':
+                    s = str(w) + "x" + str(h)
+                    local_id = self._telnet.open_connection(_ip,
+                                                        alias=name,terminal_type='vt100', window_size=s,
+                                                        prompt=_prompt,prompt_is_regexp=True,timeout=_timeout)
+                    if _login_prompt is not None:
+                        out = self._telnet.login(_auth['user'],_auth['pass'], login_prompt=_login_prompt,password_prompt=_password_prompt)
+                    else:
+                        out = self._telnet.read_until(_password_prompt)
+                        self._telnet.write(_auth['pass'])
+    
+                    # allocate new channel id
+                    id = self._max_id + 1
+                    channel_info['id']          = id 
+                    channel_info['type']        = _type
+                    channel_info['access-type'] = 'telnet'
+                    channel_info['prompt']      = _prompt 
+                    channel_info['connection']  = self._telnet
+                    channel_info['local_id']    = local_id
+
+
+                if _access_base == 'ssh':
+                    out = ""
+                    local_id = self._ssh.open_connection(_ip,alias=name,term_type='vt100',width=w,
+                                                        height=h,timeout=_timeout,
+                                                        prompt="REGEXP:%s" % _prompt)
+                    # SSH with plaintext
+                    if _auth_type == 'plain-text':
+                        if _proxy_cmd:
+                            user        = os.environ.get('USER')
+                            home_folder = os.environ.get('HOME')
+                            if _port is None: 
+                                port = 22
+                            else:
+                                port = _port
+                            _cmd = _proxy_cmd.replace('%h',_ip).replace('%p',str(port)).replace('%u',user).replace('~',home_folder)
+                            out = self._ssh.login(_auth['user'],_auth['pass'],proxy_cmd=_cmd)
+                        else:
+                            _cmd = None
+                            out = self._ssh.login(_auth['user'],_auth['pass'])
+    
+                    # SSH with publick-key
+                    if _auth_type == 'public-key':
+                        if 'pass' in _auth:
+                            pass_phrase = _auth['pass']
+                        else:
+                            pass_phrase = None
+                        out = self._ssh.login_with_public_key(_auth['user'],_auth['key'],pass_phrase)
+
+                    # allocate new channel id
+                    id = self._max_id + 1
+                    channel_info['id']          = id 
+                    channel_info['type']        = _type
+                    channel_info['access-type'] = 'jump'
+                    channel_info['prompt']      = _prompt
+                    channel_info['connection']  = self._ssh
+
+                # execute JUMP cmd
+                if 'jump_cmd' in _device_info:
+                    for item in _device_info['jump_cmd']:
+                        channel_info['connection'].write(str(item)+'\r')
+                        time.sleep(2)
+                        output = channel_info['connection'].read()
+
+                # at this point, the system is waiting for the second login
+                # phase. The status could be already login
+                _prompt = _target_tmpl['prompt']
+                if 'init' in _target_tmpl:
+                    _init = _target_tmpl['init']
+                if 'finish' in _target_tmpl:
+                    _finish = _target_tmpl['finish']
+                if 'timeout' in _target_tmpl:
+                    _timeout = _target_tmpl['timeout']
+                channel_info['prompt']  = _prompt
+
+                if re.match(r'.*login: ',output,re.DOTALL):
+                    channel_info['connection'].write(_target_auth['user'])
+                    channel_info['connection'].read_until_regexp(_password_prompt)
+                    channel_info['connection'].write(_target_auth['pass'])
+                    channel_info['connection'].read_until_regexp(_prompt)
+
+                
+     
+            # common for all access type
             # open/create a log file for this connection in result_folder
             result_folder = Common.get_result_folder()
             if log_file == '':
@@ -415,10 +521,9 @@ class VChannel(object):
             # extra 
             channel_info['screen']      = None
             channel_info['stream']      = None
-            self._current_id           = id
-            self._max_id               = id
-            self._current_name         = name
-    
+            self._current_id            = id
+            self._max_id                = id
+            self._current_name          = name
         
             # remember this info by name(alias)
             self._channels[name]   = channel_info 
@@ -585,8 +690,12 @@ class VChannel(object):
 
     def change_log(self,log_file,mode='w'):
         """ Stops current log file and create a new log file. 
+
+        Default `mode` is `w` which overwrite the existed logs. Change to `a` or
+        `a+` to append the current existed log files.
    
-        Every log from that point will be saved to the new log file
+        Every log from that point will be saved to the new log file.
+
         Return old log filename
         """
         channel = self._channels[self._current_name]
@@ -643,7 +752,7 @@ class VChannel(object):
         wait = DateTime.convert_time(str_wait)
         channel = self._channels[self._current_name]
         is_screen_mode = (channel['screen'] is not None)
-        display_cmd = str_cmd.replace(Common.newline,'<Enter>')
+        display_cmd = str(str_cmd).replace(Common.newline,'<Enter>')
         
         BuiltIn().log("Write '%s', screen_mode=`%s`" % (str_cmd,is_screen_mode))
         if start_screen_mode:
@@ -771,7 +880,11 @@ class VChannel(object):
 
 
     @with_reconnect
-    def cmd(self,command='',prompt=None,timeout=None,remove_prompt=False,match_err='\r\n(unknown command.|syntax error, expecting <command>.)\r\n'):
+    def cmd(self,command='',prompt=None,
+            timeout=None,error_on_timeout=True,
+            prompt_timeout=None,error_on_prompt_timeout=True,
+            remove_prompt=False,
+            match_err='\r\n(unknown command.|syntax error, expecting <command>.)\r\n'):
         """Executes a ``command`` and wait until for the prompt. 
   
         This is a blocking keyword. Execution of the test case will be postponed until the prompt appears.
@@ -805,27 +918,35 @@ class VChannel(object):
 
         cur_prompt  =  channel['prompt']
         if prompt is not None :    
-            # cur_prompt = '.*' + prompt
             cur_prompt = prompt
-            # output  = channel['connection'].read_until_regexp(cur_prompt)
+
+        # automatically append an END-OF-LINE char to prompt for strictly
+        # matching
+        # if cur_prompt[-1] != '$':
+        #    cur_prompt = cur_prompt + '$'
        
         # implement read_until_regexp by ourselve 
         output = ''
         tmp = ''
         prompt_check = ''
         prompt_check_count = 0
-        time_count = 0.0
+        count = 0.0
         total_count = 0.0
-        # time_out = float(DateTime.convert_time(Common.GLOBAL['vchannel']['read-timeout']))
-        # time_interval = float(DateTime.convert_time(Common.GLOBAL['vchannel']['read-interval']))
         if not timeout:
-            cmd_timeout = float(DateTime.convert_time(Common.get_config_value('read-timeout','vchannel')))
+            _timeout = float(DateTime.convert_time(Common.get_config_value('read-timeout','vchannel')))
         else:
-            cmd_timeout = float(DateTime.convert_time(timeout)) 
+            _timeout = float(DateTime.convert_time(timeout)) 
+        if not prompt_timeout:
+            _prompt_timeout = float(DateTime.convert_time(Common.get_config_value('read-timeout','vchannel')))
+        else:
+            _prompt_timeout = float(DateTime.convert_time(prompt_timeout)) 
+
+        
         time_interval   = float(DateTime.convert_time(Common.get_config_value('read-interval','vchannel')))
         # repeat until timeout or using last N output to check the prompt
-        while (time_count <  cmd_timeout) and (not re.search(cur_prompt,prompt_check,re.MULTILINE)):
-            if prompt_check_count > 3:      # using last 4 ouput for prompt check
+         
+        while (count <  _timeout) and (total_count < _prompt_timeout) and (not re.search(cur_prompt,prompt_check,re.MULTILINE)):
+            if prompt_check_count > 3:      
                 prompt_check_count = 0
                 prompt_check = ''
             tmp = channel['connection'].read()
@@ -833,13 +954,15 @@ class VChannel(object):
                 output += tmp
                 prompt_check += tmp
                 prompt_check_count += 1
-                time_count = 0
+                count = 0
             else:
                 time.sleep(time_interval)
-                time_count += time_interval
+                count += time_interval
                 total_count += time_interval
-        if time_count > cmd_timeout:
-            raise Exception('Cmd timeout after `%d` seconds' % total_count)
+        if (count >= _timeout) and error_on_timeout:
+            raise Exception('ERROR: No output after `%d` seconds' % count)
+        if (total_count >= _prompt_timeout) and error_on_prompt_timeout:
+            raise Exception('ERROR: No prompt after `%d` seconds' % total_count)
             
         
         # output  = channel['connection'].read_until_regexp(cur_prompt,loglevel='DEBUG')
@@ -900,7 +1023,7 @@ class VChannel(object):
                 output = channel['connection'].read() 
             except UnicodeDecodeError as err:
                 output = err.args[1].decode('utf-8','replace')
-
+    
         self.log(output)
         return output
 
@@ -912,8 +1035,10 @@ class VChannel(object):
         return self._current_name
 
 
-    def close(self):
+    def close(self,msg='',with_time=False,mark="***"):
         """ Closes current connection and returns the active channel name 
+
+        `msg` is the last message is written to each device's log 
         """
         channels = self.get_channels()
         old_name = self._current_name
@@ -922,16 +1047,23 @@ class VChannel(object):
 
         # close
         channels[self._current_name]['connection'].switch_connection(self._current_name)
+        # make sure a never-end process will be terminated
+        if not channel['screen']: 
+            timeout= Common.get_config_value('vchannel','wait-time-before-close','5m')
+            self.cmd(prompt_timeout=timeout,error_on_prompt_timeout=False)
+
         ### execute command before close the connection
         BuiltIn().log("Closing the connection for channel `%s`" % old_name)
         flag = Common.get_config_value('ignore-init-finish','vchannel',False)
         if not flag and finish_cmd is not None: 
             for item in finish_cmd:
                 BuiltIn().log("Executing finish command: %s" % (item))
-                # channel['connection'].write_bare(item + '\r')
-                channel['connection'].write_bare("users\r")
+                channel['connection'].write_bare(item + '\r')
                 time.sleep(1)
-        channels[self._current_name]['logger'].flush()
+        logger = BuiltIn().get_library_instance('Logger')
+        logger.log(msg,with_time,mark)
+        # channels[self._current_name]['logger'].write(msg)
+        # channels[self._current_name]['logger'].flush()
 
 
         channels[self._current_name]['connection'].close_connection() 
@@ -956,14 +1088,16 @@ class VChannel(object):
         return self._current_name
 
 
-    def close_all(self):
+    def close_all(self,msg='',with_time=False,mark="***"):
         """ Closes all current sessions and flush out all log files. 
+
+        `msg` is the last message the is written to each device's log.
 
         Current node name was reset to ``None``
         """
         # for name in self._channels:
         while len(self._channels) > 0:
-            self.close()
+            self.close(msg,with_time,mark)
 
         self._current_id = 0
         self._max_id = 0
@@ -1178,3 +1312,17 @@ class VChannel(object):
         BuiltIn().log("Took snapshot `%s` and showed the difference" % name)
 
         return result
+
+    
+    def broadcast_write_with_tag(self,cmd,*tag_list):
+        """ Broadcasts `cmd` to all channels
+        """
+        channels = Common.node_with_tag(*tag_list)
+        channel_num = len(channels)
+        _name = self._current_name
+        for item in channels:
+            self.switch(item) 
+            self.write(cmd)
+        self.switch(_name)
+        BuiltIn().log('Broadcasted cmd `%s` to %d channels' % (cmd,channel_num))
+

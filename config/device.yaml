@@ -153,5 +153,13 @@ device:
         type: vmware
         description: a shared ESXI server
         ip: 10.128.3.15
-
+    #
+        # console
+    mx480-31-24-console:
+        type: jump-smartcs
+        ip: 10.128.3.201
+        jump_cmd:
+            -   "1"
+            -   "3"
+            -   ""
  

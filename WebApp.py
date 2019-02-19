@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-12-06 17:03:14 +0900 (木, 06 12月 2018) $
-# $Rev: 1674 $
+# $Date: 2019-02-16 00:44:25 +0900 (土, 16  2月 2019) $
+# $Rev: 1786 $
 # $Ver: $
 # $Author: $
 
@@ -438,7 +438,7 @@ class WebApp(object):
         if count >= timeout_sec:
             BuiltIn().log('Timeout happened but element is still not changed')
             if error_on_timeout:
-                raise('ERR: Timeout while waiting for element status changed')
+                raise Exception('ERR: Timeout while waiting for element status changed')
 
         BuiltIn().log('Waited for element status changed')
   
