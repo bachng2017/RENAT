@@ -64,264 +64,155 @@ RENAT features:
 ![Renat scenario sample](doc/renat_sample.png)
 
 ## Installation
-Basic install instruction for Centos7 and Python3
+The following instructions is aimed for Centos 6.x systems. Other system could use the equivalent commands to install necessary packages
 
-### base install
-Install a typical Centos7 with following parameters:
+### Python
+The current version of RENAT is using Python 2.x (support Python 3.x is in experimental phase)
+```
+yum -y install centos-release-scl-rh
+yum -y install python27
+python --version
+```
 
-    - memory: 16G (or more)
-    - HDD: 64G (or more)
-    - NIC: 2
-    - package: minimum (+developer package)
-    - ip address: 10.128.64.10/16 (sample)
-    - gw: 10.128.1.1 (sample)
-    - dns: 10.128.3.101 (sample)
-    - hostname: renat.localhost (sample)
+### Other necessary packages
+```
+yum install -y epel-release
+yum install -y gettext gcc net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python27-tkinter xorg-x11-server-Xvfb ghostscript firefox-60.2.1-1.el6.centos.x86_64 httpd vim
+pip install numpy pyte PyYAML openpyxl Jinja2 pandas paramiko lxml requests pdfkit pyvmomi PyVirtualDisplay
+pip install netsnmp-py==0.3 
+```
 
-### post install configuration
-- disable SE linux:
-    - disable the feature
+### Robot Framwork packages
+```
+pip install robotframework robotframework-seleniumlibrary robotframework-selenium2library robotframework-sshlibrary docutils
+```
+For more information about Robotframework and installation, check http://robotframework.org/
 
-        ```
-        $ set enforce 0
-        ```
+### Other system configuration
+##### RENAT account
+Create a common `robot` account on the RENAT server. This account will be used for collect and set configuration between the test routers and the RENAT server. Following are sample configuration
+```
+groupadd techno -o -g 1000
+useradd robot -g tech
+passwd  robot
+```
+Edit the global configuration of RENAT `config/config.yaml` to suite your environment.
+Usually only the `robot-server` and `robot-password` are need to be modified.
 
-    - configure `SELINUX=disabled` in the `/etc/selinux/config` file:
+#### Patch the RF SSHLibrary
+By default the Robotframework SSHLibrary does not support SSH proxy command. Using the information in th patch file `$RENAT_PATH/patch/SSHLibrary.patch` to patch `SSHLibrary` located in the Python package folder.
 
-- update install package and `reboot` the system
 
-    ```
-    $ yum update -y
-    $ reboot
-    ```
-        
-### library installation
-- install python3 and related library
+### Web server (optional)
+It is more convinence to access the test result from a web browser. Configure your favorite web server to display to access the test project and test item folder.
+The following is a snipset of Apache config file `httpd.conf` to show the user `work` directory. Any RENAT test project or test item could be access easily from browser with following URL like: `http://<renat server url>/~user/work/renat/sample/item01/log.html`
+```
+<IfModule mod_userdir.c>
+    #
+    # UserDir is disabled by default since it can confirm the presence
+    # of a username on the system (depending on home directory
+    # permissions).
+    #
+    # UserDir disabled
+    # UserDir enabled *
+    #
+    # To enable requests to /~user/ to serve the user's public_html
+    # directory, remove the "UserDir disabled" line above, and uncomment
+    # the following line instead:
+    #
+    UserDir work
 
-    ```
-    $ yum install -y https://centos7.iuscommunity.org/ius-release.rpm
-    $ yum install -y python36u python36u-libs python36u-devel python36u-pip
-    $ pip3.6 install --upgrade pip 
-    ```
+</IfModule>
+<Directory /home/*/work>
+    Options MultiViews Indexes SymLinksIfOwnerMatch IncludesNoExec
+</Directory>
+```
 
-- install extra libraries
+### Selenium related libraries
+In order to capture the screen, Selenium and related drivers need to be installed and prepared correclty.
 
-    ```
-    $ yum install -y numpy net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python36u-tkinter xorg-x11-server-Xvfb  vim httpd xorg-x11-fonts-75dpi  nfs samba4 samba-client samba-winbind cifs-utils tcpdump hping3 telnet nmap wireshark java-1.8.0-openjdk firefox telnet ld-linux.so.2 ghostscript ImageMagick vlgothic-fonts vlgothic-p-fonts ntp
-    $ pip3.6 install pytest-runner
-    $ pip3.6 install numpy pyte PyYAML openpyxl Jinja2 pandas lxml requests netsnmp-py pdfkit robotframework robotframework-selenium2library robotframework-sshlibrary docutils pyvmomi PyVirtualDisplay pyscreenshot pillow decorator imgurscrot
-    ```
-    
-- install libraries (besides yum)
+`Selenium`,`geckodriver` and `firefox` version combination is important for web appliance testing and also hypervisor MKS console.
+The following combination is known that could work together
 
-    ```
-    $ cd /root
-    $ mkdir -p work/download
+```
+firefox-60.2.1-1.el6.centos.x86_64
+robotframework-selenium2library 3.0.0
+robotframework-seleniumlibrary  3.2.0
+selenium                        3.14.1
+```
 
-    $ cd /root/work/download
-    $ wget https://github.com/mozilla/geckodriver/releases/download/v0.21.0/geckodriver-v0.21.0-linux64.tar.gz
-    $ tar xzvf /root/work/download/geckodriver-v0.21.0-linux64.tar.gz -C /usr/local/bin
+#### Gecko driver
+Download and install gecko driver from https://github.com/mozilla/geckodriver/releases
 
-    $ cd /root/work/download
-    $ wget https://downloads.wkhtmltopdf.org/0.12/0.12.5/wkhtmltox-0.12.5-1.centos7.x86_64.rpm
-    $ rpm -Uvh wkhtmltox-0.12.5-1.centos7.x86_64.rpm
-    ```
+```
+cd /tmp
+wget https://github.com/mozilla/geckodriver/releases/download/v0.21.0/geckodriver-v0.21.0-linux64.tar.gz
+cd /usr/local/bin
+tar xzvf /root/work/download/geckodriver-v0.21.0-linux64.tar.gz
+chown root:root geckodriver
+```
 
-- install jenkins (optional)
+### Ixia Network and Ixia Load modules (optional)
+You need to access to proper Ixia softwares by your own and following its instruction correctly. The following instructions are just examples.You could by pass this part if you are not intending to use Ixia control modules.
+```
+yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel ld-linux.so.2
+```
 
-    ```
-    $ cd work/download        
-    $ sudo wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
-    $ sudo rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key
-    $ yum install -y jenkins
-    ```
-        
-### more system configuration 
-- modify NTP server
-    - modify /etc/ntp.conf for favourite NTP server
-    - activate and make the service auto start
-       ```
-       $ service ntpd start
-       $ chkconfig ntpd on
-       ```
-    - check the current NTP
-       ```
-       $ ntpq -p
-       ```
+Use Ixia install files to install necessary application. For example:
 
-- sudo privilege
-    - add a file named `renat` (persion 0440) to folder `/etc/sudoers.d`
-    
-        ```
-        Defaults    env_keep += "PATH PYTHONPATH LD_LIBRARY_PATH MANPATH XDG_DATA_DIRS PKG_CONFIG_PATH RENAT_PATH"
-        Cmnd_Alias CMD_ROBOT_ALLOW  = /bin/kill,/usr/local/bin/nmap,/usr/sbin/hping3,/usr/sbin/tcpdump
-        %techno ALL=NOPASSWD: CMD_ROBOT_ALLOW
-        %jenkins ALL=NOPASSWD: CMD_ROBOT_ALLOW        
-        ```
-        
-    - comment out the line including `secure_path` in the file `/etc/sudoers`
-    
-        ```
-        # Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin
-        ```
-        
-- change some system default behaviours
-    - create a folder name `work` under `/etc/skel` with permission `0775`
-    - change `UMASK` to `022` in the file `/etc/login.defs`
+- add `./IxOS6.80.1100.9Linux64.bin` (default install folder is: /opt/ixia/ixos/6.80-EA-SP1)
+- add `./IxNetworkTclClient7.41.945.9Linux.bin` (default install folder is: /opt/ixia/ixnet/7.41-EA)
+- add `./IxLoadTclApi8.01.99.14Linux_x64.bin` (default install folder is: /opt/ixia/ixload/8.01.99.14)
 
-        ```
-        # UMASK           077
-        UMASK           022
-        ```
-        
-- add a default group and user and set its password
+Add a startup file `ixia.sh` to `/etc/profile.d/` using proper destination
+```
+IXIA_HOME=/opt/ixia
+IXIA_VERSION=8.01.0.2
 
-    ```
-    $ groupadd techno -o -g 1000
-    $ useradd robot -g techno
-    $ passwd robot
-    ```
+IXL_libs=$IXIA_HOME/ixload/8.01.99.14
+IXN_libs=$IXIA_HOME/ixnet/7.41-EA
+IXOS_libs=$IXIA_HOME/ixload/8.01.99.14/../../ixos-api/8.01.0.2
+BPS_libs=/opt/ixia/bps
 
-    *Note*: the password of this `robot` account is set in the RENAT config file `${RENAT_PATH}/config/config.yaml`
-    
+PYTHONPATH=.:$IXN_libs/lib/PythonApi:$IXL_libs/lib:$IXOS_libs:$BPS_libs:$PYTHONPATH
+for LIBS in "$IXL_libs $IXOS_libs"
+do
+    for FOLDER in `find $LIBS -type f -name pkgIndex.tcl | rev | cut -d/ -f2- | rev`
+    do
+        TCLLIBPATH="$TCLLIBPATH $FOLDER"
+        PYTHONPATH="$PYTHONPATH:.:$FOLDER"
+    done
+done
 
-- configure jenkins (optional):
-    - Change jenkins listen port `JENNKINS_PORT` to `8002` in file `/etc/sysconfig/jenkins`
-    
-        ```
-        # JENKINS_PORT="8080"
-        JENKINS_PORT="8082"
-        ```
-        
-    - enable the service
-    
-        ```
-        $ systemctl enable jenkins
-        $ systemctl start jenkins
-        ```
+export TCLLIBPATH
+export IXIA_VERSION
+export IXL_libs
+export PYTHONPATH
+```
 
-- configure iptables:
-    By default, Centos7 does not support saving iptables from `service` command. 
-    ```
-    $ systemctl stop firewalld
-    $ systemctl disable firewalld
-    $ yum install -y iptables-services
-    $ systemctl enable iptables.service
-    $ systemctl start iptables.service
-    ```
-    
-    Then configure `iptables` to allow necessary ports like `80`,`8082`,`22` and traffic from IxiaAppServer.
-    Or allow access for your whole local network:
-    ```
-    -A INPUT -s 10.128.0.0/16 -j ACCEPT
-    ```
+*Important*:
+Depending on your install order, sometims following lines are inserted at the end of `etc/profile`.
+These will override the TCCLLIBPATH configured in the above ixia.sh.
+Remember to comment them out if not IxLoad module will not work correctly.
+```
+TCLLIBPATH=/opt/ixia/ixos/6.80-EA-SP1/lib
+export TCLLIBPATH
+```
 
-- configure httpd service
-    - add `apache` to `techno` group
-    - modify `userdir.conf` under folder `/etc/httpd/conf.d` to show list the `work` folder of each user
-    
-        ```
-        # UserDir disabled
-        UserDir enabled
+The concept of ``Tester module`` is that the configuration should be created using Tester GUI (like Ixia Network or Ixia Load). RENAT framework supports controling the test items, stop/run the tests etc. but does not support traffic generating itself.
 
-        # UserDir public_html
-        UserDir work
-
-        # <Directory "/home/*/public_html">
-         <Directory "/home/*/work">
-           IndexOptions +NameWidth=*
-        ```
-        
-        *Note*: Do not for get the `<Directory>` section
-            
-    - add robot to mime type in file `/etc/mime.types`
-        ```
-        # text/plain            txt asc text pm el c h cc hh cxx hxx f90 conf log
-        text/plain              txt asc text pm el c h cc hh cxx hxx f90 conf log robot
-        ```
-    - prepare the document folder
-    
-        ```  
-        $ mkdir -p /var/www/html/renat-doc
-        $ chown apache:techno /var/www/html/renat-doc/
-        $ chmod 0775 /var/www/html/renat-doc/
-        ```
-            
-    - enable and restart the service
-    
-        ```
-        $ systemctl restart httpd
-        $ systemctl enable httpd
-        ```
-
-- make skeleton for users
-    - create a folder call `work` under `/etc/skel` with mode `0750`
-
-### add a renat user
-- add a user to the group `techno`
-
-    ```
-    $ useradd user -g techno
-    $ passwd user
-    ```
-
-- login as the new user
-    
-- create a key for the account `robot` that would be used for using with SSH proxy. Enter when asked for password (2 times)
-
-    ```
-    $ mkdir ~/.ssh
-    $ cd ~/.ssh
-    $ ssh-keygen -C for_robot_`whoami` -f robot_id_rsa
-    
-- push to key to proxy server using `robot` password
-    ```
-    $ ssh-copy-id -i robot_id_rsa.pub robot@<proxy server IP>
-    ```
-
-### install Ixia related (optional)
-- download necessary files (below are samples. Use the correct install files in your environment)
-
-    ```
-    BPSRobotLibrary.tgz
-    IxNetworkTclClient7.41.945.9Linux.bin.tgz
-    IxOS6.80.1100.9Linux64.bin.tar.gz
-    ```
-- install IxOS. Choose `Tcl8.5` and default destination folder `/opt/ixia/ixos/6.80-EA-SP1`
-
-    ```
-    $ tar xzvf IxOS6.80.1100.9Linux64.bin.tar.gz
-    $ ./IxOS6.80.1100.9Linux64.bin -i console
-    ```
-    
-- install IxNetwork. Choose `/opt/ixia/ixnet/7.41-EA` for default destination folder and `1-Yes` for `HTLAPI` when asked (let other option as default)
-
-    ```
-    $ tar xzvf IxNetworkTclClient7.41.945.9Linux.bin.tgz
-    $ ./IxNetworkTclClient7.41.945.9Linux.bin -i console
-    
-- install IOxLoad. Choose `/opt/ixia/ixload/8.01.99.14` for default destination folder.
-
-    ```
-    $ tar xzvf IxLoadTclApi8.01.99.14Linux_x64.bin.tgz
-    $ ./IxLoadTclApi8.01.99.14Linux_x64.bin -i console
-    ```
-*Note*: 
-- if it is necessary remove the folder if you chose wrong destination folder and reinstall
-- Ixia library need to be patched to run in python3 env. Check `patch` folder for details
-
-### install Avalanche related (optional)
-- install avalanch api
-    
-    ```
-    $ pip3.6 install avalancheapi
-    ```
-- install avaproxy
-
-    Detail for `avaproxy` could be found in `misc` folder
-
-### other information
-Install instructions for CentOS6 Python2.x environment could be found in [here](./README_python2x.md)
+### Installation check
+Make sure you have right Python (2.x) and runnable Ixia module (if `Tester` module is necessary)
+```
+$ python --version
+Python 2.7.13
+$ python
+Python 2.7.13 (default, Apr 12 2017, 06:53:51)
+[GCC 4.4.7 20120313 (Red Hat 4.4.7-18)] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import IxNetwork
+>>> import IxLoad
+```
 
 
 ### RENAT checkout and preparation
@@ -329,10 +220,10 @@ Install instructions for CentOS6 Python2.x environment could be found in [here](
 Prepare a RENAT folder in user working folder and check out the source
 
 ```
-$ cd
-$ mkdir work
-$ cd work
-$ git clone https://github.com/bachng2017/RENAT.git renat
+cd
+mkdir work
+cd work
+git clone https://github.com/bachng2017/RENAT.git renat
 ```
 
 #### 2. RENAT  configuration
@@ -341,12 +232,12 @@ $ git clone https://github.com/bachng2017/RENAT.git renat
 Make an environment varible `$RENAT_PATH` pointing the correct RENAT folder.
 If you have multi renat (different version) checked out, modify this varible to use the correct RENAT version.
 ```
-$ export RENAT_PATH=~/work/renat
+export RENAT_PATH=~/work/renat
 ```
 
 Or edit your startup script
 ```
-$ echo "export RENAT_PATH=~/work/renat" >> ~/.bashrc
+echo "export RENAT_PATH=~/work/renat" >> ~/.bashrc
 ```
 
 - configure device and authencation information in `$RENAT_PATH/config/device.yaml` and `$RENAT_PATH/config/auth.yaml` to suite to lab environment.
@@ -504,7 +395,4 @@ This project is licensed under the Apache v2.0 license. For more detail see [lic
 
 ## Thanks
 Thanks to everybody has encouraged, tested and supported this project. All comments, advices and co-operation are appreciated.
-
-
-
 
