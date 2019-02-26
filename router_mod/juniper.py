@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1813 $
+# $Rev: 1833 $
 # $Ver: $
-# $Date: 2019-02-19 09:39:06 +0900 (火, 19  2月 2019) $
+# $Date: 2019-02-23 11:12:49 +0900 (土, 23  2月 2019) $
 # $Author: $
 
 """ Provides keywords for Juniper platform
@@ -164,7 +164,7 @@ def get_cli_mode(self):
 
 
 
-def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(error:)'):
+def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(error:|unknown command:)'):
     """ Loads configuration to a router. 
     Usable ``mode`` is ``set``, ``override``, ``merge`` and ``replace``
 

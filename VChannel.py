@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1814 $
+# $Rev: 1819 $
 # $Ver: $
-# $Date: 2019-02-19 13:08:41 +0900 (火, 19  2月 2019) $
+# $Date: 2019-02-19 20:54:36 +0900 (火, 19  2月 2019) $
 # $Author: $
 
 import os,re,sys
@@ -1132,25 +1132,26 @@ class VChannel(object):
         BuiltIn().log("Got IP address of current node: %s" % (ip))
         return  ip  
 
-    def exec_file(self,file_name,vars='',comment='# ',step=False,str_error='syntax,rror'):
+    def exec_file(self,file_name,vars='',comment='# ',step=False,mode='cmd',str_error='syntax,rror'):
         """ Executes commands listed in ``file_name``
         Lines started with ``comment`` character is considered as comments
 
-        ``file_name`` is a file located inside the ``config`` folder of the
-        test case.
+        Parameters: 
+        - `file_name` is a file located inside the ``config`` folder of the
+        test case
+        - `mode`: could be ``cmd`` or ``write`` which define that if the cmd is
+          exectued by VChannel.`Cmd` or VChannel.`Write`
+        -  if `step` is ``True``, after very command the output is check agains
+        an error list. And if a match is found, execution will be stopped. Error
+        list is define by ``str_err``, that contains multi regular expression
+        separated by a comma. Default value of ``str_err`` is `error`
+        - `vars` are additional variables in format ``var1=value1,var2=value2``
 
-        This command file could be written in Jinja2 format. Default usable
+        The command file could be written in Jinja2 format. Default usable
         variables are ``LOCAL`` and ``GLOBAL`` which are identical to
         ``Common.LOCAL`` and
         ``Common.GLOBAL``. More variables could be supplied to the template by
         ``vars``.
-
-        ``vars`` has the format: ``var1=value1,var2=value2``
-
-        If ``step`` is ``True``, after very command the output is check agains
-        an error list. And if a match is found, execution will be stopped. Error
-        list is define by ``str_err``, that contains multi regular expression
-        separated by a comma. Default value of ``str_err`` is `error`
 
         A sample for command list with Jinja2 template:
         | show interface {{ LOCAL['extra']['line1'] }}
@@ -1170,6 +1171,8 @@ class VChannel(object):
         | # this is comment line <-- this line will be ignored
         | ## this is not an comment line, and will be enterd to the router cli,
         but the router might ignore this
+
+        `step` is ignored in `write` mode
         """
 
         # load and evaluate jinja2 template
@@ -1188,14 +1191,17 @@ class VChannel(object):
             if line.startswith(comment): continue
             str_cmd = line.rstrip()
             if str_cmd == '': continue # ignore null line
-            output = self.cmd(str_cmd)
+            if mode.lower() == 'cmd': 
+                output = self.cmd(str_cmd)
+            else:
+                output = self.write(str_cmd)
 
-            if not step: continue
+            if not (step and mode.lower() == 'cmd'): continue
             for error in str_error.split(','):
                 if re.search(error,output,re.MULTILINE):
                     raise Exception("Stopped because matched error after executing `%s`" % str_cmd)
 
-        BuiltIn().log("Executed commands in file %s" % file_name)
+        BuiltIn().log("Executed commands in file `%s` with mode `%s`" % (file_name,mode))
 
 
     @with_reconnect

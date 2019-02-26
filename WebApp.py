@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-02-16 00:44:25 +0900 (土, 16  2月 2019) $
-# $Rev: 1786 $
+# $Date: 2019-02-23 16:34:37 +0900 (土, 23  2月 2019) $
+# $Rev: 1835 $
 # $Ver: $
 # $Author: $
 
@@ -93,7 +93,7 @@ class WebApp(object):
     download need to be listed in `profile` section of the application setting.
     Default `download-path` is the current active result folder.
 
-    Samples:
+    Examples:
 | ...
 | webapp:
 |     samurai-1:
@@ -228,7 +228,6 @@ class WebApp(object):
         else:
             capture_name = filename
         total_width     = int(self._driver.execute_javascript("return document.body.offsetWidth;"))
-        #total_height    = int(self._driver.execute_javascript("return document.body.offsetHeight;"))
         total_height    = int(self._driver.execute_javascript("return document.body.parentNode.scrollHeight;"))
 
         display_info = Common.get_config_value('display')
@@ -242,7 +241,6 @@ class WebApp(object):
 
         # only update windows height
         self._driver.set_window_size(old_width, total_height)
-        # self._driver.maximize_browser_window()
         time.sleep(2)
         self._driver.capture_page_screenshot(capture_name)  
         # restore old window size

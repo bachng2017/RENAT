@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-11-23 21:16:12 +0900 (金, 23 11月 2018) $
-# $Rev: 1625 $
+# $Date: 2019-02-23 16:34:37 +0900 (土, 23  2月 2019) $
+# $Rev: 1835 $
 # $Ver: $
 # $Author: $
 
@@ -270,7 +270,7 @@ class Arbor(WebApp):
         - by default, the system try to match the menu item in full, when
           ``partial_match`` is ``True``, partial match is applied.
 
-        Samples:
+        Examples:
         | Arbor.`Menu`               |          order=Alerts/Ongoing |
         | Arbor.`Capture Screenshot` | 
         | Arbor.`Menu`               |          order=Alerts/All Alerts |

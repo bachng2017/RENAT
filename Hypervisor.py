@@ -89,6 +89,7 @@ class Hypervisor(object):
         _auth_type      = _access_tmpl['auth'] 
         _profile        = _access_tmpl['profile']
         _auth           = Common.GLOBAL['auth'][_auth_type][_profile]
+        _driver         = None
 
         try:
             channel_info = {}

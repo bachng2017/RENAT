@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-02-03 01:28:42 +0900 (日, 03  2月 2019) $
-# $Rev: 1762 $
+# $Date: 2019-02-26 23:05:14 +0900 (火, 26  2月 2019) $
+# $Rev: 1855 $
 # $Ver: $
 # $Author: $
 
@@ -127,13 +127,19 @@ def power_off(self,vm_name,graceful=True):
         cmd = 'vim-cmd vmsvc/power.shutdown %s' % target_vm._moId
         output = _ssh_cmd(self,cmd)
     
-    if 'VMware Tools is not running' in output:
+    if ('VMware Tools is not running' in output) or ('Invalid fault' in output):
         cmd = 'vim-cmd vmsvc/power.off %s' % target_vm._moId
         output = _ssh_cmd(self,cmd)
    
     BuiltIn().log('Shutdown the VM `%s`' % vm_name) 
 
-def send_mks_key(self,key,wait='1s'):
+
+def send_mks_key(self,key,wait='5s'):
+    BuiltIn().log_to_console('WARN: Send MKS Key is deprecated. Use Send MKS Keys instead')
+    return self.send_mks_keys(key,wait)
+
+
+def send_mks_keys(self,keys,wait='5s'):
     """ Sends key strokes to current web console
    
     Special Ctrl char could be used as ``${CTRL_A}`` to ``${CTRL_Z}``
@@ -145,12 +151,13 @@ def send_mks_key(self,key,wait='1s'):
     """ 
     driver = BuiltIn().get_library_instance('SeleniumLibrary')
     canvas = driver.get_webelement('mainCanvas')
-    if len(key) == 1 and ord(key) < ord('@'):
-        canvas.send_keys(Keys.CONTROL + chr(ord(key)+ord('@')))
+    if len(keys) == 1 and ord(keys) < ord('@'):
+        canvas.send_keys(Keys.CONTROL + chr(ord(keys) + ord('@')))
     else:
-        canvas.send_keys(key)
+        canvas.send_keys(keys)
     time.sleep(DateTime.convert_time(wait))
     BuiltIn().log('Sent keystrokes to the web console')
+
 
 def click_mks(self,xoffset,yoffset):
     """ Click on the MKS console at `xoffset`,`yoffset` coordinate
@@ -166,7 +173,7 @@ def click_mks(self,xoffset,yoffset):
     BuiltIn().log('Clicked on the MKS console at (%s,%s)' % (xoffset,yoffset))
 
 
-def send_mks_cmd(self,cmd,wait=u'2s'):
+def send_mks_cmd(self,cmd,wait=u'5s'):
     """ Sends command to current web console and wait for a while
 
     By default, `wait` time is ``2s`` and the keyword will automaticall add a
@@ -281,9 +288,11 @@ def open_console(self,vm_name,width=None,height=None):
 
     driver = BuiltIn().get_library_instance('SeleniumLibrary')
     driver.open_browser('file:///' + console_file)
-    # driver.open_browser('file:///' + console_file,'chrome')
     time.sleep(5)
+    driver.set_window_size(1024,768)   
+    driver.maximize_browser_window() 
     canvas = driver.get_webelement('mainCanvas')
+    # canvas.size = {'width':1024,'height':768}
     size = canvas.size
     width = size['width']
     height = size['height'] 

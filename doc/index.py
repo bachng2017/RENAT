@@ -25,9 +25,9 @@ Router_:
 Tester_:
     Library provides keywords to control testers, includes mod_ixnet_ , mod_ixload_ , mod_ixbps_ and mod_avaproxy_
 WebApp_:
-    Common library for web application, includes 2 child libraries: Samurai_ and Arbor_
+    Common library for web application includes 2 child libraries: Samurai_ and Arbor_
 Hypervisor_:
-    Library provides keywords to control Hypervisor, included mod_vmware_
+    Library provides keywords to control Hypervisor includes mod_vmware_
 
 LabKeyword_:
     Common lab keywords

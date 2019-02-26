@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1790 $
+# $Rev: 1835 $
 # $Ver: $
-# $Date: 2019-02-17 10:20:35 +0900 (日, 17  2月 2019) $
+# $Date: 2019-02-23 16:34:37 +0900 (土, 23  2月 2019) $
 # $Author: $
 
 """ Common library for RENAT
@@ -66,12 +66,12 @@ router or a web appliance box and should be uniq between the devices.
 <description> is any useful information and <ip> is the IP that RENAT
 uses to access the device.
 
-<type> is important because it will be used as the ky of the ``access_template``
+<type> is important because it will be used as a key of the ``access_template``
 in template file. Usually users do not need to invent a new type but should use
 the existed type. When a new platform need to be supported, a new type will be
 introduced with the correspon template and authentication information.
 
-Samples:
+Examples:
 | device:
 |     apollo:
 |         type: ssh-host
@@ -97,25 +97,25 @@ The template file contains information about how to access to the device and how
 it should polling information ( SNMP only for now). Each template has the
 following format:
 
-<type>:
-    access:         <ssh or telnet>
-    auth:           <plaint-text or public-key>
-    profile:        <authentication profile name>
-    prompt:         <a regular expression for the PROMPT of the CLI device> (optional)
-    login_prompt:   <a login PROMPT for CLI device> (optional)
-    password_prompt:<a PROMPT for asking password of CLI device> (optional)   
-    append:         <a pharase to append automatically for every CLI command
-that executes> on this device (optional>
-    init:           <an array of command that will be executed automatically
-after a sucessful login of CLI device> (optional) 
+| <type>:
+|     access:         ssh, telnet or jump
+|     auth:           plaint-text or public-key
+|     profile:        authentication profile name
+|     prompt:         a regular expression for the PROMPT of the CLI device> (optional)
+|     login_prompt:   a login PROMPT for CLI device (optional)
+|     password_prompt:a PROMPT for asking password of CLI device (optional)   
+|     append:         a phrase to append automatically for every CLI command that executes> on this device (optional>
+|     init:           an array of command that will be executed automatically after a sucessful login of CLI device> (optional) 
+|      target:         another type (mandatory in case of access is ``jump``
 
 *Note*: Becareful about the prompt field. Usually RENAT will wait until it could
 see the prompt in its output. A wrong prompt will halt the system until it is
 timed out.
 
-Samples:
+Examples:
 
 | access-template:
+|     # template for an oridnary UNIX server access by SSH
 |     ssh-host:
 |         access: ssh
 |         auth: public-key
@@ -123,6 +123,7 @@ Samples:
 |         prompt: \$
 |         append:
 |         init: unalias -a
+|     # template for a Juniper router
 |     juniper:
 |         access: telnet
 |         auth: plain-text
@@ -130,6 +131,7 @@ Samples:
 |         prompt: "(#|>) "
 |         append: ' | no-more'
 |         init:
+|     # template for a Cisco router
 |     cisco:
 |         access: ssh
 |         auth: plain-text
@@ -137,6 +139,15 @@ Samples:
 |         prompt: "\@.*(#|>) "
 |         append:
 |         init:
+|    # template for a Juniper router access through a SmartCS console server
+|    jump-smartcs:
+|        access: jump
+|        access_base: telnet
+|        auth: plain-text
+|        profile: default
+|        prompt: "tty.*> "
+|        password_prompt: "Password:"
+|        target: juniper
 | snmp-template:
 |        juniper:
 |             mib: ./mib-Juniper.json
@@ -165,18 +176,18 @@ or
 Where <profile> is the name of the authentication profile specificed in the
 ``access template`` of the device
 
-Sample:
+Example:
 | auth:
 |     plain-text:
 |         default:
 |             user: user
-|             pass: nttXXX
+|             pass: xxxxxx
 |         flets:
 |             user: user
-|             pass: IpcoXXXX
+|             pass: xxxxxx
 |         arbor:
 |             user: admin
-|             pass: nttXXX
+|             pass: xxxxxx
 | 
 |     public-key: # for Public Key authentication
 |         default:
@@ -216,7 +227,7 @@ Usually the ``local.yaml`` has following parts:
 
 
 
-Sample:
+Example:
 
 | # CLI node
 | node:
@@ -246,7 +257,7 @@ Sample:
 |         ip: 10.128.32.70
 |         config: vmx_20161129.ixncfg
 |
-| # Other user information| 
+| # Other local information specific for this case
 | port-mapping:
 |     uplink01:
 |         device: vmx11
@@ -729,7 +740,7 @@ def is_stable(seq,threshold,percentile='90'):
 def str2seq(str_index,size):
     """ Returns a sequence from string format
 
-        Samples:
+        Examples:
         | `Str2Seq` | ::    | 5 | # (0,1,2,3,4) |
         | `Str2Seq` | :2    | 5 | # (0,1)       |
         | `Str2Seq` | 1:3   | 5 | # (1,2) |
@@ -1327,7 +1338,7 @@ def load_plugin():
 def explicit_run():
     """ skip the test case if global_variable RUN_ME is not defined
 
-    Sample scenario:
+    Examples:
     | 00. Cabling |
     | Common.`Explicit Run` |
     | Log To Console        |          cabling... |
@@ -1342,6 +1353,8 @@ def explicit_run():
  
 
 def get_myid():
+    """ Returns ID uniq for this test case
+    """
     return BuiltIn().get_variable_value('${MYID}')
 
 
