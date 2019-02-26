@@ -30,8 +30,11 @@ For details about Robot Framework see [RobotFramework](http://www.robotframework
 - [Disclaimer](#disclaimer)
 - [Table Of Contents](#table-of-contents)
 - [Features](#features)
-- [Installation](#installation)
-- [Usages](#usages)
+- [Installation by Ansible](#installation-by-ansible)
+- [Installation for CentOS7](#installation-for-centos7)
+- [Installation for CentOS6](#installation-for-centos6)
+- [RENAT checkout and preparation](#renat-checkout-and-preparation)
+- [Create scenarios](#create-scenarios)
 - [More Examples](#more-examples)
 - [Manual](#manual)
 - [Copying And Copyrights](#copying-and-copyrights)
@@ -63,10 +66,48 @@ RENAT features:
 
 ![Renat scenario sample](doc/renat_sample.png)
 
-## Installation
+## Installation by Ansible
+Installation instructions using Ansible
+### 1. prepare an Ansible server
+Prepare an Ansible service with necessary packages
+
+### 2. install a base CentOS
+- install a base CentOS7 with `minimum distribution` and `developer package`
+- set and remember password for the root account
+
+### 3. prepare the playbook
+- extract playbooks from `misc/ansible-renat-github.tar.gz`
+- add an entry in ansible server for the install target `genesis` in `/etc/hosts` file
+
+```
+10.128.64.2     genesis
+```
+
+- edit `ansible-renat-github/inventories/host` and change the password `password` to the correct password set in step #2
+
+```
+[renat:vars]
+ansible_ssh_user=root
+ansible_ssh_pass=password
+```
+
+- if the target is behind a proxy, configure the proxy IP in `host_vars/genesis`
+
+### 4. run the playbook
+
+```
+$ cd ansible-renat-github
+$ ansible-playbook -i inventories/host -e "hosts=genesis" RENAT_INSTALL.yml -vvvv --diff
+```
+
+The playbook will install necessary packages and environment for RENAT
+
+Add necessary more users and go to [here](#renat-checkout-and-preparation) to continue
+
+## Installation for CentOS7
 Basic install instruction for Centos7 and Python3
 
-### base install
+### 1. base install
 Install a typical Centos7 with following parameters:
 
     - memory: 16G (or more)
@@ -78,7 +119,7 @@ Install a typical Centos7 with following parameters:
     - dns: 10.128.3.101 (sample)
     - hostname: renat.localhost (sample)
 
-### post install configuration
+### 2. post install configuration
 - disable SE linux:
     - disable the feature
 
@@ -95,7 +136,7 @@ Install a typical Centos7 with following parameters:
     $ reboot
     ```
         
-### library installation
+### 3. library installation
 - install python3 and related library
 
     ```
@@ -136,7 +177,7 @@ Install a typical Centos7 with following parameters:
     $ yum install -y jenkins
     ```
         
-### more system configuration 
+### 4. more system configuration 
 - modify NTP server
     - modify /etc/ntp.conf for favourite NTP server
     - activate and make the service auto start
@@ -257,7 +298,7 @@ Install a typical Centos7 with following parameters:
 - make skeleton for users
     - create a folder call `work` under `/etc/skel` with mode `0750`
 
-### add a renat user
+### 5. add a renat user
 - add a user to the group `techno`
 
     ```
@@ -279,7 +320,7 @@ Install a typical Centos7 with following parameters:
     $ ssh-copy-id -i robot_id_rsa.pub robot@<proxy server IP>
     ```
 
-### install Ixia related (optional)
+### 6. install Ixia related (optional)
 - download necessary files (below are samples. Use the correct install files in your environment)
 
     ```
@@ -310,7 +351,7 @@ Install a typical Centos7 with following parameters:
 - if it is necessary remove the folder if you chose wrong destination folder and reinstall
 - Ixia library need to be patched to run in python3 env. Check `patch` folder for details
 
-### install Avalanche related (optional)
+### 7. install Avalanche related (optional)
 - install avalanch api
     
     ```
@@ -320,12 +361,12 @@ Install a typical Centos7 with following parameters:
 
     Detail for `avaproxy` could be found in `misc` folder
 
-### other information
+## Installation for CentOS6
 Install instructions for CentOS6 Python2.x environment could be found in [here](./README_python2x.md)
 
 
-### RENAT checkout and preparation
-#### 1. Checkout
+## RENAT checkout and preparation
+### 1. Checkout
 Prepare a RENAT folder in user working folder and check out the source
 
 ```
@@ -335,7 +376,7 @@ $ cd work
 $ git clone https://github.com/bachng2017/RENAT.git renat
 ```
 
-#### 2. RENAT  configuration
+### 2. RENAT  configuration
 - make $RENAT_PATH
 
 Make an environment varible `$RENAT_PATH` pointing the correct RENAT folder.
@@ -351,7 +392,7 @@ $ echo "export RENAT_PATH=~/work/renat" >> ~/.bashrc
 
 - configure device and authencation information in `$RENAT_PATH/config/device.yaml` and `$RENAT_PATH/config/auth.yaml` to suite to lab environment.
 
-## Create test scenario and run
+## Create scenarios
 Below example assumes that you've already have a test router running JunOS.
 
 ### 1. Create a sample project
