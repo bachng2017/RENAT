@@ -49,17 +49,18 @@ else:
     create_local = raw_input(_('Create local configuration file (local.yaml) or not [yes,no=default]:'))
 if create_local == '': create_local = 'no'
 
+# 
 if create_local.lower() in ['yes','y']:
     if sys.version_info[0] > 2:
+        str_node    = input(_('Use node list (comma separated) [ex:vmx11]:'))
         str_tester  = input(_('Use tester [ex:ixnet03_8009]:'))
         traffic     = input(_('Use tester config file [ex:traffic.ixncfg]:'))
-        str_node    = input(_('Use node list (comma separated) [ex:vmx11]:'))
         str_app     = input(_('Use web app list (comma separated)[ex:samurai1]:'))
         str_hpv     = input(_('Use hypervisor list (comma separated)[ex:esxi-3-15]:'))
     else:
+        str_node    = raw_input(_('Use node list (comma separated) [ex:vmx11]:'))
         str_tester  = raw_input(_('Use tester [ex:ixnet03_8009]:'))
         traffic     = raw_input(_('Use tester config file [ex:traffic.ixncfg]:'))
-        str_node    = raw_input(_('Use node list (comma separated) [ex:vmx11]:'))
         str_app     = raw_input(_('Use web app list (comma separated)[ex:samurai1]:'))
         str_hpv     = raw_input(_('Use hypervisor list (comma separated)[ex:esxi-3-15]:'))
 

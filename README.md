@@ -196,7 +196,7 @@ Install a typical Centos7 with following parameters:
         ```
         Defaults    env_keep += "PATH PYTHONPATH LD_LIBRARY_PATH MANPATH XDG_DATA_DIRS PKG_CONFIG_PATH RENAT_PATH"
         Cmnd_Alias CMD_ROBOT_ALLOW  = /bin/kill,/usr/local/bin/nmap,/usr/sbin/hping3,/usr/sbin/tcpdump
-        %techno ALL=NOPASSWD: CMD_ROBOT_ALLOW
+        %renat ALL=NOPASSWD: CMD_ROBOT_ALLOW
         %jenkins ALL=NOPASSWD: CMD_ROBOT_ALLOW        
         ```
         
@@ -218,8 +218,8 @@ Install a typical Centos7 with following parameters:
 - add a default group and user and set its password
 
     ```
-    $ groupadd techno -o -g 1000
-    $ useradd robot -g techno
+    $ groupadd renat -o -g 1000
+    $ useradd robot -g renat
     $ passwd robot
     ```
 
@@ -258,7 +258,7 @@ Install a typical Centos7 with following parameters:
     ```
 
 - configure httpd service
-    - add `apache` to `techno` group
+    - add `apache` to `renat` group
     - modify `userdir.conf` under folder `/etc/httpd/conf.d` to show list the `work` folder of each user
     
         ```
@@ -284,7 +284,7 @@ Install a typical Centos7 with following parameters:
     
         ```  
         $ mkdir -p /var/www/html/renat-doc
-        $ chown apache:techno /var/www/html/renat-doc/
+        $ chown apache:renat /var/www/html/renat-doc/
         $ chmod 0775 /var/www/html/renat-doc/
         ```
             
@@ -299,10 +299,10 @@ Install a typical Centos7 with following parameters:
     - create a folder call `work` under `/etc/skel` with mode `0750`
 
 ### 5. add a renat user
-- add a user to the group `techno`
+- add a user to the group `renat`
 
     ```
-    $ useradd user -g techno
+    $ useradd user -g renat
     $ passwd user
     ```
 
@@ -539,7 +539,7 @@ When running with `--debug` options likes `./run.sh --debug debug.txt`, the syst
 See [manual](https://bachng2017.github.io/RENAT/doc/index.html) for more details about RENAT keywords and its modules. Or checking the `doc` folder in your `renat` (html/pdf)
 
 ## Copying And Copyrights
-Copyright 2018 NTT Communications
+Copyright 2018-2019 NTT Communications
 
 This project is licensed under the Apache v2.0 license. For more detail see [license](./LICENSE)
 
