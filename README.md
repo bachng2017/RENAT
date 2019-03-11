@@ -79,7 +79,7 @@ A super simple way to try RENAT is running it from a container. Below are instru
 2. start the container that open port 80 and 10022
 
     ```
-    $ docker run --rm -d --privileged -p 80:80 -p 10022:22 --name renat renat:latest
+    $ docker run --rm -d --privileged -p 80:80 -p 10022:22 --name renat bachng/renat:latest
     ```
 
     At this point, a RENAT server will all necessary packages and latest RENAT is ready with predefined `robot` user.
