@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1833 $
+# $Rev: 1888 $
 # $Ver: $
-# $Date: 2019-02-23 11:12:49 +0900 (土, 23  2月 2019) $
+# $Date: 2019-03-11 15:07:13 +0900 (月, 11  3月 2019) $
 # $Author: $
 
 """ Provides keywords for Juniper platform
@@ -35,6 +35,7 @@ from datetime import datetime
 from datetime import timedelta
 import robot.libraries.DateTime as DateTime
 from robot.libraries.BuiltIn import BuiltIn
+from robot.libraries.OperatingSystem import OperatingSystem
 import openpyxl
 from openpyxl.styles import PatternFill
 from openpyxl.styles import colors
@@ -163,6 +164,125 @@ def get_cli_mode(self):
     return result
 
 
+def push_config(self,mode='set',config_file='', \
+                        pre_config=None, \
+                        pos_config=None, \
+                        confirm='0s',vars='',err_match='(error:|unknown command:)'):
+    """ Pushes configuration directly to the router
+
+    Usable ``mode`` is ``set``, ``override``, ``merge`` and ``replace``
+
+    ``set`` mode uses configuration that contains ``set`` command.
+    Mode ``override``, ``merge`` and ``replace`` use ordinary JunOS configuration file with appropriate mode.
+    ``config_file`` is a configuration file inside the ``config`` folder of the
+    current test case.
+    
+    Config file could includes jinja2 template. The template will be evalued
+    with `LOCAL`, `GLOBAL` and varibles defined by `vars`. The `vars` has the
+    format: var1=value1,var2=value2 ...
+    
+    If the loading has no error that match the ``error_match``, the
+    configuration will be commited.
+
+    The keywordl waits for ``confirm`` seconds before rollback the commited configuration. A
+    zero value indicates an immediatly commit
+
+    `pre_config` and `pos_config` is extra configuration commands separated by
+    `;` that would be excuted before and after the configuration is loaded. It could
+    be used to add extra firewall rules to the router.
+
+    *Note*: by default the keyword will activate the SSH service on the router
+    if the service is not activated and disable the service after loading the
+    configuration.
+    """
+    # validate mode
+    if not mode in ['override','merge','replace','set']:
+        raise Exception("Invalid ``mode``. ``mode`` should be ``set``,``override``,``merge``,``replace``")
+
+    # copy file, assuming current mode is command mode
+    cli_mode = self.get_cli_mode()
+    if cli_mode == "config": self._vchannel.cmd('exit')
+
+    confirm_time = int(DateTime.convert_time(confirm) / 60) # minute
+    current_services = self.cmd('show configuration system services')
+    self.cmd('configure',prompt='# ')
+    if 'ssh' not in current_services:
+        self.cmd('set system service ssh',prompt='# ')
+        if pre_config is not None:
+            for item in pre_config.split(';'): self.cmd(item,prompt='# ')
+    self.cmd('commit synchronize')
+
+    # prepare the configuration file
+    folder              = os.getcwd() + '/config/'
+    file_path           = os.getcwd() + '/config/' + config_file
+    file_path_replace   = os.getcwd() + '/tmp/' + config_file + '.tmp'
+    # jinja2 process
+    loader=jinja2.Environment(loader=jinja2.FileSystemLoader(folder)).get_template(config_file)
+    render_var = {'LOCAL':Common.LOCAL,'GLOBAL':Common.GLOBAL}
+    for pair in vars.split(','):
+        info = pair.split("=")
+        if len(info) == 2:
+            render_var.update({info[0].strip():info[1].strip()})
+    compiled_config = loader.render(render_var)
+    with codecs.open(file_path_replace,'w','utf-8') as f: 
+        f.write(compiled_config)
+    BuiltIn().log('Compiled and wrote configuration to `%s`' % file_path_replace)
+    file_path_replace = file_path_replace.replace('(','\(').replace(')','\)')
+
+    # load the configuration
+    _user = self._vchannel._current_channel_info['auth']['user'] 
+    _pass = self._vchannel._current_channel_info['auth']['pass'] 
+    _ip = self._vchannel._current_channel_info['ip'] 
+    cmd = "sshpass -p %s scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null %s %s@%s:/var/tmp/%s" % (_pass,file_path_replace,_user,_ip,config_file)
+    rc,output = OperatingSystem().run_and_return_rc_and_output(cmd)
+
+    # cleanup additional configuration
+    if 'ssh' not in current_services:
+        self.cmd('delete system services ssh')
+    if pos_config is not None:
+        for item in pos_config.split(';'): self.cmd(item,prompt='# ')
+    self.cmd('commit synchronize')
+
+    # load the configuration
+    if rc != 0:
+        self.cmd('exit')
+        msg = "ERROR: error while pushing configuation to router;\n%s" % output
+        BuiltIn().log(msg)
+        raise(Exception(msg))
+    else:
+        output = self.cmd("load " + mode + " /var/tmp/" + config_file)
+
+        # check ouput
+        if re.search(err_match, output, re.MULTILINE):    
+            self.cmd("rollback 0")
+            self.cmd("exit")
+            msg = "ERROR: An error happened while loading the config. Output: `%s`" % output
+            BuiltIn().log(msg)
+            BuiltIn().log('output:')
+            BuiltIn().log(output)
+            raise Exception(msg)
+
+    if confirm_time == 0:
+        output = self.cmd('commit synchronize')
+    else: 
+        output = self.cmd("commit confirmed %s" % (confirm_time))
+
+    # check output 
+    if re.search(err_match, output, re.MULTILINE):
+        self.cmd("rollback 0")
+        self.cmd("exit")
+        msg = "ERROR: An error happened while committing the change so I rolled it back"
+        BuiltIn().log(msg)
+        BuiltIn().log('output:')
+        BuiltIn().log(output)
+        raise Exception(msg)
+    else:
+        self.cmd('exit')
+
+    BuiltIn().log("commit result is: " + output)
+    BuiltIn().log("Loaded config with ``%s`` mode and confirm time %s" % (mode,confirm_time))
+    
+
 
 def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(error:|unknown command:)'):
     """ Loads configuration to a router. 
@@ -183,6 +303,9 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(
     The keywordl waits for ``confirm`` seconds before rollback the commited configuration. A
     zero value indicates an immediatly commit
     """
+    # validate mode
+    if not mode in ['override','merge','replace','set']:
+        raise Exception("Invalid ``mode``. ``mode`` should be ``set``,``override``,``merge``,``replace``")
 
     # copy file, assuming current mode is command mode
     cli_mode = self.get_cli_mode()
@@ -212,64 +335,101 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(
 
     output = self._vchannel.cmd(cmd,prompt="\(yes/no\)\? |password: ")
     if "yes/no" in output:
-        output = self._vchannel.cmd("yes",prompt='password: ')
+        output = self.cmd("yes",prompt='password: ')
     if "password:" in output:
-        output = self._vchannel.cmd(password)
+        output = self.cmd(password)
 
     confirm_time = int(DateTime.convert_time(confirm) / 60) # minute
 
-
     if not '100%' in output:
         raise Exception("ERROR: error while copying config file `%s`" % config_file)
-
-    if mode in ['override','merge','replace']:
-        self._vchannel.cmd('configure')
-        output = self._vchannel.cmd("load " + mode + " /var/tmp/" + config_file)
-    elif mode == 'set':
-        self._vchannel.cmd('configure')
-        output = self._vchannel.cmd("load set /var/tmp/" + config_file)
     else:
-        raise Exception("Invalid ``mode``. ``mode`` should be ``set``,``override``,``merge``,``replace``")
-
-    # check ouput
-    if re.search(err_match, output, re.MULTILINE):    
-        self._vchannel.cmd("rollback 0")
-        msg = "ERROR: An error happened while loading the config. Output: `%s`" % output
-        BuiltIn().log(msg)
-        BuiltIn().log('output:')
-        BuiltIn().log(output)
-        raise Exception(msg)
+        self.cmd("configure")
+        output = self.cmd("load %s /var/tmp/%s" % (mode,config_file))
+        if re.search(err_match, output, re.MULTILINE):    
+            self.cmd("rollback 0")
+            self.cmd("exit")
+            msg = "ERROR: An error happened while loading the config:\n%s" % output
+            BuiltIn().log(msg)
+            raise(Exception(msg))
 
     if confirm_time == 0:
-        output = self._vchannel.cmd("commit")
+        output = self.cmd('commit synchronize')
     else: 
-        output = self._vchannel.cmd("commit confirmed %s" % (confirm_time))
+        output = self.cmd("commit confirmed %s" % (confirm_time))
 
     # check output 
     if re.search(err_match, output, re.MULTILINE):
-        self._vchannel.cmd("rollback 0")
-        msg = "ERROR: An error happened while committing the change so I rolled it back"
+        self.cmd("rollback 0")
+        self.cmd("exit")
+        msg = "ERROR: An error happened while committing the change so I rolled it back\n%s" % output
         BuiltIn().log(msg)
-        BuiltIn().log('output:')
-        BuiltIn().log(output)
-        raise Exception(msg)
-
-
-    self._vchannel.cmd('exit')
-
+        raise(Exception(msg))
+    else:
+        self.cmd('exit')
     BuiltIn().log("commit result is: " + output)
     BuiltIn().log("Loaded config with ``%s`` mode and confirm time %s" % (mode,confirm_time))
-    return True
+
+
+def copy_file(self,src_path,filename=None,pre_config=None,pos_config=None):
+    """ Copies a file from router
+
+    Parameters:
+    - `src_path`: a absolute path insides the router
+    - `filename`: a file name under ``result`` folder
+    """
+    # get current service and add ssh if it is necessary
+    current_services = self.cmd('show configuration system services')
+    if 'ssh' not in current_services:
+        self.cmd('configure',prompt='# ')
+        self.cmd('set system service ssh',prompt='# ')
+        if pre_config is not None:
+            for item in pre_config.split(';'): self.cmd(item,prompt='# ')
+        self.cmd('commit synchronize and-quit')
+
+    # prepare filepath
+    if filename is None:
+        _filename = os.path.basename(src_path)
+    else:    
+        _filename = filename
+    dst_path  = '%s/%s' % (Common.get_result_path(),_filename)
+    dst_path = dst_path.replace('(','\(').replace(')','\)')
+
+    #
+    _user = self._vchannel._current_channel_info['auth']['user']
+    _pass = self._vchannel._current_channel_info['auth']['pass']
+    _ip = self._vchannel._current_channel_info['ip']
+    cmd = 'sshpass -p %s scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null %s@%s:%s %s' % (_pass,_user,_ip,src_path,dst_path)
+    rc,output = OperatingSystem().run_and_return_rc_and_output(cmd)
+
+    BuiltIn().log(output)
+   
+    # cleanup additional configuration
+    if 'ssh' not in current_services:
+        self.cmd('configure',prompt='# ')
+        self.cmd('delete system services ssh')
+        if pos_config is not None:
+            for item in pos_config.split(';'): self.cmd(item,prompt='# ') 
+        self.cmd('commit synchronize and-quit')
+  
+    if  rc != 0:
+        BuiltIn().log(output)
+        raise(Exception("ERROR: error while copy a file with error:\n%s" % output))
+  
+    BuiltIn().log('Copied file from `%s` to `%s`' % (src_path,filename))
 
 
 
 def get_file(self,src_file,dst_file=None):
     """ Gets a file from router
 
-    - ``src_file`` is a absolute path insides the router
-    - ``dst_file`` is a file name under ``result`` folder
+    Parameters:
+    - `src_file`: a absolute path insides the router
+    - `dst_file`: a file name under ``result`` folder
 
-    if `dst_file` is not defined, it will be the filename of the `src_file`
+    if `dst_file` is not defined, it will be the filename of the `src_file`.
+
+    The keyword copy the specific file *FROM* the router to the RENAT server
     """
  
     cli_mode = self.get_cli_mode()
@@ -314,14 +474,21 @@ def get_file(self,src_file,dst_file=None):
     BuiltIn().log("Get the file `%s` from node `%s`" % (src_file,self._vchannel.current_name))
 
 
+def copy_config(self,dst_name=None):
+    """ Gets the configuration file of the router
+
+    This keyword directly copy the configuration file from the router
+    """
+    return self.copy_file('/config/juniper.conf.gz',dst_name)
 
 def get_config(self,dst_name=None):
     """ Gets the current configuration file of the router to current ``result``
     folder.
 
     Default ``dst_name`` is ``juniper.conf.gz``
+    This keyword push the configuration from *FROM* the router to the RENAT
+    server
     """
-
     return self.get_file('/config/juniper.conf.gz',dst_name)
 
 

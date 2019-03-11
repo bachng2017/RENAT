@@ -30,6 +30,7 @@ For details about Robot Framework see [RobotFramework](http://www.robotframework
 - [Disclaimer](#disclaimer)
 - [Table Of Contents](#table-of-contents)
 - [Features](#features)
+- [A glimpse of RENAT by docker](#a-glimpse-of-renat-by-docker)
 - [Installation by Ansible](#installation-by-ansible)
 - [Installation for CentOS7](#installation-for-centos7)
 - [Installation for CentOS6](#installation-for-centos6)
@@ -61,44 +62,86 @@ RENAT features:
     - servers: *unix system
     - others platforms: SmartCS, ArborSP, Samurai (a NTTCOM product)
 
-*Notes*: Supports could be variant on os versions
+*Notes*: Supports could be variant on OS versions
 
 
 ![Renat scenario sample](doc/renat_sample.png)
 
+## A glimpse of RENAT by docker
+A super simple way to try RENAT is running it from a container. Below are instructions.
+
+1. import docker image from dockerhub
+
+    ```
+    $ dockel pull bachng/renat:latest
+    ```
+
+2. start the container that open port 80 and 10022
+
+    ```
+    $ docker run --rm -d --privileged -p 80:80 -p 10022:22 --name renat renat:latest
+    ```
+
+    At this point, a RENAT server will all necessary packages and latest RENAT is ready with predefined `robot` user.
+
+3. login to the container as `robot` user
+
+    ```
+    $ docker exec -it --user robot renat /bin/bash --login
+    ```
+4. create a test scenario
+
+    ```
+    [robot@afeb42da1974 renat]$ $RENAT_PATH/tools/project.sh renat-sample
+    [robot@afeb42da1974 renat]$ cd renat-sample
+    [robot@afeb42da1974 renat]$ $RENAT_PATH/tools/item.sh test01
+    ```
+
+    A `do nothing` scenario is made. Check test01/main.robot for more details
+5. run check the result
+
+    ```
+    [robot@afeb42da1974 renat]$ cd test01
+    [robot@afeb42da1974 renat]$ ./run.sh 
+    ```
+
+    Test results and logs could be checked by `http://<this machine IP>/~robot/result.log`
+
+    See [Create scenarios](#create-scenarios) for more detail about creating a sample to interacte with routers.
+    
 ## Installation by Ansible
 Installation instructions using Ansible
-### 1. prepare an Ansible server
+1. prepare an Ansible server
 Prepare an Ansible service with necessary packages
 
-### 2. install a base CentOS
-- install a base CentOS7 with `minimum distribution` and `developer package`
-- set and remember password for the root account
+2. install a base CentOS
+    - install a base CentOS7 with `minimum distribution` and `developer package`
+    - set and remember password for the root account
 
-### 3. prepare the playbook
-- extract playbooks from `misc/ansible-renat-github.tar.gz`
-- add an entry in ansible server for the install target `genesis` in `/etc/hosts` file
+3. prepare the playbook
+    - extract playbooks from `misc/ansible-renat-github.tar.gz`
+    - add an entry in ansible server for the install target `genesis` in `/etc/hosts` file
 
-```
-10.128.64.2     genesis
-```
+        ```
+        10.128.64.2     genesis
+        ```
 
-- edit `ansible-renat-github/inventories/host` and change the password `password` to the correct password set in step #2
+    - edit `ansible-renat-github/inventories/host` and change the password `password` to the correct password set in step #2
 
-```
-[renat:vars]
-ansible_ssh_user=root
-ansible_ssh_pass=password
-```
+        ```
+        [renat:vars]
+        ansible_ssh_user=root
+        ansible_ssh_pass=password
+        ```
 
-- if the target is behind a proxy, configure the proxy IP in `host_vars/genesis`
+    - if the target is behind a proxy, configure the proxy IP in `host_vars/genesis`
 
-### 4. run the playbook
+4. run the playbook
 
-```
-$ cd ansible-renat-github
-$ ansible-playbook -i inventories/host -e "hosts=genesis" RENAT_INSTALL.yml -vvvv --diff
-```
+    ```
+    $ cd ansible-renat-github
+    $ ansible-playbook -i inventories/host -e "hosts=genesis" RENAT_INSTALL.yml -vvvv --diff
+    ```
 
 The playbook will install necessary packages and environment for RENAT
 
@@ -148,7 +191,7 @@ Install a typical Centos7 with following parameters:
 - install extra libraries
 
     ```
-    $ yum install -y numpy net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python36u-tkinter xorg-x11-server-Xvfb  vim httpd xorg-x11-fonts-75dpi  nfs samba4 samba-client samba-winbind cifs-utils tcpdump hping3 telnet nmap wireshark java-1.8.0-openjdk firefox telnet ld-linux.so.2 ghostscript ImageMagick vlgothic-fonts vlgothic-p-fonts ntp
+    $ yum install -y numpy net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python36u-tkinter xorg-x11-server-Xvfb  vim httpd xorg-x11-fonts-75dpi  nfs samba4 samba-client samba-winbind cifs-utils tcpdump hping3 telnet nmap wireshark java-1.8.0-openjdk firefox telnet ld-linux.so.2 ghostscript ImageMagick vlgothic-fonts vlgothic-p-fonts ntp openssl sshpass
     $ pip3.6 install pytest-runner
     $ pip3.6 install numpy pyte PyYAML openpyxl Jinja2 pandas lxml requests netsnmp-py pdfkit robotframework robotframework-selenium2library robotframework-sshlibrary docutils pyvmomi PyVirtualDisplay pyscreenshot pillow decorator imgurscrot
     ```
@@ -299,11 +342,11 @@ Install a typical Centos7 with following parameters:
     - create a folder call `work` under `/etc/skel` with mode `0750`
 
 ### 5. add a renat user
-- add a user to the group `renat`
+- add a user (e.g. robot) to the group `renat`
 
     ```
-    $ useradd user -g renat
-    $ passwd user
+    $ useradd robot -g renat
+    $ passwd robot
     ```
 
 - login as the new user
@@ -366,167 +409,170 @@ Install instructions for CentOS6 Python2.x environment could be found in [here](
 
 
 ## RENAT checkout and preparation
-### 1. Checkout
-Prepare a RENAT folder in user working folder and check out the source
+1. Checkout
+    Prepare a RENAT folder in user working folder and check out the source
 
-```
-$ cd
-$ mkdir work
-$ cd work
-$ git clone https://github.com/bachng2017/RENAT.git renat
-```
+    ```
+    $ cd
+    $ mkdir work
+    $ cd work
+    $ git clone https://github.com/bachng2017/RENAT.git renat
+    ```
 
-### 2. RENAT  configuration
-- make $RENAT_PATH
+2. RENAT  configuration
 
-Make an environment varible `$RENAT_PATH` pointing the correct RENAT folder.
-If you have multi renat (different version) checked out, modify this varible to use the correct RENAT version.
-```
-$ export RENAT_PATH=~/work/renat
-```
+    Make an environment varible `$RENAT_PATH` pointing the correct RENAT folder.
 
-Or edit your startup script
-```
-$ echo "export RENAT_PATH=~/work/renat" >> ~/.bashrc
-```
+    If you have multi renat (different version) checked out, modify this varible to use the correct RENAT version.
+    ```
+    $ export RENAT_PATH=~/work/renat
+    ```
+    Or edit your startup script
+    ```
+    $ echo "export RENAT_PATH=~/work/renat" >> ~/.bashrc
+    ```
 
-- configure device and authencation information in `$RENAT_PATH/config/device.yaml` and `$RENAT_PATH/config/auth.yaml` to suite to lab environment.
+3. Adjust the test enviroment
+
+    Configure device and authencation information in `$RENAT_PATH/config/device.yaml` and `$RENAT_PATH/config/auth.yaml` to suite to lab environment.
+
 
 ## Create scenarios
-Below example assumes that you've already have a test router running JunOS.
+Below example assumes that you've already have a router running JunOS with name `vmx11` 
 
-### 1. Create a sample project
-```
-$ cd ~/work
-$ $RENAT_PATH/tools/project.sh sample
-created test project:  sample
-use item.sh to create test case
-tree sample
-sample
-├── lab.robot
-├── renat.rc
-├── run.sh
-└── setpath.bashrc
-``` 
+For example change the IP for device `vmx11` in `device.yaml` and change the `default` section for the telnet account that is used to login into `vmx11` router.
 
-### 2. Create a sample test item
-```
-$ cd sample
-$ $RENAT_PATH/tools/item.sh item01
-Create local configuration file (local.yaml) or not [yes,no=default]:y
-Use tester [ex:ixnet03_8009]:
-Use tester config file [ex:traffic.ixncfg]:
-Use node list (comma separated) [ex:vmx11]:vmx11
-Use web app list (comma separated)[ex:samurai1]:
+1. Create a sample project
 
+    ```
+    $ cd ~/work
+    $ $RENAT_PATH/tools/project.sh sample
+    created test project:  sample
+    use item.sh to create test case
+    
+    $tree sample
+    sample
+    ├── lab.robot
+    ├── renat.rc
+    ├── run.sh
+    └── setpath.bashrc
+    ```
 
-=== Created `item01` test item ===
-Case scenario:     /home/user/work/renat/tools/item01/main.robot
-Case run file:     /home/user/work/renat/tools/item01/run.sh
-Local config file: /home/user/work/renat/tools/item01/config/local.yaml
-Tester config file:/home/user/work/renat/tools/item01/config/
-Check and change the `local.yaml` local config file if necessary
-$ tree item01
-item01
-├── config
-│   ├── local.yaml
-│   └── vmx11.conf
-├── lab.robot -> ../lab.robot
-├── main.robot
-├── readme.txt
-├── renat.rc
-├── result
-├── run.sh
-└── tmp
+2. Create a sample test item
 
-4 directories, 10 files
-```
+    ```
+    $ cd sample
+    $ $RENAT_PATH/tools/item.sh item01
+    Create local configuration file (local.yaml) or not [yes,no=default]:y
+    Use tester [ex:ixnet03_8009]:
+    Use tester config file [ex:traffic.ixncfg]:
+    Use node list (comma separated) [ex:vmx11]:vmx11
+    Use web app list (comma separated)[ex:samurai1]:
+        
+    === Created `item01` test item ===
+    Case scenario:     /home/user/work/renat/tools/item01/main.robot
+    Case run file:     /home/user/work/renat/tools/item01/run.sh
+    Local config file: /home/user/work/renat/tools/item01/config/local.yaml
+    Tester config file:/home/user/work/renat/tools/item01/config/
+    Check and change the `local.yaml` local config file if necessary
 
-### 3.Edit scenario file
-The `config/local.yaml` file includes local information for each test item. Edit this file to add more test devices, tester or other item specific information.
+    $ tree item01
+    item01
+    ├── config
+    │   ├── local.yaml
+    │   └── vmx11.conf
+    ├── lab.robot -> ../lab.robot
+    ├── main.robot
+    ├── readme.txt
+    ├── renat.rc
+    ├── result
+    ├── run.sh
+    └── tmp
+    
+    4 directories, 10 files
+    ```
 
-Edit `main.robot` file in test item folder to look like this
+3. Edit scenario file `config/local.yaml` file includes local information for each test item. Edit this file to add more test devices, tester or other item specific information.
+    Edit `main.robot` file in test item folder to look like this
 
-```
-# Basic setting 
-*** Setting ***
-Documentation   This is a sample test item
-Metadata        Log File    [.|${CURDIR}/result]
-Suite Setup     Lab Setup
-Suite Teardown  Lab Teardown
+    ```
+    # Basic setting 
+    *** Setting ***
+    Documentation   This is a sample test item
+    Metadata        Log File    [.|${CURDIR}/result]
+    Suite Setup     Lab Setup
+    Suite Teardown  Lab Teardown
+    
+    # Common setting
+    Resource        lab.robot
+    
+    # Variable setting
+    *** Variables ***
+    
+    *** Test Cases ***
+    01. First item:
+        Router.Switch               vmx11
+        Router.Cmd                  show version
+    ```
 
-# Common setting
-Resource        lab.robot
+4. Use `--dryrun` option to check the syntax
 
-# Variable setting
-*** Variables ***
+    ```
+    $ ./run.sh --dryrun
+    Current RENAT path: /home/user/work/renat
+    Run only once
+    Current local.yaml: /home/user/work/renat/sample/item01/config/local.yaml
+    Loaded extra library `Tester`
+    Loaded extra library `Arbor`
+    ==============================================================================
+    Main :: Testing item01
+    ==============================================================================
+    01. First item:                                                       | PASS |
+    ------------------------------------------------------------------------------
+    Main :: Testing item01                                                | PASS |
+    1 critical test, 1 passed, 0 failed
+    1 test total, 1 passed, 0 failed
+    ==============================================================================
+    Output:  /home/user/work/renat/sample/item01/result/output.xml
+    Log:     /home/user/work/renat/sample/item01/result/log.html
+    Report:  /home/user/work/renat/sample/item01/result/report.html
+    ```
 
+5. Execute `./run.sh` to run the test. Test result and log files are in the `./result` folder.
 
-*** Test Cases ***
-01. First item:
-    Router.Switch               vmx11
-    Router.Cmd                  show version
-```
+    ```
+    $ ./run.sh
+    Current RENAT path: /home/user/work/renat
+    Run only once
+    Current local.yaml: /home/user/work/renat/sample/item01/config/local.yaml
+    Loaded extra library `Tester`
+    Loaded extra library `Arbor`
+    Loaded extra library `OpticalSwitch`
+    ==============================================================================
+    Main :: item01: very simple sample
+    ==============================================================================
+    RENAT Ver:: RENAT 0.1.6
+    ------------------------------------------------------------------------------
+    README:
+    The sample requires a running Juniper router
+    
+    ------------------------------------------------------------------------------
+    00. Lab Setup
+    ------------------------------------------------------------------------------
+    01. First item:                                                       | PASS |
+    ------------------------------------------------------------------------------
+    99. Lab Teardown
+    ------------------------------------------------------------------------------
+    Main :: item01: very simple sample                                    | PASS |
+    1 critical test, 1 passed, 0 failed
+    1 test total, 1 passed, 0 failed
+    ==============================================================================
+    Output:  /home/user/work/renat/sample/item01/result/output.xml
+    Log:     /home/user/work/renat/sample/item01/result/log.html
+    Report:  /home/user/work/renat/sample/item01/result/report.html
+    ```
 
-### 4.Check to scenario
-Using `--dryrun` option to check the current scenario
-```
-$ ./run.sh --dryrun
-Current RENAT path: /home/user/work/renat
-Run only once
-Current local.yaml: /home/user/work/renat/sample/item01/config/local.yaml
-Loaded extra library `Tester`
-Loaded extra library `Arbor`
-==============================================================================
-Main :: Testing item01
-==============================================================================
-01. First item:                                                       | PASS |
-------------------------------------------------------------------------------
-Main :: Testing item01                                                | PASS |
-1 critical test, 1 passed, 0 failed
-1 test total, 1 passed, 0 failed
-==============================================================================
-Output:  /home/user/work/renat/sample/item01/result/output.xml
-Log:     /home/user/work/renat/sample/item01/result/log.html
-Report:  /home/user/work/renat/sample/item01/result/report.html
-```
-
-
-### 5. Run the test
-Execute `./run.sh` to run the test. Test result and log files are in the `./result` folder.
-
-```
-$ ./run.sh
-Current RENAT path: /home/user/work/renat
-Run only once
-Current local.yaml: /home/user/work/renat/sample/item01/config/local.yaml
-Loaded extra library `Tester`
-Loaded extra library `Arbor`
-Loaded extra library `OpticalSwitch`
-==============================================================================
-Main :: item01: very simple sample
-==============================================================================
-RENAT Ver:: RENAT 0.1.6
-------------------------------------------------------------------------------
-README:
-The sample requires a running Juniper router
-
-------------------------------------------------------------------------------
-00. Lab Setup
-------------------------------------------------------------------------------
-01. First item:                                                       | PASS |
-------------------------------------------------------------------------------
-99. Lab Teardown
-------------------------------------------------------------------------------
-Main :: item01: very simple sample                                    | PASS |
-1 critical test, 1 passed, 0 failed
-1 test total, 1 passed, 0 failed
-==============================================================================
-Output:  /home/user/work/renat/sample/item01/result/output.xml
-Log:     /home/user/work/renat/sample/item01/result/log.html
-Report:  /home/user/work/renat/sample/item01/result/report.html
-```
-
+6. Check the result
 In case you has configured a web server, access `http://<server-ip>/~<username>/tes01/result/log.html` or `http://<server-ip>/~<username>/result/report.html` for more details about the result.
 
 When running with `--debug` options likes `./run.sh --debug debug.txt`, the system creates detail debug information in the file `result/debug.txt`. Use this to see in details or bug report. Please make sure your passwords are removed before submit the files.
