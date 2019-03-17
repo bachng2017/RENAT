@@ -73,7 +73,7 @@ A super simple way to try RENAT is running it from a container. Below are instru
 1. import docker image from dockerhub
 
     ```
-    $ dockel pull bachng/renat:latest
+    $ docker pull bachng/renat:latest
     ```
 
 2. start the container that open port 80 and 10022
