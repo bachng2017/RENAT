@@ -1,6 +1,6 @@
 # RENAT
 
-A Robotframework Extension for Network Automation Testing
+A Robotframework Extension for Network Automated Testing
 
 ---
 
@@ -42,7 +42,7 @@ For details about Robot Framework see [RobotFramework](http://www.robotframework
 - [Thanks](#thanks)
 
 ## Features
-The framework provides an simple way to conduct Network Automation Testing by using simple scenario
+The framework provides an simple way to conduct Network Automated Testing by using simple scenario
 
 RENAT features:
 - a Robot-framework (RF) library aims to support NW testing with easy-to-write plain-text scenario utilizing all features of current RF
@@ -70,6 +70,8 @@ RENAT features:
 ## A glimpse of RENAT by docker
 A super simple way to try RENAT is running it from a container. Below are instructions.
 
+*Notes*: this container does not include proprietary softwares. See manuals for more details on how to install those.
+
 1. import docker image from dockerhub
 
     ```
@@ -79,10 +81,13 @@ A super simple way to try RENAT is running it from a container. Below are instru
 2. start the container that open port 80 and 10022
 
     ```
-    $ docker run --rm -d --privileged -p 80:80 -p 10022:22 --name renat bachng/renat:latest
+    $ mdkir /opt/renat
+    $ docker run --rm -d --privileged -v /opt/renat:/opt/renat -p 80:80 -p 10022:22 --name renat bachng/renat:latest
     ```
 
-    At this point, a RENAT server will all necessary packages and latest RENAT is ready with predefined `robot` user.
+    At this point, a RENAT server will all necessary packages and latest RENAT is ready with predefined `robot` user. 
+
+    The folder `/opt/renat` on the container is also bound to `/opt/renat` on the host.
 
 3. login to the container as `robot` user
 
@@ -98,7 +103,7 @@ A super simple way to try RENAT is running it from a container. Below are instru
     ```
 
     A `do nothing` scenario is made. Check test01/main.robot for more details
-5. run check the result
+5. run and check the result
 
     ```
     [robot@afeb42da1974 renat]$ cd test01
@@ -107,7 +112,13 @@ A super simple way to try RENAT is running it from a container. Below are instru
 
     Test results and logs could be checked by `http://<this machine IP>/~robot/result.log`
 
-    See [Create scenarios](#create-scenarios) for more detail about creating a sample to interacte with routers.
+6. to use with real devices for useful tests, edit below files for correct information
+    - $RENAT_PATH/config/device.yaml: device's IP
+    - $RENAT_PATH/config/auth.yaml: authentication (username/password)
+    - $RENAT_PATH/config/template.yaml(optional): in case current templates are not fit for your devices
+    
+See [Create scenarios](#create-scenarios) for more detail about creating a sample to interacte with routers.
+
     
 ## Installation by Ansible
 Installation instructions using Ansible

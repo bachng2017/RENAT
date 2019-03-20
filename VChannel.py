@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1819 $
+# $Rev: 1899 $
 # $Ver: $
-# $Date: 2019-02-19 20:54:36 +0900 (火, 19  2月 2019) $
+# $Date: 2019-03-20 09:25:54 +0900 (水, 20  3月 2019) $
 # $Author: $
 
 import os,re,sys
@@ -338,11 +338,14 @@ class VChannel(object):
 
         try:
             channel_info = {}
-            ### TELNET 
+
+            ### TELNET section
             ### _login_prompt could be None but not the _password_prompt
             if _access == 'telnet':
                 s = str(w) + "x" + str(h)
+                if _port is None: _port = 23
                 local_id = self._telnet.open_connection(_ip,
+                                                        port=_port, 
                                                         alias=name,terminal_type='vt100', window_size=s,
                                                         prompt=_prompt,prompt_is_regexp=True,timeout=_timeout)
                 if _login_prompt is not None:
@@ -364,8 +367,11 @@ class VChannel(object):
             ### SSH
             if _access == 'ssh':
                 out = ""
-                local_id = self._ssh.open_connection(_ip,alias=name,term_type='vt100',width=w,
-                                                    height=h,timeout=_timeout,prompt="REGEXP:%s" % _prompt)
+                if _port is None: _port = 22
+                local_id = self._ssh.open_connection(_ip,
+                                                    port=_port,
+                                                    alias=name,term_type='vt100',width=w,height=h,
+                                                    timeout=_timeout,prompt="REGEXP:%s" % _prompt)
                 # SSH with plaintext
                 if _auth_type == 'plain-text':
                     if _proxy_cmd:
@@ -379,7 +385,6 @@ class VChannel(object):
                         out = self._ssh.login(_auth['user'],_auth['pass'],proxy_cmd=_cmd)
                     else:
                         _cmd = None
-                        # out = self._ssh.login(_auth['user'],_auth['pass'],False)
                         out = self._ssh.login(_auth['user'],_auth['pass'])
 
                 # SSH with publick-key
