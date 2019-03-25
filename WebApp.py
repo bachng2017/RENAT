@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-03-02 10:16:09 +0900 (土, 02  3月 2019) $
-# $Rev: 1865 $
+# $Date: 2019-03-26 07:28:16 +0900 (火, 26  3月 2019) $
+# $Rev: 1924 $
 # $Ver: $
 # $Author: $
 
@@ -302,8 +302,8 @@ class WebApp(object):
 
         # collect information about the application that listed 
         app_info = Common.LOCAL['webapp'][app]
-        if 'login_url' in app_info and app_info['login_url']:
-            login_url = app_info['login_url']
+        if 'login-url' in app_info and app_info['login-url']:
+            login_url = app_info['login-url']
         if 'browser' in app_info and app_info['browser']:
             browser  = app_info['browser']
         if 'proxy' in app_info and app_info['proxy']:

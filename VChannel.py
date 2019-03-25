@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1899 $
+# $Rev: 1923 $
 # $Ver: $
-# $Date: 2019-03-20 09:25:54 +0900 (水, 20  3月 2019) $
+# $Date: 2019-03-26 04:49:39 +0900 (火, 26  3月 2019) $
 # $Author: $
 
 import os,re,sys
@@ -235,7 +235,7 @@ class VChannel(object):
         # _curr_name  = self._current_name
         _node       = self._current_channel_info['node']
         _name       = self._current_channel_info['name']
-        _log_file   = self._current_channel_info['log_file']
+        _log_file   = self._current_channel_info['log-file']
         _w          = self._current_channel_info['w'] 
         _h          = self._current_channel_info['h'] 
         _mode       = self._current_channel_info['mode'] 
@@ -296,44 +296,54 @@ class VChannel(object):
         _access_tmpl    = Common.GLOBAL['access-template'][_type] 
         _access         = _access_tmpl['access']
         _auth_type      = _access_tmpl['auth']
-        if 'proxy_cmd' in _access_tmpl:
-            _proxy_cmd      = _access_tmpl['proxy_cmd']
-        else:
-            _proxy_cmd      = None
         _profile        = _access_tmpl['profile']
+        
+        if 'negotiate' in _access_tmpl:
+            _negotiate  = _access_tmpl['negotiate']
+        else:
+            _negotiate  = None
+
+        if 'proxy-cmd' in _access_tmpl:
+            _proxy_cmd  = _access_tmpl['proxy-cmd']
+        else:
+            _proxy_cmd  = None
         if 'port' in _access_tmpl:
             _port = _access_tmpl['port']
         else:
-            _port = None
+            if 'port' in _device_info:
+                _port = _device_info['port']
+            else:
+                _port = None
 
-        # _prompt         = _access_tmpl['prompt'] + '$' # automatically append <dollar> to the prompt from yaml config 
+        # _prompt  = _access_tmpl['prompt'] + '$' # automatically append <dollar> to the prompt from yaml config 
         if 'prompt' in _access_tmpl:
             _prompt  = _access_tmpl['prompt']
         else:
-            _prompt  = '.*'        
-        if _prompt[-1] != '$':
-            _prompt += '$'
+            _prompt  = '.*'    
+        # using strict prompt or not
+        if Common.get_config_value('vchannel','prompt-strict'):
+            if _prompt[-1] != '$': _prompt += '$'
 
-        _auth           = Common.GLOBAL['auth'][_auth_type][_profile]
+        _auth  = Common.GLOBAL['auth'][_auth_type][_profile]
         if 'init' in _access_tmpl:
-            _init           = _access_tmpl['init'] # initial command 
+            _init  = _access_tmpl['init'] # initial command 
         else:
             _init = None
         if 'finish' in _access_tmpl:
-            _finish         = _access_tmpl['finish'] #finish  command 
+            _finish = _access_tmpl['finish'] #finish  command 
         else:
             _finish = None
         _timeout        = timeout
-        if 'login_prompt' in _access_tmpl: 
-            _login_prompt = _access_tmpl['login_prompt']
+        if 'login-prompt' in _access_tmpl: 
+            _login_prompt = _access_tmpl['login-prompt']
         else:
             _login_prompt = 'login:'
-        if 'password_prompt' in _access_tmpl: 
-            _password_prompt = _access_tmpl['password_prompt']
+        if 'password-prompt' in _access_tmpl: 
+            _password_prompt = _access_tmpl['password-prompt']
         else:
             _password_prompt = 'Password:'
         
-        BuiltIn().log("Opening connection to `%s(%s)` by name `%s` by `%s`" % (node,_ip,name,_access))
+        BuiltIn().log("Opening connection to `%s(%s):%s` as name `%s` by `%s`" % (node,_ip,_port,name,_access))
         
 
         try:
@@ -342,18 +352,28 @@ class VChannel(object):
             ### TELNET section
             ### _login_prompt could be None but not the _password_prompt
             if _access == 'telnet':
+                output = ""
                 s = str(w) + "x" + str(h)
                 if _port is None: _port = 23
                 local_id = self._telnet.open_connection(_ip,
                                                         port=_port, 
                                                         alias=name,terminal_type='vt100', window_size=s,
-                                                        prompt=_prompt,prompt_is_regexp=True,timeout=_timeout)
+                                                        prompt=_prompt,prompt_is_regexp=True,
+                                                    #    default_log_level="INFO",
+                                                    #    telnetlib_log_level="TRACE",
+                                                        timeout=_timeout)
                 if _login_prompt is not None:
-                    out = self._telnet.login(_auth['user'],_auth['pass'], login_prompt=_login_prompt,password_prompt=_password_prompt)
+                    BuiltIn().log("Trying to login by username/password as `%s/%s`" % (_auth['user'],_auth['pass']))
+                    output = self._telnet.login(_auth['user'],_auth['pass'], login_prompt=_login_prompt,password_prompt=_password_prompt)
                 else:
-                    out = self._telnet.read_until(_password_prompt)
+                    BuiltIn().log("Trying to login only by password as `%s`" % _auth['pass'])
+                    output = self._telnet.read_until(_password_prompt)
+                    BuiltIn().log(output)
                     self._telnet.write(_auth['pass'])
-    
+                    output += Common.newline
+                    output += self._telnet.read()
+                    BuiltIn().log(output)
+                
                 # allocate new channel id
                 id = self._max_id + 1
                 channel_info['id']          = id 
@@ -361,12 +381,11 @@ class VChannel(object):
                 channel_info['access-type'] = 'telnet'
                 channel_info['prompt']      = _prompt 
                 channel_info['connection']  = self._telnet
-                channel_info['local_id']    = local_id
-    
+                channel_info['local-id']    = local_id
     
             ### SSH
             if _access == 'ssh':
-                out = ""
+                output = ""
                 if _port is None: _port = 22
                 local_id = self._ssh.open_connection(_ip,
                                                     port=_port,
@@ -382,10 +401,10 @@ class VChannel(object):
                         else:
                             port = _port
                         _cmd = _proxy_cmd.replace('%h',_ip).replace('%p',str(port)).replace('%u',user).replace('~',home_folder)
-                        out = self._ssh.login(_auth['user'],_auth['pass'],proxy_cmd=_cmd)
+                        output = self._ssh.login(_auth['user'],_auth['pass'],proxy_cmd=_cmd)
                     else:
                         _cmd = None
-                        out = self._ssh.login(_auth['user'],_auth['pass'])
+                        output = self._ssh.login(_auth['user'],_auth['pass'])
 
                 # SSH with publick-key
                 if _auth_type == 'public-key':
@@ -393,7 +412,7 @@ class VChannel(object):
                         pass_phrase = _auth['pass']
                     else:
                         pass_phrase = None
-                    out = self._ssh.login_with_public_key(_auth['user'],_auth['key'],pass_phrase)
+                    output = self._ssh.login_with_public_key(_auth['user'],_auth['key'],pass_phrase)
     
                 # allocate new channel id
                 id = self._max_id + 1
@@ -402,34 +421,73 @@ class VChannel(object):
                 channel_info['access-type'] = 'ssh'
                 channel_info['prompt']      = _prompt
                 channel_info['connection']  = self._ssh
-                channel_info['local_id']    = local_id
+                channel_info['local-id']    = local_id
 
-            ### JUMP
+            ### JUMP session
             if _access == 'jump':
-                _access_base        = _access_tmpl['access_base']
-                _target_name        = _access_tmpl['target']
-                _target_tmpl        = Common.GLOBAL['access-template'][_target_name] 
-                _target_auth_type   = _target_tmpl['auth']
-                _target_profile     = _target_tmpl['profile']
-                _target_auth        = Common.GLOBAL['auth'][_target_auth_type][_target_profile]
+                output = ""
+                _access_base = _access_tmpl['access-base']
 
-                if 'password_prompt' in _target_tmpl:
-                    _password_prompt = _target_tmpl['password_prompt']
-                else:
-                    _password_prompt = 'Password:'
-
-
+                # jump on telnet
                 if _access_base == 'telnet':
                     s = str(w) + "x" + str(h)
                     local_id = self._telnet.open_connection(_ip,
+                                                        port=_port, 
                                                         alias=name,terminal_type='vt100', window_size=s,
-                                                        prompt=_prompt,prompt_is_regexp=True,timeout=_timeout)
+                                                        prompt=_prompt,prompt_is_regexp=True,
+                                                        default_log_level="INFO",
+                                                        telnetlib_log_level="TRACE",
+                                                        timeout=_timeout)
+
+                    # negotiate telnet session manually
+                    cmd_ser1 = '\xff\xfc\x25' # i wont't authenticate
+                    cmd_ser2 = '\xff\xfb\x00' # i will binary
+                    # i do binary
+                    # i will suppress go ahead
+                    # i do suppress go ahead
+                    # i do echo
+                    # i don't 
+                    cmd_ser3 = '\xff\xfd\x00\xff\xfb\x03\xff\xfd\x03\xff\xfd\x01\xff\xfe\xe8'
+                    cmd_ser4 = '\xff\xfe\x2c' # i don't Com Port Control Option
+
+                    if _negotiate:
+                        BuiltIn().log("Negotiate telnet specs for this session MANUALLY")
+                        self._telnet.write_bare(cmd_ser1)
+                        time.sleep(1)
+                        self._telnet.write_bare("\r")
+                        time.sleep(1)
+                        self._telnet.write_bare("\r")
+                        time.sleep(1)
+                        output = self._telnet.read()
+                        # BuiltIn().log("--buf(%d)------" % len(output))
+                        # BuiltIn().log(output)
+                        # BuiltIn().log("---------------")
+                       
+                        if len(output) == 0: 
+                            self._telnet.write_bare(cmd_ser1)
+                            time.sleep(1)
+                            self._telnet.write_bare(cmd_ser2)
+                            time.sleep(1)
+                            self._telnet.write_bare(cmd_ser3)
+                            time.sleep(1)
+                            self._telnet.write_bare(cmd_ser4)
+                            time.sleep(3)
+
                     if _login_prompt is not None:
-                        out = self._telnet.login(_auth['user'],_auth['pass'], login_prompt=_login_prompt,password_prompt=_password_prompt)
+                        BuiltIn().log("Trying to login by username/password as `%s/%s`" % (_auth['user'],_auth['pass']))
+                        output = self._telnet.login(_auth['user'],_auth['pass'], login_prompt=_login_prompt,password_prompt=_password_prompt)
                     else:
-                        out = self._telnet.read_until(_password_prompt)
-                        self._telnet.write(_auth['pass'])
-    
+                        if _password_prompt is not None:
+                            BuiltIn().log("Trying to login only by password as `%s`" % (_auth['pass']))
+                            output = self._telnet.read_until_regexp(_password_prompt)
+                            self._telnet.write(_auth['pass'])
+                        else:
+                            BuiltIn().log("WARN: Access jump server withouth authentication")
+                            # self._telnet.write_bare("\r")
+                            # time.sleep(1)
+                            # output = self._telnet.read()
+                            # BuiltIn().log(output)
+                            
                     # allocate new channel id
                     id = self._max_id + 1
                     channel_info['id']          = id 
@@ -437,9 +495,9 @@ class VChannel(object):
                     channel_info['access-type'] = 'telnet'
                     channel_info['prompt']      = _prompt 
                     channel_info['connection']  = self._telnet
-                    channel_info['local_id']    = local_id
+                    channel_info['local-id']    = local_id
 
-
+                # jump on ssh
                 if _access_base == 'ssh':
                     out = ""
                     local_id = self._ssh.open_connection(_ip,alias=name,term_type='vt100',width=w,
@@ -458,7 +516,7 @@ class VChannel(object):
                             out = self._ssh.login(_auth['user'],_auth['pass'],proxy_cmd=_cmd)
                         else:
                             _cmd = None
-                            out = self._ssh.login(_auth['user'],_auth['pass'])
+                            output = self._ssh.login(_auth['user'],_auth['pass'])
     
                     # SSH with publick-key
                     if _auth_type == 'public-key':
@@ -466,7 +524,7 @@ class VChannel(object):
                             pass_phrase = _auth['pass']
                         else:
                             pass_phrase = None
-                        out = self._ssh.login_with_public_key(_auth['user'],_auth['key'],pass_phrase)
+                        output = self._ssh.login_with_public_key(_auth['user'],_auth['key'],pass_phrase)
 
                     # allocate new channel id
                     id = self._max_id + 1
@@ -477,31 +535,53 @@ class VChannel(object):
                     channel_info['connection']  = self._ssh
 
                 # execute JUMP cmd
-                if 'jump_cmd' in _device_info:
-                    for item in _device_info['jump_cmd']:
+                if 'jump-cmd' in _device_info:
+                    for item in _device_info['jump-cmd']:
                         channel_info['connection'].write(str(item)+'\r')
                         time.sleep(2)
                         output = channel_info['connection'].read()
 
                 # at this point, the system is waiting for the second login
                 # phase. The status could be already login
+                BuiltIn().log("Jump to other device")
+
+                _target_name        = _access_tmpl['target']
+                _target_tmpl        = Common.GLOBAL['access-template'][_target_name] 
+                _target_auth_type   = _target_tmpl['auth']
+                _target_profile     = _target_tmpl['profile']
+                _target_auth        = Common.GLOBAL['auth'][_target_auth_type][_target_profile]
+
                 _prompt = _target_tmpl['prompt']
-                if 'init' in _target_tmpl:
-                    _init = _target_tmpl['init']
-                if 'finish' in _target_tmpl:
-                    _finish = _target_tmpl['finish']
-                if 'timeout' in _target_tmpl:
-                    _timeout = _target_tmpl['timeout']
+                _login_prompt = 'Username: '
+                _password_prompt = 'Password: '
+ 
+                if 'login-prompt' in _target_tmpl:      _login_prompt       = _target_tmpl['login-prompt']
+                if 'password-prompt' in _target_tmpl:   _password_prompt    = _target_tmpl['password_prompt']
+                if 'init' in _target_tmpl:               _init              = _target_tmpl['init']
+                if 'finish' in _target_tmpl:            _finish             = _target_tmpl['finish']
+                if 'timeout' in _target_tmpl:           _timeout            = _target_tmpl['timeout']
+
+                # update channel and authentication info
                 channel_info['prompt']  = _prompt
+                _auth = _target_auth
 
-                if re.match(r'.*login: ',output,re.DOTALL):
-                    channel_info['connection'].write(_target_auth['user'])
-                    channel_info['connection'].read_until_regexp(_password_prompt)
-                    channel_info['connection'].write(_target_auth['pass'])
-                    channel_info['connection'].read_until_regexp(_prompt)
+                # authentication to the target device
+                last_line = ""
+                if output != "": last_line = output.split()[-1]
+                if _login_prompt and re.match(_login_prompt,last_line,re.MULTILINE):
+                    channel_info['connection'].write(_auth['user'])
+                    time.sleep(3)
+                if _password_prompt and re.match(_password_prompt,last_line,re.MULTILINE):
+                    channel_info['connection'].write(_auth['pass'])
+                    time.sleep(3)
+                 
+                BuiltIn().log("Wait for the 1st prompt")
+                channel_info['connection'].write("\r")
+                time.sleep(1)
+                channel_info['connection'].write("\r")
+                time.sleep(1)
+                channel_info['connection'].read_until_regexp(_prompt)
 
-                
-     
             # common for all access type
             # open/create a log file for this connection in result_folder
             result_folder = Common.get_result_folder()
@@ -513,7 +593,7 @@ class VChannel(object):
             # common channel info
             channel_info['node']        = node
             channel_info['name']        = name
-            channel_info['log_file']    = log_file
+            channel_info['log-file']    = log_file
             channel_info['w']           = w
             channel_info['h']           = h
             channel_info['mode']        = mode
@@ -522,6 +602,7 @@ class VChannel(object):
             channel_info['ip']          = _ip
             channel_info['separator']   = ""
             channel_info['finish']      = _finish
+            channel_info['timeout']     = timeout
        
             # extra 
             channel_info['screen']      = None
@@ -537,15 +618,18 @@ class VChannel(object):
             # by default switch to the connected device
             self.switch(name)
 
-            # logging the ouput 
-            self.log(out)
-        
-            # enable
-            if 'enable' in _auth:
-                channel_info['connection'].write('enable')
-                channel_info['connection'].read_until_regexp("Password:")
-                self.cmd(_auth['enable'])
-    
+            # logging the authentication process until now
+            BuiltIn().log(output)
+            self.log(output)
+
+            # activate ENABLE mode
+            # the device might bi in ENABLE mode already
+            if 'secret' in _auth:
+                BuiltIn().log("Entering ENABLE mode")
+                self.cmd()
+                output = self.cmd('enable',prompt=r"Password:|%s" % _prompt)
+                if "Password:" in output: self.cmd(_auth['secret'])
+
             ### execute 1st command after login
             flag = Common.get_config_value('ignore-init-finish','vchannel',False)
             if not flag and _init is not None: 
@@ -668,7 +752,7 @@ class VChannel(object):
             self._current_channel_info = channel_info
             self._current_id = channel_info['id']
 
-            channel_info['connection'].switch_connection(channel_info['local_id'])
+            channel_info['connection'].switch_connection(channel_info['local-id'])
             if channel_info['screen']:
                 # read from the session and log the result
                 channel_info['stream'].feed(channel_info['connection'].read())
@@ -686,7 +770,7 @@ class VChannel(object):
             if 'logger' in channel_info: channel_info['logger'].flush()
 
             BuiltIn().log("Switched current channel to `%s(%s)`" % (name,channel_info['ip']))
-            return channel_info['id'], channel_info['local_id'], output
+            return channel_info['id'], channel_info['local-id'], output
         else:
             err_msg = "ERROR: Could not find `%s` in current channels" % name
             BuiltIn().log(err_msg)
@@ -704,7 +788,7 @@ class VChannel(object):
         Return old log filename
         """
         channel = self._channels[self._current_name]
-        old_log_file = channel['log_file']
+        old_log_file = channel['log-file']
 
         # flush buffer before change the log file
         channel['logger'].flush()
@@ -712,7 +796,7 @@ class VChannel(object):
     
         result_path = Common.get_result_path() 
         channel['logger'] = codecs.open(result_path+'/'+log_file,mode,'utf-8') 
-        channel['log_file'] = log_file
+        channel['log-file'] = log_file
 
         BuiltIn().log("Changed current log file to %s" % log_file)
         return old_log_file
@@ -884,16 +968,27 @@ class VChannel(object):
         BuiltIn().log("Executed command: `%s` and wait until prompt")
 
 
+    
+    def _set_conn_timeout(self,conn,timeout): 
+        """ Set current connection timeout
+        """
+        if timeout is None: return
+        if hasattr(conn,'set_timeout'): conn.set_timeout(timeout)
+        if hasattr(conn,'set_client_configuration'): conn.set_client_configuration(timeout=timeout)
+
+
     @with_reconnect
     def cmd(self,command='',prompt=None,
             timeout=None,error_on_timeout=True,
-            prompt_timeout=None,error_on_prompt_timeout=True,
             remove_prompt=False,
             match_err='\r\n(unknown command.|syntax error, expecting <command>.)\r\n'):
         """Executes a ``command`` and wait until for the prompt. 
   
         This is a blocking keyword. Execution of the test case will be postponed until the prompt appears.
-        If ``prompt`` is a null string (default), its value is defined in the ``./config/template.yaml``
+
+        If ``prompt`` is a null string (default), its value is defined in the
+        ``./config/template.yaml``.  Otherwise, it is a regular expression for a
+        temporarily prompt for this command only.
 
         `timeout` is the timeout for this `Cmd`. If `timeout` is not define, the
         local `vchannel/cmd-timeout` or global `vchannel/cmd-timeout` will be
@@ -909,6 +1004,13 @@ class VChannel(object):
         Output will be automatically logged to the channel current log file.
 
         See [./Common.html|Common] for details about the config files.
+
+        Sample:
+        | Router.Cmd   | version |
+        | Router.Cmd   | reload   | prompt=\\[yes/no\\]:${SPACE} | # reload a Cisco router |
+        | Router.Cmd   | no       | prompt=\\[confirm\\] | [ is escaped twice |
+        | Router.Write |
+
         """
         BuiltIn().log("Execute command: `%s`" % (command))
         output = ''
@@ -930,48 +1032,18 @@ class VChannel(object):
         # if cur_prompt[-1] != '$':
         #    cur_prompt = cur_prompt + '$'
        
-        # implement read_until_regexp by ourselve 
         output = ''
-        tmp = ''
-        prompt_check = ''
-        prompt_check_count = 0
-        count = 0.0
-        total_count = 0.0
-        if not timeout:
-            _timeout = float(DateTime.convert_time(Common.get_config_value('read-timeout','vchannel')))
-        else:
-            _timeout = float(DateTime.convert_time(timeout)) 
-        if not prompt_timeout:
-            _prompt_timeout = float(DateTime.convert_time(Common.get_config_value('read-timeout','vchannel')))
-        else:
-            _prompt_timeout = float(DateTime.convert_time(prompt_timeout)) 
 
-        
-        time_interval   = float(DateTime.convert_time(Common.get_config_value('read-interval','vchannel')))
-        # repeat until timeout or using last N output to check the prompt
-         
-        while (count <  _timeout) and (total_count < _prompt_timeout) and (not re.search(cur_prompt,prompt_check,re.MULTILINE)):
-            if prompt_check_count > 3:      
-                prompt_check_count = 0
-                prompt_check = ''
-            tmp = channel['connection'].read()
-            if tmp != '':
-                output += tmp
-                prompt_check += tmp
-                prompt_check_count += 1
-                count = 0
+        # only TelnetLib has set_timeout attr
+        self._set_conn_timeout(channel['connection'],timeout)
+        try:
+            output = channel['connection'].read_until_regexp(cur_prompt)
+            self.log(output)
+        except:
+            if error_on_timeout: raise
             else:
-                time.sleep(time_interval)
-                count += time_interval
-                total_count += time_interval
-        if (count >= _timeout) and error_on_timeout:
-            raise Exception('ERROR: No output after `%d` seconds' % count)
-        if (total_count >= _prompt_timeout) and error_on_prompt_timeout:
-            raise Exception('ERROR: No prompt after `%d` seconds' % total_count)
-            
-        
-        # output  = channel['connection'].read_until_regexp(cur_prompt,loglevel='DEBUG')
-        self.log(output)
+                BuiltIn().log("WARN: timeout occured but no error was raised")
+        self._set_conn_timeout(channel['connection'],channel['timeout'])
 
         # result checking
         cmd_auto_check = Common.get_config_value('cmd-auto-check')
@@ -981,12 +1053,12 @@ class VChannel(object):
             BuiltIn().log(output)
             raise Exception(err_msg)
 
-        # 
+        # remove PROMPT from the result if necessary
         if remove_prompt:
             tmp = output.splitlines()
             output = "\r\n".join(tmp[:-1])
             
-        BuiltIn().log("Executed command `%s` (%d sec)" % (command,total_count))
+        BuiltIn().log("Executed command `%s`" % (command))
         return output
     
 
@@ -1054,24 +1126,27 @@ class VChannel(object):
         channels[self._current_name]['connection'].switch_connection(self._current_name)
         # make sure a never-end process will be terminated
         if not channel['screen']: 
-            timeout= Common.get_config_value('vchannel','wait-time-before-close','5m')
-            self.cmd(prompt_timeout=timeout,error_on_prompt_timeout=False)
+            timeout= Common.get_config_value('vchannel','wait-time-before-close','1m')
+            BuiltIn().log("Wait `%s` seconds before closing the connection `%s`" % (timeout,old_name))
+            self.cmd(timeout=timeout,error_on_timeout=False)
 
         ### execute command before close the connection
         BuiltIn().log("Closing the connection for channel `%s`" % old_name)
         flag = Common.get_config_value('ignore-init-finish','vchannel',False)
         if not flag and finish_cmd is not None: 
             for item in finish_cmd:
-                BuiltIn().log("Executing finish command: %s" % (item))
+                BuiltIn().log("Execute finish command: %s" % (item))
                 channel['connection'].write_bare(item + '\r')
                 time.sleep(1)
+
         logger = BuiltIn().get_library_instance('Logger')
+
+        # close the connection and log the last messages
+        output = channels[self._current_name]['connection'].close_connection() 
+        if output is not None:
+            logger.log(output)
+        
         logger.log(msg,with_time,mark)
-        # channels[self._current_name]['logger'].write(msg)
-        # channels[self._current_name]['logger'].flush()
-
-
-        channels[self._current_name]['connection'].close_connection() 
         del(channels[self._current_name])
 
         # choose another active channel
@@ -1088,6 +1163,9 @@ class VChannel(object):
             first_key = list(channels.keys())[0]  # make dict key compatible with Python3
             self._current_name     = channels[first_key]['name'] 
             self._current_id       = channels[first_key]['id']
+
+        # we need some time to release the socket
+        time.sleep(1)
 
         BuiltIn().log("Closed the connection for channel `%s`, current channel is `%s`" % (old_name,self._current_name))
         return self._current_name
@@ -1294,7 +1372,7 @@ class VChannel(object):
             buffer += cmd + "\n"
             buffer += self.cmd(cmd)
         self._snap_buffer[name] = {}
-        self._snap_buffer[name]['cmd_list'] = cmd_list
+        self._snap_buffer[name]['cmd-list'] = cmd_list
         self._snap_buffer[name]['buffer'] = buffer
 
         BuiltIn().log("Took snapshot `%s`" % name)
@@ -1308,7 +1386,7 @@ class VChannel(object):
         """
 
         if not self._snap_buffer[name]: return False
-        cmd_list    = self._snap_buffer[name]['cmd_list']
+        cmd_list    = self._snap_buffer[name]['cmd-list']
         old_buffer  = self._snap_buffer[name]['buffer']
 
         buffer = ""

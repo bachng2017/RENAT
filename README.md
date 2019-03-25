@@ -94,6 +94,11 @@ A super simple way to try RENAT is running it from a container. Below are instru
     ```
     $ docker exec -it --user robot renat /bin/bash --login
     ```
+    or using SSH with `robot/password!secret` account
+    ```
+    $ ssh -l robot -p 10022 <host_ip>
+    ```
+
 4. create a test scenario
 
     ```
@@ -117,7 +122,7 @@ A super simple way to try RENAT is running it from a container. Below are instru
     - $RENAT_PATH/config/auth.yaml: authentication (username/password)
     - $RENAT_PATH/config/template.yaml(optional): in case current templates are not fit for your devices
     
-See [Create scenarios](#create-scenarios) for more detail about creating a sample to interacte with routers.
+See [Create scenarios](#create-scenarios) for more detail about creating a sample to interact with routers.
 
     
 ## Installation by Ansible

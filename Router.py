@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-08-23 00:00:54 +0900 (Thu, 23 Aug 2018) $
-# $Rev: 1208 $
+# $Date: 2019-03-26 04:49:39 +0900 (火, 26  3月 2019) $
+# $Rev: 1923 $
 # $Ver: $
 # $Author: $
 
@@ -124,7 +124,8 @@ class Router(object):
         """ 
         channel = self.get_current_channel()
         node    = channel['node']
-        type_list    = channel['type'].split('_')
+        # type_list    = channel['type'].split('_')
+        type_list = re.split(r'-|_', channel['type']) 
         mod_name = ''
         type_list_length = len(type_list)
 
@@ -178,8 +179,8 @@ class Router(object):
             data[node] = {}
             data[node]['ip']          = Common.GLOBAL['device'][device]['ip']
             data[node]['community']   = Common.GLOBAL['snmp-template'][type]['community'] 
-            data[node]['mib_file']    = Common.mib_for_node(node)
-            f = open(data[node]['mib_file'])
+            data[node]['mib-file']    = Common.mib_for_node(node)
+            f = open(data[node]['mib-file'])
             data[node]['oid_list']    = json.load(f)['miblist']
             f.close()
             data[node]['poller'] = netsnmp.SNMPSession(data[node]['ip'], data[node]['community']) 

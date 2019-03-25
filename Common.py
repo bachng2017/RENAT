@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1835 $
+# $Rev: 1923 $
 # $Ver: $
-# $Date: 2019-02-23 16:34:37 +0900 (土, 23  2月 2019) $
+# $Date: 2019-03-26 04:49:39 +0900 (火, 26  3月 2019) $
 # $Author: $
 
 """ Common library for RENAT
@@ -268,7 +268,7 @@ Example:
 |
 | # Default information 
 | default:
-|     ignore_dead_node: yes
+|     ignore-dead-node: yes
 |     terminal:
 |         width: 80
 |         height: 32
@@ -292,13 +292,13 @@ simply ``$NODE['vmx']``. When a keyword need a list of current node, ``@{NODE}``
 could be used.
 
 *Notes:* By default, RENAT will stop and raise an exception if connection to a
-node is failed. But if ``ignore_dead_node`` is defined as ``yes`` (default) is
+node is failed. But if ``ignore-dead-node`` is defined as ``yes`` (default) is
 the current active ``local.yaml``, RENAT will omit an warning but keep running
 the test and remove the node from its active node list.
 
 """
 
-ROBOT_LIBRARY_VERSION = 'RENAT 0.1.13'
+ROBOT_LIBRARY_VERSION = 'RENAT 0.1.14'
 
 import os,socket
 import glob,fnmatch
@@ -485,8 +485,11 @@ else:
 USER = os.path.expandvars("$USER")
 HOME = os.path.expandvars("$HOME")
 
+# read from local configuration
 if 'node' in LOCAL:     NODE    = LOCAL['node']
+if NODE is None: NODE = []
 if 'webaapp' in LOCAL:  WEBAPP = LOCAL['webapp']
+if WEBAPP is None: WEBAPP = []
 
 newline = GLOBAL['default']['newline']
 
@@ -517,7 +520,13 @@ def get_config_path():
 def get_item_config_path():
     """ Returns absolute path of current item config folder
     """
-    return os.getcwd() + '/config'
+    return os.getcwd() + '/config/'
+
+
+def get_tmp_path():
+    """ Returns temporary path
+    """
+    return os.getcwd() + '/tmp/'
     
 
 def get_result_path():
@@ -994,6 +1003,8 @@ def pause(msg="",time_out='3h',error_on_timeout=True,default_input=''):
 
     In case of ``error_on_timeout`` is True(default), the keyword will raise an
     error when timeout occurs. Otherwise, it will continue the test.
+
+    Inf succeed, the keyword returns the input from user.
 
     *Notes:* If the variable ``${RENAT_BATCH}`` was defined, the keyword will print out
     the message and keeps running without pausing.
@@ -1549,7 +1560,6 @@ def current_usergroup():
 # in doc create mode, there is not RF context, so we need to bypass the errors
 try:
     
-
     BuiltIn().set_global_variable('${GLOBAL}',GLOBAL)
     BuiltIn().set_global_variable('${LOCAL}',LOCAL)
     BuiltIn().set_global_variable('${USER}',USER)
@@ -1576,5 +1586,7 @@ try:
 except Exception as e:
     # incase need to debug uncomment following
     # raise 
-    log("ERROR: Error happened  while setting global configuration")
+    msg = "WARN: Error happened  while setting global configuration"
+    log(msg)
+    BuiltIn().log(msg)
     

@@ -1,5 +1,5 @@
-# $Rev: 1880 $
-# $Date: 2019-03-10 15:28:46 +0900 (日, 10  3月 2019) $
+# $Rev: 1912 $
+# $Date: 2019-03-24 18:15:59 +0900 (日, 24  3月 2019) $
 # $Author: $
 
 access-template:
@@ -22,7 +22,7 @@ access-template:
             - unalias -a
         finish:
             - exit
-    juniper_withpage:
+    juniper-withpage:
         access: telnet
         auth: plain-text 
         profile: default
@@ -35,30 +35,35 @@ access-template:
         init: 
             - set cli idle-timeout 0 
             - set cli screen-length 0
-    juniper_flets:
-        access: telnet
-        auth: plain-text 
-        profile: flets_juniper
-        prompt: "@.*(#|>) " 
-        init: 
-            - set cli idle-timeout 0 
-            - set cli screen-length 0
     cisco:
+        access: telnet
+        auth: plain-text
+        profile: default
+        prompt: ".*(#|>)"
+        login_prompt:    "Username: "
+        password_prompt: "Password: "
+        init:
+            - terminal length 0
+        finish:
+            - quit
+    cisco-xe:
+        access: telnet
+        auth: plain-text
+        profile: default
+        prompt: ".*(#|>)"
+        login_prompt:    "Username: "
+        password_prompt: "Password: "
+        init:
+            - terminal length 0
+        finish:
+            - quit
+    cisco-ssh:
         access: ssh
         auth: plain-text
         profile: default
         prompt: "@.*(#|>) "
         init:
-            - set terminal length 0
-    cisco_asr:
-        access: telnet
-        auth: plain-text
-        profile: default
-        prompt: "CPU.*(#|>)" 
-        login_prompt: "Username:"
-        password_prompt: "Password:"
-        init:
-            - terminal length 0 
+            - terminal length 0
     gr:
         access: telnet
         auth: plain-text
@@ -189,6 +194,15 @@ access-template:
         prompt: "tty.*> "
         password_prompt: "Password:"
         target: juniper
+    jump-cisco-xe:
+        access: jump
+        access_base: telnet
+        auth: plain-text
+        profile: default
+        prompt: ".*(#|>)"
+        login_prompt:
+        password_prompt:
+        target: cisco-xe-console
 
 snmp-template:
        juniper:

@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-02-16 01:45:03 +0900 (土, 16  2月 2019) $
-# $Rev: 1788 $
+# $Date: 2019-03-19 21:34:12 +0900 (火, 19  3月 2019) $
+# $Rev: 1897 $
 # $Ver: $
 # $Author: $
 
@@ -92,7 +92,7 @@ def close(self):
 
 
 def load_config(self,config_name=''):
-    """ Loads the SPF config file 
+    """ Loads the SPF config file and reseres necessary port
     """
     cli  = self._clients[self._cur_name]
     avaproxy = cli['connection']
@@ -124,6 +124,10 @@ def load_config(self,config_name=''):
         interface = 0
         for item in port_data:
             res = Common.send(avaproxy,'ava::reserve_port/%d/%s/%s/%s' % (interface,item['chassis'],item['card'],item['port']))
+            if res != 'ava::ok' :
+                msg = "ERROR: could not reserve necessary ports\n%s" % res
+                BuiltIn().log(msg)
+                raise Exception(msg)
             interface += 1
             BuiltIn().log('    reserved port %s/%s/%s with result %s' % (item['chassis'],item['card'],item['port'],res))
     else:

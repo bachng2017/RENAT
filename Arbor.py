@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-02-23 16:34:37 +0900 (土, 23  2月 2019) $
-# $Rev: 1835 $
+# $Date: 2019-03-26 04:49:39 +0900 (火, 26  3月 2019) $
+# $Rev: 1923 $
 # $Ver: $
 # $Author: $
 
@@ -77,10 +77,10 @@ class Arbor(WebApp):
         ``name``.
 
         Extra information could be added to the ``webapp`` sections likes
-        ``login_url``, ``browser`` or ``profile_dir``. Default values are:
+        ``login-url``, ``browser`` or ``profile-dir``. Default values are:
         | browser     | firefox |
-        | login_url   | /         |
-        | profile_dir | ./config/samurai.profile |
+        | login-url   | /         |
+        | profile-dir | ./config/samurai.profile |
         """
         self.open_ff_with_profile(app,name)
         # login 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# $Date: 2019-02-18 05:06:35 +0900 (月, 18  2月 2019) $
-# $Rev: 1798 $
+# $Date: 2019-03-25 01:28:51 +0900 (月, 25  3月 2019) $
+# $Rev: 1914 $
 # $Ver: $
 # $Author: $
 
@@ -62,10 +62,10 @@ Follow Syslog And Trap Start
     VChannel.Cmd            cd /var/log
     VChannel.Cmd            [ -s ${WORKING_FOLDER}/${MYID}_TAIL.txt ] && kill -9 $(cat ${WORKING_FOLDER}/${MYID}_TAIL.txt)
     VChannel.Cmd            [ -f ${WORKING_FOLDER}/${MYID}_TAIL.txt ] && rm -f ${WORKING_FOLDER}/${MYID}_TAIL.txt
-    @{nodes}=               Common.Node With Attr  follow-remote-log  ${TRUE}
+    @{NODE_LIST}=           Common.Node With Attr  follow-remote-log  ${TRUE}
     ${file_list}=           Set Variable    ${EMPTY}
-    :FOR    ${node}  IN  @{nodes}
-    \   ${dev}=             Set Variable    ${LOCAL['node'][u'${node}']['device']}
+    :FOR    ${ITEM}  IN  @{NODE_LIST}
+    \   ${dev}=             Set Variable    ${LOCAL['node'][u'${ITEM}']['device']}
     \   ${ip}=              Set Variable    ${GLOBAL['device']['${dev}']['ip']}
     \   ${file_list}=       Set Variable    ${file_list} syslog-net/${ip}.log snmptrap-net/${ip}.log
     Run Keyword If	'${file_list}' != ''	VChannel.Write	tail -n 0 -F ${file_list} &
@@ -115,13 +115,17 @@ Lab Setup
     Common.Load Plugin
 
     Logger.Log All          TESTING BEGIN   ${TRUE}     ===
-    @{node_list}=           Node With Tag    init    juniper
-    :FOR  ${node}  IN  @{node_list}
-    \   Router.Switch       ${node}
+    @{NODE_LIST}=           Node With Tag    init    juniper
+    :FOR  ${ITEM}  IN  @{NODE_LIST}
+    \   Router.Switch       ${ITEM}
     \   Router.Cmd          show system uptime | no-more
     \   Router.Cmd          show version invoke-on all-routing-engines | no-more
     \   Router.Cmd          show system alarms | no-more
     \   Router.Cmd          show chassis hardware | no-more
+
+    :FOR  ${ITEM}   IN      @{NODE}
+    \   Router.Switch       ${ITEM}
+    \   Router.Cmd
 
     BuiltIn.Log To Console  00. Lab Setup
     BuiltIn.Log To Console  ------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 default:
     robot-server: 127.0.0.1
-    robot-password: password
+    robot-password: <password>
     renat-master-folder: $RENAT_PATH/config
     calient-master-path: 
     ntm-master-path: 
@@ -9,10 +9,10 @@ default:
     interval-between-retry: 15s
     terminal-timeout: 20m
     cmd-auto-check: False
-    newline: "\n"
-    slack-cmd:  $RENAT_PATH/tools/renat_bot.sh
-    slack-proxy: 127.0.0.1
-    log-level: TRACE
+    newline: "\r\n"
+    slack-cmd: /home/robot/work/slack/renat_bot.sh
+    slack-proxy: 10.128.3.103:4713
+    log-level: DEBUG
     ignore-dead-node: FALSE
     mks-console:
         width:  1024
@@ -22,15 +22,14 @@ default:
         height: 1080
 
 vchannel:
-    read-timeout:   180s
-    read-interval:  0.3s
+    wait-time-before-close: 1m
     ignore-init-finish: False
+    prompt-strict: yes
 
 extra-lib:
-    - Tester
-    - Hypervisor 
+#    - Tester
 #    - OpticalSwitch
 #    - Samurai
 #    - Arbor
-
+    - Hypervisor
 
