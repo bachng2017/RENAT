@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1923 $
+# $Rev: 1925 $
 # $Ver: $
-# $Date: 2019-03-26 04:49:39 +0900 (火, 26  3月 2019) $
+# $Date: 2019-03-26 10:38:10 +0900 (火, 26  3月 2019) $
 # $Author: $
 
 import os,re,sys
@@ -205,6 +205,17 @@ class VChannel(object):
         """ Returns all current vchannel instances
         """
         return self._channels
+
+
+    def _update_all(self):
+        """ silently update all channels and flush their logs
+        """
+        for name in self._channels:
+            channel = self._channels[name]
+            if channel['screen']: continue
+            channel['connection'].read() 
+            logger = channel['logger']
+            logger.flush()    
 
 
     def log(self,msg):
@@ -1143,8 +1154,7 @@ class VChannel(object):
 
         # close the connection and log the last messages
         output = channels[self._current_name]['connection'].close_connection() 
-        if output is not None:
-            logger.log(output)
+        if output is not None: self.log(output)
         
         logger.log(msg,with_time,mark)
         del(channels[self._current_name])

@@ -81,7 +81,7 @@ A super simple way to try RENAT is running it from a container. Below are instru
 2. start the container that open port 80 and 10022
 
     ```
-    $ mdkir /opt/renat
+    $ mkdir -p /opt/renat
     $ docker run --rm -d --privileged -v /opt/renat:/opt/renat -p 80:80 -p 10022:22 --name renat bachng/renat:latest
     ```
 
@@ -99,7 +99,7 @@ A super simple way to try RENAT is running it from a container. Below are instru
     $ ssh -l robot -p 10022 <host_ip>
     ```
 
-4. create a test scenario
+4. create a test scenario. Enter `y` to create a local configuration file and `Enter` for other questions.
 
     ```
     [robot@afeb42da1974 renat]$ $RENAT_PATH/tools/project.sh renat-sample

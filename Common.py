@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1923 $
+# $Rev: 1926 $
 # $Ver: $
-# $Date: 2019-03-26 04:49:39 +0900 (火, 26  3月 2019) $
+# $Date: 2019-03-26 10:39:02 +0900 (火, 26  3月 2019) $
 # $Author: $
 
 """ Common library for RENAT
@@ -306,6 +306,7 @@ import re
 import yaml
 import glob
 import time,datetime
+from datetime import timedelta
 import codecs
 import numpy
 import random
@@ -1391,7 +1392,7 @@ def log_csv(csv_file,index=False,border=0):
     BuiltIn().log(df.to_html(index=index,border=border),html=True)    
 
 
-def wait(wait_time,size=10):
+def wait(wait_time,size=u'10'):
     """ Waits for `wait-time` and display the proress bar
 
     `wait_time` used RF `DateTime` format.
@@ -1400,18 +1401,29 @@ def wait(wait_time,size=10):
     | Common.`Wait` | wait_time=30s | size=10 |
     """
     wait_sec = DateTime.convert_time(wait_time)
-    length = int(size)
-    # if length > wait_sec: length = int(wait_sec)
-    step = float(wait_sec/length)
-    display = '%3.2fsecs [%%-%ds] %%02d%%%%' % (wait_sec,int(size))
+    bar_size = int(size)
+    step = float(wait_sec/bar_size)
+    time1 = datetime.datetime.now()
+    time2 = time1 + datetime.timedelta(seconds=wait_sec)
+    epoch1 = int(time1.strftime('%s'))
+    epoch2 = int(time2.strftime('%s'))
+    display = '%3.2fsecs [%%-%ds] %%02d%%%%' % (wait_sec,bar_size)
     del_size = len(display % ('',0)) 
     BuiltIn().log_to_console(display % ('',0),'STDOUT',True)
-    for i in range(length):
-        BuiltIn().log_to_console('\010'*del_size + display % ('='*i,int(i*100/length)),'STDOUT',True)
-        time.sleep(step)
-    i = length
-    BuiltIn().log_to_console('\010'*del_size + display % ('='*i,int(i*100/length)),'STDOUT',True)
-    # BuiltIn().log_to_console('')
+    count = 0
+    now = epoch1
+    while now < epoch2:
+        BuiltIn().log_to_console('\010'*del_size + display % ('='*count,int(count*100/bar_size)),'STDOUT',True)
+        now = int(datetime.datetime.now().strftime('%s'))
+
+        # when step is long enough, try to do some useful thin
+        if step > 30:
+            vchannel_instance = BuiltIn().get_library_instance('VChannel')
+            vchannel_instance._update_all()
+    
+        time.sleep(max(min(step,epoch2-now),0))
+        count += 1
+    # BuiltIn().log_to_console('\010'*del_size + display % ('='*bar_size,100),'STDOUT',True)
     BuiltIn().log('Slept `%d` seconds' % wait_sec)
 
 
@@ -1555,6 +1567,11 @@ def current_usergroup():
         result = subprocess.check_output(cmd_line,stderr=subprocess.STDOUT,shell=True).strip()
     BuiltIn().log('Current usergroup is `%s`' % result)
     return result
+
+def sleep(wait_time):
+    """ Overrides the BuiltIn.Sleep keyword
+    """
+    return wait(wait_time)
 
 # set RF global variables and load libraries
 # in doc create mode, there is not RF context, so we need to bypass the errors
