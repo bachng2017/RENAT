@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-02-18 10:42:14 +0900 (月, 18  2月 2019) $
-# $Rev: 1806 $
+# $Date: 2019-04-03 07:35:13 +0900 (水, 03  4月 2019) $
+# $Rev: 1972 $
 # $Ver: $
 # $Author: $
 
@@ -45,14 +45,61 @@ from robot.libraries.BuiltIn import BuiltIn
 import robot.libraries.DateTime as DateTime
 import xml.etree.ElementTree as ET
 
+def update_chassis(self):
+    """ updates chassis info by information in device.yaml
+    """
+    cli     = self._clients[self._cur_name]
+    ix      = cli['connection']
+
+    # prepare chassis
+    device =  Common.LOCAL['tester'][self._cur_name]['device']
+    device_info = Common.GLOBAL['device'][device]
+    cur_chassis = map(lambda x: ix.getAttribute(x,'-hostname'),ix.getList(ix.getRoot()+'availableHardware','chassis'))
+
+    if 'chassis' in device_info:
+        BuiltIn().log("    found chassis setting")
+        for item in device_info['chassis']:
+            item = item.strip()
+            if item in cur_chassis: continue 
+            ix.add(ix.getRoot()+'availableHardware', 'chassis', '-hostname',item) 
+            BuiltIn().log('    added chassis `%s`' % item)
+        ix.commit()
+
+        chassis = ix.getList(ix.getRoot()+'availableHardware', 'chassis')
+        # wait until all chassis is ready 
+        interval = 5
+        ready = False
+        while not ready:
+            BuiltIn().log('    wait %d seconds until all chassis are ready' % interval)
+            time.sleep(interval)
+            ready = True
+            for item in chassis:
+                ready = ready and (ix.getAttribute(item,'-state') == u"ready")
+
+        # set chassis master
+        master = ''
+        for item in chassis:
+            BuiltIn().log('    checking %s:%s' % (ix.getAttribute(item,'-hostname'),ix.getAttribute(item,'-isMaster')))
+            if ix.getAttribute(item,'-isMaster') == u'false': continue
+            master = ix.getAttribute(item,'-hostname')
+            BuiltIn().log('    found master `%s`' % master)
+        if master != '' :
+            for item in chassis:
+                if ix.getAttribute(item,'-isMaster') == 'true': continue
+                BuiltIn().log('    set cluster master to `%s`' % master)
+                ix.setAttribute(item,'-masterChassis',master)
+        ix.commit()
+        time.sleep(5)
+    BuiltIn().log('Updated chassis information')
+
 def reset_config(self):
     """ Clears current config and creates new blank config
     """
-
     cli     = self._clients[self._cur_name]
     ix      = cli['connection']
 
     ix.execute('newConfig')
+    self.update_chassis()
     BuiltIn().log("Created a new blank config")
 
 
@@ -155,38 +202,39 @@ def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,pr
     # load config
     config_path = Common.get_item_config_path() + '/' + config_name
     ix.execute('loadConfig',ix.readFrom(config_path))
-    
-    BuiltIn().log("Loaded config `%s`" % config_path)
+    BuiltIn().log("Loaded config file `%s`" % config_path)
+
+    self.update_chassis()
 
     real_port_data = []
     if 'real-port' in Common.LOCAL['tester'][self._cur_name]:
         real_port_data = Common.LOCAL['tester'][self._cur_name]['real-port']
-        BuiltIn().log("     Found remap port data")
+        BuiltIn().log("    found port setting")
         if real_port_data and len(real_port_data) != 0: # no need to remap ports
             # remap ports 
             vports = ix.getList(ix.getRoot(),'vport')
             real_ports = []
             for item in real_port_data:
-                chassis = item['chassis']
-                card    = item['card']
-                port    = item['port']
+                chassis = item['chassis'].strip()
+                card    = int(item['card'])
+                port    = int(item['port'])
                 real_ports.append((chassis,card,port)) 
+
+            BuiltIn().log("    assigning %d ports to %d vports" % (len(real_ports),len(vports)))
 
             # assign ports
             result_id = ix.setAsync().execute('assignPorts',real_ports,[],vports,force) 
-       
-            BuiltIn().log("    Assigning ports ...")
             interval = 5
-            is_done = "false"
+            is_done = u"false"
             count = 0
-            while is_done == "false" and count < wait2:  
+            while is_done == u"false" and count < wait2:  
                 count = count + interval
                 BuiltIn().log_to_console('.','STDOUT',True)
                 time.sleep(interval)
                 is_done = ix.isDone(result_id)
-                BuiltIn().log("    status is `%s`, wait for more %d seconds ..." % (is_done,interval))
+                BuiltIn().log("    assigning status was `%s`, wait for more %d seconds ..." % (is_done,interval))
 
-            if is_done != "true" :
+            if is_done != u"true" :
                 raise Exception("ERROR: Error while remapping ports. The chassis IP might be wrong")
 
             # extra setting for port
@@ -199,9 +247,8 @@ def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,pr
                 else:
                     tx_mode = 'interleaved'
                 ix.setAttribute(port,'-txMode',tx_mode)
-
             result = ix.commit()
-            if result != '::ixNet::OK' :
+            if result != u'::ixNet::OK' :
                 raise Exception("ERROR: Error while remapping ports: " + result)    
             BuiltIn().log("Loaded config and reassigned %d ports in %d seconds" % (len(vports),count))
 
@@ -212,19 +259,17 @@ def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,pr
     if protocol :
         BuiltIn().log("Starting all protocols...")
         result = ix.execute('startAllProtocols')
-        if result != '::ixNet::OK' :
+        if result != u'::ixNet::OK' :
             raise Exception("ERROR: Error while starting protocols: "+result)    
         time.sleep(wait) # wait enough for protocol to start
         BuiltIn().log("Started all protocols")
-
     # apply traffic
     if apply :
         BuiltIn().log("Applying traffic ...")
         result = ix.execute('apply',ix.getRoot()+'traffic')
-        if result != '::ixNet::OK' :
+        if result != u'::ixNet::OK' :
             raise Exception("ERROR: Error while applying traffic: " + result)    
         BuiltIn().log("Applied traffic")
-
     #
     time.sleep(wait3)
 
@@ -595,10 +640,16 @@ def get_test_result(self,view,prefix=u"stat_"):
     view = view.replace('_',' ')
     
     result_path = os.getcwd() + '/' + Common.get_result_folder()
+    # null page should be ignored
     result_id = ix.setAsync().getAttribute(view+'/page','-isReady')
     time.sleep(5) # wait for 5 second
     is_done = ix.isDone(result_id) 
-    if is_done == "true": 
+    if is_done == u"true": 
+        ready = ix.getResult(result_id)
+        if ready == u'false': 
+            BuiltIn().log("No statistic data for view `%s`" % view) 
+            return 
+
         # set page size to 500 rows(max)
         ix.setAttribute(view+'/page','-pageSize',500)
         ix.commit()
@@ -613,7 +664,6 @@ def get_test_result(self,view,prefix=u"stat_"):
         file_name = file_name.replace('__','_')
         file_name = prefix + file_name
 
-        
         total_page = int(ix.getAttribute(view+'/page','-totalPages'))
 
         # open result file for write and preparing cap titles
@@ -637,7 +687,7 @@ def get_test_result(self,view,prefix=u"stat_"):
                     w.writerow(row[i][j])
 
         f.close()
-    BuiltIn().log("Got test data for view `%s`" % view) 
+    BuiltIn().log("Got statistic data for view `%s`" % view) 
 
 
 def collect_all_data(self,prefix="stat_"):
@@ -694,18 +744,24 @@ def loss_from_file(self,file_name='Flow_Statistics.csv',index='0'):
   
     frame_delta = int(data.filter(like='Frames Delta').loc[index_int])
     tx_frame    = int(data['Tx Frames'].loc[index_int])
-    time1       = datetime.strptime(data['First TimeStamp'].loc[index_int],"%H:%M:%S.%f")
-    time2       = datetime.strptime(data['Last TimeStamp'].loc[index_int],"%H:%M:%S.%f")
-
-    msec_delta  = (time2-time1).total_seconds()*1000
-    BuiltIn().log("    Delta sec   = %d" % msec_delta) 
-    BuiltIn().log("    Delta frame = %d" % frame_delta)
-    if tx_frame != 0:
-        msec_loss   = int(frame_delta * msec_delta / tx_frame)
-        BuiltIn().log("Loss was %d frames, %d miliseconds" % (frame_delta,msec_loss))
-    else:
+    BuiltIn().log('----------')
+    BuiltIn().log(data['First TimeStamp'].loc[index_int])
+    BuiltIn().log('----------')
+    data1 = data['First TimeStamp'].loc[index_int]
+    data2 = data['Last TimeStamp'].loc[index_int]
+    if pd.isnull(data1) or pd.isnull(data2) or tx_frame == 0:
         msec_loss   = None
         BuiltIn().log("Loss was %d frames, N/A miliseconds" % (frame_delta))
+    else:
+        time1       = datetime.strptime(data['First TimeStamp'].loc[index_int],"%H:%M:%S.%f")
+        time2       = datetime.strptime(data['Last TimeStamp'].loc[index_int],"%H:%M:%S.%f")
+        msec_delta  = (time2-time1).total_seconds()*1000
+        
+        BuiltIn().log("    Delta sec   = %d" % msec_delta) 
+        BuiltIn().log("    Delta frame = %d" % frame_delta)
+        msec_loss   = int(frame_delta * msec_delta / tx_frame)
+        BuiltIn().log("Loss was %d frames, %d miliseconds" % (frame_delta,msec_loss))
+
     return msec_loss,frame_delta
 
 
@@ -874,7 +930,7 @@ def stop_and_save_capture(self,prefix='',wait_until_finish=True,monitor_interval
 
     folder = ix.getAttribute(ix.getRoot()+'/testConfiguration','-resultPath') 
     # temporary folder
-    folder = "C:/tmp/" + os.getcwd().replace('/','_')
+    folder = Common.get_config_value('ixremote-temp') + os.getcwd().replace('/','_')
     ix.execute('saveCapture', folder)
    
     count = 0 
@@ -979,7 +1035,7 @@ def add_port(self,force=True,time_out='2m',learn_time='2m'):
         BuiltIn().log("    is_done = %s, wait for more %d seconds ..." % (is_done,interval))
 
     if is_done != "true":
-        raise Exception("ERROR: Error while remapping ports. The chassis IP might be wrong")
+        raise Exception("ERROR: Error while remapping ports: hardware failure or wrong chassis IP")
 
     # wait for ports become enable
     self.wait_until_connected(wait_time)
@@ -1119,10 +1175,10 @@ def run_quicktest(self,test_index='0',wait_until_finish=True):
 
 
 
-def get_test_report(self,local_name='ixnet_report.pdf',enable_all=True):
+def get_test_report(self,name='ixnet_report.pdf',enable_all=True):
     """ Generates and get report of the current active test in PDF format
 
-    ``local_name``: name of the report on local machine. Default is ``ixnet_report.pdf``
+    ``name``: name of the report on local machine. Default is ``ixnet_report.pdf``
     """
     BuiltIn().log("Get report of the current test")
 
@@ -1167,11 +1223,9 @@ def get_test_report(self,local_name='ixnet_report.pdf',enable_all=True):
         time.sleep(5)
 
     # copy to local folder (renat server)
-    dest_file = Common.get_result_path() + '/' + local_name
-    ix.execute('copyFile',ix.readFrom(report_file,'-ixNetRelative'),ix.writeTo(dest_file,'-overwrite'))
-
-    BuiltIn().log("Got the report file `%s`" % local_name) 
-
+    dst_file = Common.get_result_path() + '/' + name
+    ix.execute('copyFile',ix.readFrom(report_file,'-ixNetRelative'),ix.writeTo(dst_file,'-overwrite'))
+    BuiltIn().log("Got the report file `%s`" % name) 
 
 
 def get_quicktest_result_path(self,test_index=u'-1'):
@@ -1442,7 +1496,7 @@ def get_test_composer_result(self,result_file=u'composer.log'):
 
     if composer_runner:
         result_path = ix.getAttribute(composer_runner+'/results','-resultPath')
-        src_path = result_path + '\logFile.txt'
+        src_path = result_path + '/logFile.txt'
         dst_path = Common.get_result_path() + '/' + str(result_file)
         BuiltIn().log("    result src: %s" % src_path)
         BuiltIn().log("    result dst: %s" % dst_path)
@@ -1586,16 +1640,16 @@ def get_csv_log(self, prefix='', index=u'-1', *views):
         csv_list = [x.attrib['scope'] for x in root.findall('.//Source[@entity_name="%s"]' % view) ]
         if index.lower() in [':','all']:
             for csv_file in csv_list:
-                dst_file = '%s//%s%s' % (Common.get_result_path(),prefix,csv_file.replace(' ','_'))
-                src_file = '%s\\%s' % (src_folder,csv_file)
+                dst_file = '%s/%s%s' % (Common.get_result_path(),prefix,csv_file.replace(' ','_'))
+                src_file = '%s/%s' % (src_folder,csv_file)
                 BuiltIn().log('copy from %s to %s' % (src_file,dst_file))
                 result = ix.execute('copyFile',ix.readFrom(src_file,'-ixNetRelative'),ix.writeTo(dst_file,'-overwrite'))
                 if result != '::ixNet::OK' : raise result
                 count += 1
         else:
             csv_file = csv_list[int(index)]
-            dst_file = '%s//%s%s' % (Common.get_result_path(),prefix,csv_file.replace(' ','_'))
-            src_file = '%s\\%s' % (src_folder,csv_file)
+            dst_file = '%s/%s%s' % (Common.get_result_path(),prefix,csv_file.replace(' ','_'))
+            src_file = '%s/%s' % (src_folder,csv_file)
             BuiltIn().log('copy from %s to %s' % (src_file,dst_file))
             result = ix.execute('copyFile',ix.readFrom(src_file,'-ixNetRelative'),ix.writeTo(dst_file,'-overwrite'))
             if result != '::ixNet::OK' : raise result

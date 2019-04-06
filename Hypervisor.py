@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-03-02 10:16:09 +0900 (土, 02  3月 2019) $
-# $Rev: 1865 $
+# $Date: 2019-04-02 08:19:11 +0900 (火, 02  4月 2019) $
+# $Rev: 1970 $
 # $Ver: $
 # $Author: $
 
@@ -124,7 +124,6 @@ class Hypervisor(object):
             self._current_name = name    
 
             self._channels[name]   = channel_info
-            self._current_channel_info = channel_info
         except Exception as err:
             if ignore_dead_node:
                 msg = 'WARN: Error when connecting to `%s(%s)` bug ignored' % (name,_ip)
@@ -142,7 +141,6 @@ class Hypervisor(object):
         """
         if name in self._channels:
             channel = self._channels[name]
-            self._current_channel_info = channel
             self._current_id = channel['id']
             BuiltIn().log('Switched current hypervisor to `%s(%s)`' % (name,channel['ip'])) 
         else:

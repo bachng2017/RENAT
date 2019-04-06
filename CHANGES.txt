@@ -13,14 +13,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1923 $
+# $Rev: 1938 $
 # $Ver: $
-# $Date: 2019-03-26 04:49:39 +0900 (火, 26  3月 2019) $
+# $Date: 2019-03-30 16:26:40 +0900 (土, 30  3月 2019) $
 # $Author: $
 
 RENAT(Robotframework Extension for Network Automation Testing)
 
 == What's new ==
+
+=== 0.1.15 ===
+- fix bugs and consolidate code
+- upddate item/run.sh to deal with zero-width-null space
 
 === 0.1.14 ===
 - consolidate VChannel.py for more robust and add support to terminal server

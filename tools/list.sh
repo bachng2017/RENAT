@@ -69,7 +69,11 @@ for item in $(find $1 -depth -type f -name "run.sh" | sort); do
     if [ -f $ROBOT ]; then
         if [ -f $LOG ]; then
             # echo "Output:.*$CURPATH/$ITEM/result"
-            INFO=$(cat $LOG | grep -B3 "Output:.*$CURPATH/$ITEM/result" | grep total)
+            if [ "$ITEM" == "." ]; then
+                INFO=$(cat $LOG | grep -B3 "Output:.*$CURPATH/result" | grep total)
+            else
+                INFO=$(cat $LOG | grep -B3 "Output:.*$CURPATH/$ITEM/result" | grep total)
+            fi
             IGNORE=$(cat $LOG | grep -A1 "Entering.*$CURPATH/$ITEM" | grep .ignore)
             if [ "$IGNORE" == "" ]; then
                 if [ "$INFO" == "" ]; then

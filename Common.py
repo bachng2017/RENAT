@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1926 $
+# $Rev: 1973 $
 # $Ver: $
-# $Date: 2019-03-26 10:39:02 +0900 (火, 26  3月 2019) $
+# $Date: 2019-04-03 08:18:20 +0900 (水, 03  4月 2019) $
 # $Author: $
 
 """ Common library for RENAT
@@ -1432,6 +1432,7 @@ def start_display():
     """
     global DISPLAY
     display_info = get_config_value('display')
+    logging.getLogger("easyprocess").setLevel(logging.INFO)
     DISPLAY = Display(visible=0, size=(display_info['width'],display_info['height']))
     # DISPLAY = Display(visible=0, size=(display_info['width'],display_info['height']),fbdir=get_result_path())
     DISPLAY.start()
@@ -1568,10 +1569,19 @@ def current_usergroup():
     BuiltIn().log('Current usergroup is `%s`' % result)
     return result
 
-def sleep(wait_time):
-    """ Overrides the BuiltIn.Sleep keyword
+# def sleep(wait_time):
+#    """ Overrides the BuiltIn.Sleep keyword
+#    """
+#    return wait(wait_time)
+
+
+def stop_next_run(msg=u'Case run was stopped by user'):
+    """ Stops next run (specified by -n) using a .stop file with reason
     """
-    return wait(wait_time)
+    with open(os.getcwd() + '/.stop','w') as file:
+        file.write(msg + newline)
+    BuiltIn().log("Do not run the test on next round")
+
 
 # set RF global variables and load libraries
 # in doc create mode, there is not RF context, so we need to bypass the errors

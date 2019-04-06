@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1925 $
+# $Rev: 1963 $
 # $Ver: $
-# $Date: 2019-03-26 10:38:10 +0900 (火, 26  3月 2019) $
+# $Date: 2019-04-01 09:28:05 +0900 (月, 01  4月 2019) $
 # $Author: $
 
 import os,re,sys
@@ -181,6 +181,7 @@ class VChannel(object):
         self._max_id = 0
         self._snap_buffer = {}
         self._channels = {}
+        self._backup_channels = {}
 
     @property
     def current_name(self):
@@ -211,11 +212,15 @@ class VChannel(object):
         """ silently update all channels and flush their logs
         """
         for name in self._channels:
-            channel = self._channels[name]
-            if channel['screen']: continue
-            channel['connection'].read() 
-            logger = channel['logger']
-            logger.flush()    
+            try:
+                channel = self._channels[name]
+                if channel['screen']: continue
+                output = channel['connection'].read() 
+                _log(channel,output)
+                channel['logger'].flush()
+            except Exception as err:
+                # BuiltIn().log(err)
+                BuiltIn().log("WARN: error happend while update channel `%s` but is ignored" % name)
 
 
     def log(self,msg):
@@ -243,14 +248,14 @@ class VChannel(object):
         BuiltIn().log("Reconnect to `%s`" % name)
 
         # remember the current channel name
-        # _curr_name  = self._current_name
-        _node       = self._current_channel_info['node']
-        _name       = self._current_channel_info['name']
-        _log_file   = self._current_channel_info['log-file']
-        _w          = self._current_channel_info['w'] 
-        _h          = self._current_channel_info['h'] 
-        _mode       = self._current_channel_info['mode'] 
-        _timeout    = self._current_channel_info['timeout']
+        backup_channel = self._backup_channels[name]
+        _node       = backup_channel['node']
+        _name       = backup_channel['name']
+        _log_file   = backup_channel['log-file']
+        _w          = backup_channel['w'] 
+        _h          = backup_channel['h'] 
+        _mode       = backup_channel['mode'] 
+        _timeout    = backup_channel['timeout']
 
         # reconect to the node. Appending the log
         if name in self._channels: 
@@ -348,11 +353,11 @@ class VChannel(object):
         if 'login-prompt' in _access_tmpl: 
             _login_prompt = _access_tmpl['login-prompt']
         else:
-            _login_prompt = 'login:'
+            _login_prompt = Common.get_config_value('default-login-prompt','vchannel')
         if 'password-prompt' in _access_tmpl: 
             _password_prompt = _access_tmpl['password-prompt']
         else:
-            _password_prompt = 'Password:'
+            _password_prompt = Common.get_config_value('default-password-prompt','vchannel')
         
         BuiltIn().log("Opening connection to `%s(%s):%s` as name `%s` by `%s`" % (node,_ip,_port,name,_access))
         
@@ -563,11 +568,11 @@ class VChannel(object):
                 _target_auth        = Common.GLOBAL['auth'][_target_auth_type][_target_profile]
 
                 _prompt = _target_tmpl['prompt']
-                _login_prompt = 'Username: '
-                _password_prompt = 'Password: '
+                _login_prompt = Common.get_config_value('default-login-prompt','vchannel')
+                _password_prompt = Common.get_config_value('default-password-prompt','vchannel')
  
                 if 'login-prompt' in _target_tmpl:      _login_prompt       = _target_tmpl['login-prompt']
-                if 'password-prompt' in _target_tmpl:   _password_prompt    = _target_tmpl['password_prompt']
+                if 'password-prompt' in _target_tmpl:   _password_prompt    = _target_tmpl['password-prompt']
                 if 'init' in _target_tmpl:               _init              = _target_tmpl['init']
                 if 'finish' in _target_tmpl:            _finish             = _target_tmpl['finish']
                 if 'timeout' in _target_tmpl:           _timeout            = _target_tmpl['timeout']
@@ -577,18 +582,30 @@ class VChannel(object):
                 _auth = _target_auth
 
                 # authentication to the target device
-                last_line = ""
-                if output != "": last_line = output.split()[-1]
-                if _login_prompt and re.match(_login_prompt,last_line,re.MULTILINE):
+                BuiltIn().log("------------")
+                BuiltIn().log("--%s--" % output)
+                BuiltIn().log("------------")
+                if re.search('Press RETURN to get started',output):
+                    channel_info['connection'].write("\r")
+                    time.sleep(3)
+                    
+                if _login_prompt and re.search(_login_prompt,output):
+                    BuiltIn().log("Login to target device with username `%s`" % _auth['user'])
                     channel_info['connection'].write(_auth['user'])
                     time.sleep(3)
-                if _password_prompt and re.match(_password_prompt,last_line,re.MULTILINE):
+                    output = channel_info['connection'].read()
+                    BuiltIn().log("------------")
+                    BuiltIn().log("--%s--" % output)
+                    BuiltIn().log("------------")
+                
+                if _password_prompt and re.search(_password_prompt,output):
+                    BuiltIn().log("Login to target device with password `%s`" % _auth['pass'])
                     channel_info['connection'].write(_auth['pass'])
                     time.sleep(3)
                  
                 BuiltIn().log("Wait for the 1st prompt")
                 channel_info['connection'].write("\r")
-                time.sleep(1)
+                time.sleep(3)
                 channel_info['connection'].write("\r")
                 time.sleep(1)
                 channel_info['connection'].read_until_regexp(_prompt)
@@ -624,7 +641,7 @@ class VChannel(object):
         
             # remember this info by name(alias)
             self._channels[name]   = channel_info 
-            self._current_channel_info = channel_info
+            self._backup_channels[name] = channel_info
     
             # by default switch to the connected device
             self.switch(name)
@@ -760,7 +777,6 @@ class VChannel(object):
         if name in self._channels: 
             self._current_name = name
             channel_info = self._channels[name]
-            self._current_channel_info = channel_info
             self._current_id = channel_info['id']
 
             channel_info['connection'].switch_connection(channel_info['local-id'])
@@ -1135,11 +1151,6 @@ class VChannel(object):
 
         # close
         channels[self._current_name]['connection'].switch_connection(self._current_name)
-        # make sure a never-end process will be terminated
-        if not channel['screen']: 
-            timeout= Common.get_config_value('vchannel','wait-time-before-close','1m')
-            BuiltIn().log("Wait `%s` seconds before closing the connection `%s`" % (timeout,old_name))
-            self.cmd(timeout=timeout,error_on_timeout=False)
 
         ### execute command before close the connection
         BuiltIn().log("Closing the connection for channel `%s`" % old_name)
@@ -1149,13 +1160,21 @@ class VChannel(object):
                 BuiltIn().log("Execute finish command: %s" % (item))
                 channel['connection'].write_bare(item + '\r')
                 time.sleep(1)
-
-        logger = BuiltIn().get_library_instance('Logger')
-
-        # close the connection and log the last messages
-        output = channels[self._current_name]['connection'].close_connection() 
-        if output is not None: self.log(output)
         
+        timeout = Common.get_config_value('wait-time-before-close','vchannel','10s')
+        BuiltIn().log("Wait `%s` seconds before closing the connection `%s`" % (timeout,old_name))
+        try: 
+            channel['connection'].write_bare('' + '\r')
+            time.sleep(DateTime.convert_time(timeout))
+            output = channels[self._current_name]['connection'].close_connection() 
+            if output is not None: self.log(output)
+        except Exception as err:
+            BuiltIn().log('WARN: ignored errors while closing channel')
+            BuiltIn().log(err)
+            BuiltIn().log(traceback.format_exc())
+        
+        # farewell message    
+        logger = BuiltIn().get_library_instance('Logger')
         logger.log(msg,with_time,mark)
         del(channels[self._current_name])
 

@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1888 $
+# $Rev: 1980 $
 # $Ver: $
-# $Date: 2019-03-11 15:07:13 +0900 (月, 11  3月 2019) $
+# $Date: 2019-04-05 00:22:26 +0900 (金, 05  4月 2019) $
 # $Author: $
 
 """ Provides keywords for Juniper platform
@@ -230,9 +230,9 @@ def push_config(self,mode='set',config_file='', \
     file_path_replace = file_path_replace.replace('(','\(').replace(')','\)')
 
     # load the configuration
-    _user = self._vchannel._current_channel_info['auth']['user'] 
-    _pass = self._vchannel._current_channel_info['auth']['pass'] 
-    _ip = self._vchannel._current_channel_info['ip'] 
+    _user = self._vchannel.get_current_channel()['auth']['user'] 
+    _pass = self._vchannel.get_current_channel()['auth']['pass'] 
+    _ip   = self._vchannel.get_current_channel()['ip'] 
     cmd = "sshpass -p %s scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null %s %s@%s:/var/tmp/%s" % (_pass,file_path_replace,_user,_ip,config_file)
     rc,output = OperatingSystem().run_and_return_rc_and_output(cmd)
 
@@ -396,9 +396,9 @@ def copy_file(self,src_path,filename=None,pre_config=None,pos_config=None):
     dst_path = dst_path.replace('(','\(').replace(')','\)')
 
     #
-    _user = self._vchannel._current_channel_info['auth']['user']
-    _pass = self._vchannel._current_channel_info['auth']['pass']
-    _ip = self._vchannel._current_channel_info['ip']
+    _user = self._vchannel.get_current_channel()['auth']['user'] 
+    _pass = self._vchannel.get_current_channel()['auth']['pass'] 
+    _ip   = self._vchannel.get_current_channel()['ip'] 
     cmd = 'sshpass -p %s scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null %s@%s:%s %s' % (_pass,_user,_ip,src_path,dst_path)
     rc,output = OperatingSystem().run_and_return_rc_and_output(cmd)
 

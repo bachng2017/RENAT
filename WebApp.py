@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-03-26 07:28:16 +0900 (火, 26  3月 2019) $
-# $Rev: 1924 $
+# $Date: 2019-04-03 16:21:19 +0900 (水, 03  4月 2019) $
+# $Rev: 1974 $
 # $Ver: $
 # $Author: $
 
@@ -39,15 +39,22 @@ def _with_reconnect(keyword, self, *args, **kwargs):
         try:
             return keyword(self,*args,**kwargs)
         except (AssertionError,ElementNotFound) as err:
+            self.capture_screenshot(extra="_warn") # save the last available screen
             BuiltIn().log(err)
-    
-            logout_count = self._driver.get_matching_xpath_count("//h1[.='Timeout']")
-            if logout_count == 0: # this is not time out
+            logout_count = int(self._driver.get_matching_xpath_count("//h1[.='Timeout']"))
+            BuiltIn().log("Found `%d` match for Timeout" % logout_count)
+            if logout_count == 0: # this is not time out    
+                BuiltIn().log(Common.newline, console = True)
+                BuiltIn().log_to_console(err)
+                BuiltIn().log(Common.newline + "Detail:", console = True)
+                msg= self._driver.get_text('my_contents')
+                BuiltIn().log(msg,console=True)
                 raise
 
             count += 1
             if count < max_count:
                 BuiltIn().log('WARN: Failed to execute the keyword `%s` %d time(s)'  % (keyword.__name__,count))
+                BuiltIn().log('WARN: Will try the keyword again')
                 safe_reconnect(self)
             else:
                 BuiltIn().log('ERROR: Gave up retry for keyword `%s`' % keyword.__name__)
@@ -430,8 +437,12 @@ class WebApp(object):
             delta = DateTime.convert_time(interval)
             time.sleep(delta)
             count += delta
-            element = self._driver.get_webelement(xpath)
-            element_id = element.id
+            element_count = self._driver.get_element_count(xpath)
+            if element_count > 0:
+                element = self._driver.get_webelement(xpath)
+                element_id = element.id
+            else:
+                element_id = -1
            
         if count >= timeout_sec:
             BuiltIn().log('Timeout happened but element is still not changed')

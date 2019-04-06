@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-02-14 17:48:03 +0900 (木, 14  2月 2019) $
-# $Rev: 1777 $
+# $Date: 2019-04-02 08:19:11 +0900 (火, 02  4月 2019) $
+# $Rev: 1970 $
 # $Ver: $
 # $Author: $
 
@@ -55,27 +55,41 @@ class Tester(object):
     stop traffic flows. It also could generate traffic reports and support
     QuickTest for IxNetwork.
 
+    Testers are defined in global ``device.yaml`` likes this:
+
+|     ixnet01_8010:
+|         type: ixnet
+|         description: TCL server 8.01
+|         ip: 10.128.4.21
+|         port: 8010
+|         chassis:
+|             - 10.128.4.40
+|             - 10.128.4.41
+    
+    ``ip`` is the the IP of Ixia application server and ``chassis`` section is
+    optional which describe all the chassis in the chain.
+
     Tester information is stored in the active ``local.yaml``. The syntax is
-slightly different depending on the tester platform. Below is sample for
-IxNetwork.
+    slightly different depending on the tester platform. Below is sample for
+    IxNetwork.
 
 | tester:
 |     tester01:
 |         device: ixnet03_8009
 |         config: vmx_20161129.ixncfg
-|         real_port:
+|         real-port:
 |            -   description: to egde router   
-                 chassis: 10.128.32.71
+|                chassis: 10.128.32.71
 |                card: 6
 |                port: 11
 |            -   description: to backbone router 
-                 chassis: 10.128.32.71
+|                chassis: 10.128.32.71
 |                card: 6
 |                port: 9
 
 where ``device`` is the tester defined in the master ``device.yaml`` file.
-If ``real_port`` does not exist, port remapping will not take place.
-Otherwise, port remapping will use the ``real_port`` information to reassign
+If ``real-port`` does not exist, port remapping will not take place.
+Otherwise, port remapping will use the ``real-port`` information to reassign
 all existed ports and map to Ixia ports.
 
 In this case, the order will be the order when user created the port in Ixia
@@ -85,7 +99,6 @@ GUI.
 Ixia GUI.
 
     Examples:
-    | Tester.`Connect All` |
     | Tester.`Switch` | tester01 |
     | Tester.`Load And Start Traffic` |
     | `Sleep` | 30s |
@@ -100,7 +113,6 @@ library of Robot Framework.
 module.
 
 """
-
     ROBOT_LIBRARY_SCOPE = 'TEST SUITE'
     ROBOT_LIBRARY_VERSION = Common.version()
 
@@ -136,7 +148,6 @@ module.
                                 return self._xrun(cmd,*args,**kwargs)
                             return _xrun
                         setattr(self,cmd,MethodType(gen_xrun(cmd),self))
-
         except RobotNotRunningError as e:
             Common.err("WARN: RENAT is not running") 
 
@@ -144,7 +155,6 @@ module.
     def switch(self,name):
         """ Switchs the current tester to ``name``
         """
-
         self._cur_name = name
         BuiltIn().log("Switched to tester " + name)
 
@@ -152,7 +162,6 @@ module.
     def connect(self,name):
         """ Connect to the tester ``name``
         """
-
         dname   = Common.LOCAL['tester'][name]['device']
         ip      = Common.GLOBAL['device'][dname]['ip']
         desc    = Common.GLOBAL['device'][dname]['description']
@@ -222,11 +231,9 @@ module.
         else:
             raise Exception("ERROR: wrong module type")
     
-        self._clients[name] = client
         self._cur_name = name
-    
+        self._clients[name] = client
         BuiltIn().log("Connected to tester `%s`(%s)" % (self._cur_name,ip))
-
 
 
     def connect_all(self):

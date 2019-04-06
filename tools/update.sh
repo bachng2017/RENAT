@@ -26,6 +26,7 @@ else
   done
   echo "moved chibalab.robot to lab.robot"
 
+  # update lab robot
   FILE=$RENAT_PATH/tools/template/project/lab.robot
   if [[ -f ./lab.robot ]]; then
         diff $QUIET  $FILE lab.robot
@@ -36,11 +37,21 @@ else
         fi
   fi
 
+  # update project/run.sh
   FILE=$RENAT_PATH/tools/template/project/run.sh
   diff $QUIET $FILE run.sh
   if [[ $? != 0 ]]; then 
     cp -f $RENAT_PATH/tools/template/project/run.sh .
     echo "updated project run.sh"
+    echo "---"
+  fi
+
+  # gitignore
+  FILE=$RENAT_PATH/tools/template/project/.gitignore
+  diff $QUIET $FILE run.sh
+  if [[ $? != 0 ]]; then 
+    cp -f $RENAT_PATH/tools/template/project/run.sh .
+    echo "updated item/.gitignore" 
     echo "---"
   fi
 
@@ -63,8 +74,8 @@ else
   find . -name "main.robot" -exec sed -i 's/\.\.\/lab\.robot/lab\.robot/' {} \;
   echo "updated main.robot"
 
-  find . -name "local.yaml" -exec sed -i '/    result_folder: result/d' {} \;
-  echo "updateed local.yaml"
+  find . -name "local.yaml" -exec sed -i '/^  *result_folder: result/d' {} \;
+  echo "updated local.yaml"
 fi
 
   

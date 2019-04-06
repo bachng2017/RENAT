@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# $Date: 2019-01-28 00:50:29 +0900 (月, 28  1月 2019) $
-# $Rev: 1729 $
+# $Date: 2019-04-05 10:31:41 +0900 (金, 05  4月 2019) $
+# $Rev: 1982 $
 # $Author: $
-# usage: ./runsh [-n <num>] <other robot argument>
-
+# usage: ./run.sh [-n <num>] <other robot argument>
+# ITEM run script
 # read renat resource
 # the RENAT_PATH variable is evaluated with this priority
 # environment variable < suite renat.rc < case renat.rc
@@ -25,13 +25,14 @@ usage () {
     echo "  -n, --number NUM        repeat the test NUM times"
     echo "  -f, --force             force the test to run, does not care about .ignore files"
     echo "  -a, --all               run the item and all its sub items"
+    echo "  -b, --rm-null-space     automatically remove the null space char (\u200b) in the scenario"
     echo "RF Options:"
     echo "  -d, --dir FOLDER        make default result forder to FOLDER"
     echo "  -X                      stop immediately if a step fails (default is not set)"
     echo "  -v VAR:VALUE            define a global RF variable ${VAR} with value VALUE"
     echo "  -e TAG                  ignore steps tagged with TAG"
     echo "  -i TAG                  execute only steps tagged with TAG"
-    echo "  -B                      automatically backup result folder with current date information"
+    echo "  -B, --backup            automatically backup result folder with current date information"
     echo "  -r, --dry-run           same meaning with the original --dryrun"
     echo "Predefinded global variables:"
     echo "  -v CLEAN                execute CleanUp Result keyword before in Setup step"
@@ -39,24 +40,18 @@ usage () {
     echo ""
 }
 
-# apply the resource
-if [ -f ../renat.rc ]; then
-    source ../renat.rc
-fi
-
-if [ -f ./renat.rc ]; then
-    source ./renat.rc
-fi
-
-
 for OPT in "$@"; do
     case "$OPT" in 
         '-h'|'--help' )
             usage
             exit 1
             ;;
-        '-B'|'--Backup' )
+        '-B'|'--backup' )
             BACKUP=1
+            shift 1
+            ;;
+        '-b'|'--remove-null-space' )
+            RM_NULL_SPACE=1
             shift 1
             ;;
         '-d'|'--dir' )
@@ -100,11 +95,27 @@ for OPT in "$@"; do
 done
 
 
+# check the anoyance \u200B code 
+WARN=$(grep -Psrn '\x{200B}' *.{yaml,robot})
+if [ "$WARN" != "" ]; then
+    if [ -z $RM_NULL_SPACE ]; then
+        echo -e "\e[31mWARNING: an unexpect ZERO WIDTH SPACE is found in your scenario. Check and remove them or use -b option\e[m"
+        echo "$WARN"
+        exit 1
+    else
+        echo "WARNING:zero width space is found and remove. Original file is backup to main.robot.org"
+        cp main.robot main.robot.org
+        sed -i -s 's/\xe2\x80\x8b//g' main.robot
+    fi
+fi
+
+
 # check necessary environment
 if [[ -z "$RENAT_PATH" ]]; then
     echo "RENAT_PATH environment variable is not defined. Please check your environment"
     exit 1
 else
+    echo "Current time:       $(env LC_ALL=c date)"
     echo "Current RENAT path: $RENAT_PATH"
     echo 
 fi
@@ -135,10 +146,12 @@ run() {
         NAME="$PREFIX/$(basename $PWD)"
     fi
 
+    # run sub items if -a is defined
     if [ ! -z $RUN_ALL ]; then    
-        for folder in $(find . -mindepth 1 -maxdepth 1 -type d | sort); do
-            if [ -f $folder/run.sh ]; then
-                run $folder "$NAME"
+        for ITEM in $(find . -mindepth 1 -maxdepth 1 -type d | sort); do
+            if [ -f $ITEM/run.sh ]; then
+                > $ITEM/run.log 
+                run $ITEM "$NAME" > >(tee -a $ITEM/run.log) 2>&1
             fi
         done
     fi
@@ -153,13 +166,21 @@ run() {
             echo "Run $NUM times"
         fi 
         echo 
-        for INDEX in $(seq -f "%03g" 1 $NUM); do
-            echo "Run: $INDEX"
+
+        for RUN_INDEX in $(seq -f "%03g" 1 $NUM); do
+            echo "Run: $RUN_INDEX"
+            if [ -e ./.stop ]; then
+                echo "This run was stopped with following reason:"
+                cat ./.stop
+                echo "---------------------------------"
+                rm "./.stop"
+                break    
+            fi
             if [ -z $RESULT_FOLDER ]; then
                     RESULT_FOLDER="result"
             fi
-            if [ $INDEX -gt 1 ]; then
-                RESULT_FOLDER="result_$INDEX"
+            if [ $RUN_INDEX -gt 1 ]; then
+                RESULT_FOLDER="result_$RUN_INDEX"
             fi
 
             # backup result folder if it exists
@@ -174,7 +195,9 @@ run() {
                 OPTION="$OPTION --dryrun"
             fi
 
-            robot --name $NAME $PARAM -d ${RESULT_FOLDER} -v MYID:$MYID -v RESULT_FOLDER:$RESULT_FOLDER -v RENAT_PATH:$RENAT_PATH $OPTION -K off main.robot
+            robot --name $NAME $PARAM -d ${RESULT_FOLDER} \
+                    -v MYID:$MYID -v RUN_INDEX:$RUN_INDEX -v RESULT_FOLDER:$RESULT_FOLDER \
+                    -v RENAT_PATH:$RENAT_PATH $OPTION -K off main.robot
             CODE=$?
             RESULT=$(expr $RESULT + $CODE)
             echo
@@ -187,13 +210,13 @@ run() {
     fi
 }
 
-run . . > >(tee run.log) 2>&1
+> ./run.log
+run . . > >(tee -a ./run.log) 2>&1
 
 TIME2=$(date +"%s")
 
 ### update run database
 MSG="$PWD/$PROG $@"
-# sqlite3 /home/robot/run.sqlite3 "UPDATE run_table SET count = count + 1 WHERE name='$USER'"
 if [ -z ${RENAT_BATCH} ]; then
     logger -p local5.info -t "renat[$USER]" $TIME1 $TIME2 $RESULT "$MSG"
 fi

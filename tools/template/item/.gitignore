@@ -1,5 +1,6 @@
 tmp/*
 result/*
+result_*
 setpath.bashrc
 !.gitkeep
 !.gitignore

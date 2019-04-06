@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# $Date: 2019-03-25 01:28:51 +0900 (月, 25  3月 2019) $
-# $Rev: 1914 $
+# $Date: 2019-03-29 07:41:02 +0900 (金, 29  3月 2019) $
+# $Rev: 1936 $
 # $Ver: $
 # $Author: $
 
@@ -86,8 +86,9 @@ Lab Setup
     Create Directory        tmp
     Change Mod              tmp                 0775
     Create Directory        ${WORKING_FOLDER}
-
     Change Mod              ${RESULT_FOLDER}    0775
+
+    Remove File             ./.stop
 
     Set Library Search Order    Common  Router
 
