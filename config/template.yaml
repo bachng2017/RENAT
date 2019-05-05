@@ -14,7 +14,7 @@ access-template:
             - exit
     ssh-host-proxy:
         access: ssh
-        proxy_cmd: "/usr/bin/ssh -l robot -i ~/.ssh/robot_id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p 10.128.3.101"
+        proxy-cmd: "/usr/bin/ssh -l robot -i ~/.ssh/robot_id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p 10.128.3.101"
         auth: public-key
         profile: default
         prompt: "@.*(>|\\$) "
@@ -40,8 +40,8 @@ access-template:
         auth: plain-text
         profile: default
         prompt: ".*(#|>)"
-        login_prompt:    "Username: "
-        password_prompt: "Password: "
+        login-prompt:    "Username: "
+        password-prompt: "Password: "
         init:
             - terminal length 0
         finish:
@@ -51,8 +51,8 @@ access-template:
         auth: plain-text
         profile: default
         prompt: ".*(#|>)"
-        login_prompt:    "Username: "
-        password_prompt: "Password: "
+        login-prompt:    "Username: "
+        password-prompt: "Password: "
         init:
             - terminal length 0
         finish:
@@ -76,8 +76,8 @@ access-template:
         auth: plain-text
         profile: default 
         prompt: ":.*(#|>|\\$) " 
-        login_prompt: "Login:"
-        password_prompt: "Password:"
+        login-prompt: "Login:"
+        password-prompt: "Password:"
         init:
             - environment no more
     samurai:
@@ -110,8 +110,8 @@ access-template:
         auth: plain-text
         profile: ap-sw
         prompt: ".*(#|>) "
-        login_prompt:
-        password_prompt: "login:"
+        login-prompt:
+        password-prompt: "login:"
         init:
             - "\n"
     yamaha-l2:
@@ -119,19 +119,19 @@ access-template:
         auth: plain-text
         profile: ymh
         prompt: ".*(#|>) "
-        login_prompt:
-        password_prompt: "Password:"
+        login-prompt:
+        password-prompt: "Password:"
         init:
     arbor-sp-cli:
         access: ssh
-        proxy_cmd: "/usr/bin/ssh -l robot -i ~/.ssh/robot_id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p 10.128.3.101"
+        proxy-cmd: "/usr/bin/ssh -l robot -i ~/.ssh/robot_id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p 10.128.3.101"
         auth: plain-text
         profile: arbor
         prompt: "(:.*#|DIAG>) "
         init:
     arbor-vsp-cli:
         access: ssh
-        proxy_cmd: "/usr/bin/ssh -l robot -i ~/.ssh/robot_id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p 10.128.3.101"
+        proxy-cmd: "/usr/bin/ssh -l robot -i ~/.ssh/robot_id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p 10.128.3.101"
         auth: plain-text
         profile: arbor
         prompt: "(:.*#|DIAG>|\\? \\[y\\]) "
@@ -140,7 +140,7 @@ access-template:
             - exit
     arbor-tms-cli:
         access: ssh
-        proxy_cmd: "/usr/bin/ssh -l robot -i ~/.ssh/robot_id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p 10.128.3.101"
+        proxy-cmd: "/usr/bin/ssh -l robot -i ~/.ssh/robot_id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p 10.128.3.101"
         auth: plain-text
         profile: arbor
         prompt: ":.*# "
@@ -149,7 +149,7 @@ access-template:
             - exit
     arbor-tms-hd1000-cli:
         access: ssh
-        proxy_cmd: "/usr/bin/ssh -l robot -i ~/.ssh/robot_id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p 10.128.3.101"
+        proxy-cmd: "/usr/bin/ssh -l robot -i ~/.ssh/robot_id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p 10.128.3.101"
         auth: plain-text
         profile: arbor
         prompt: ":.*# "
@@ -188,20 +188,20 @@ access-template:
         profile: vmware-esxi
     jump-smartcs:
         access: jump
-        access_base: telnet
+        access-base: telnet
         auth: plain-text
         profile: default
         prompt: "tty.*> "
-        password_prompt: "Password:"
+        password-prompt: "Password:"
         target: juniper
     jump-cisco-xe:
         access: jump
-        access_base: telnet
+        access-base: telnet
         auth: plain-text
         profile: default
         prompt: ".*(#|>)"
-        login_prompt:
-        password_prompt:
+        login-prompt:
+        password-prompt:
         target: cisco-xe-console
 
 snmp-template:
