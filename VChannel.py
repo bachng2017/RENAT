@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1963 $
+# $Rev: 2009 $
 # $Ver: $
-# $Date: 2019-04-01 09:28:05 +0900 (月, 01  4月 2019) $
+# $Date: 2019-05-06 10:16:36 +0900 (月, 06  5月 2019) $
 # $Author: $
 
 import os,re,sys
@@ -337,7 +337,7 @@ class VChannel(object):
         else:
             _prompt  = '.*'    
         # using strict prompt or not
-        if Common.get_config_value('vchannel','prompt-strict'):
+        if Common.get_config_value('prompt-strict','vchannel',True):
             if _prompt[-1] != '$': _prompt += '$'
 
         _auth  = Common.GLOBAL['auth'][_auth_type][_profile]
