@@ -22,7 +22,7 @@ default:
         height: 1080
 
 vchannel:
-    wait-time-before-close: 1m
+    wait-time-before-close: 5s
     ignore-init-finish: False
     prompt-strict: yes
 
