@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-04-03 07:35:13 +0900 (水, 03  4月 2019) $
-# $Rev: 1972 $
+# $Date: 2019-05-14 13:13:14 +0900 (火, 14  5月 2019) $
+# $Rev: 2013 $
 # $Ver: $
 # $Author: $
 
@@ -930,7 +930,7 @@ def stop_and_save_capture(self,prefix='',wait_until_finish=True,monitor_interval
 
     folder = ix.getAttribute(ix.getRoot()+'/testConfiguration','-resultPath') 
     # temporary folder
-    folder = Common.get_config_value('ixremote-temp') + os.getcwd().replace('/','_')
+    folder = Common.get_config_value('ix-remote-tmp') + '/' + os.getcwd().replace('/','_')
     ix.execute('saveCapture', folder)
    
     count = 0 

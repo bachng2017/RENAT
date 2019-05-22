@@ -17,7 +17,7 @@ node:
 
 # web application setting
 webapp:   
-{%- for app in app_list %}
+{%- for app in web_list %}
     {{ app }}:
         device: {{ app }}
         browser:
@@ -27,7 +27,7 @@ webapp:
 
 # hypervisor setting
 hypervisor:
-{%- for hpv in hpv_list %}
+{%- for hpv in hyper_list %}
    {{ hpv }}: 
         device: {{ hpv }}
 {%- endfor %}

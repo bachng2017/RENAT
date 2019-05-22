@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1973 $
+# $Rev: 2014 $
 # $Ver: $
-# $Date: 2019-04-03 08:18:20 +0900 (水, 03  4月 2019) $
+# $Date: 2019-05-21 15:41:29 +0900 (火, 21  5月 2019) $
 # $Author: $
 
 """ Common library for RENAT
@@ -298,7 +298,7 @@ the test and remove the node from its active node list.
 
 """
 
-ROBOT_LIBRARY_VERSION = 'RENAT 0.1.14'
+ROBOT_LIBRARY_VERSION = 'RENAT 0.1.15'
 
 import os,socket
 import glob,fnmatch

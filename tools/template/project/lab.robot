@@ -7,7 +7,7 @@
 *** Variables ***
 # folder and script for polling process on Apollo
 ${WORKING_FOLDER}           ${HOME}/work
-${POLLING_SCRIPT}           tools/Polling.rb -i 5
+${POLLING_SCRIPT}           /ocn-gin/script/Pooling/Pooling.rb -i 5
 
 *** Setting ***
 Resource                    ${RENAT_PATH}/config/extra.robot

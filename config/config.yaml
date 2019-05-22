@@ -25,6 +25,8 @@ vchannel:
     wait-time-before-close: 5s
     ignore-init-finish: False
     prompt-strict: yes
+    default-login-prompt: "login: "                  <
+    default-password-prompt: "Password:"
 
 extra-lib:
 #    - Tester

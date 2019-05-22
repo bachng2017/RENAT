@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-02-26 23:05:14 +0900 (火, 26  2月 2019) $
-# $Rev: 1855 $
+# $Date: 2019-05-22 05:47:03 +0900 (水, 22  5月 2019) $
+# $Rev: 2022 $
 # $Ver: $
 # $Author: $
 
@@ -62,6 +62,8 @@ def _get_vm(self,vm_name):
         if (vm.name == vm_name):
             target_vm = vm
             break
+    if target_vm is None:
+        raise Exception("ERR: could not find the VM named `%s`" % (vm_name))
     return target_vm
 
 def get_vm_list(self):

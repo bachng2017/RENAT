@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# $Date: 2019-01-28 00:50:29 +0900 (月, 28  1月 2019) $
-# $Rev: 1729 $
+# $Date: 2019-04-19 17:38:37 +0900 (金, 19  4月 2019) $
+# $Rev: 1996 $
 # $Ver: $
 # $Author: $
 # suite run script
@@ -65,7 +65,7 @@ run() {
 
     if [ "$REPORT" == "1" ]; then
         if [ -f $PWD/result/output.xml ]; then
-            COLLECT="$COLLECT $PWD/result/*.xml"
+            COLLECT="$COLLECT $PWD/result/output.xml"
         fi
     else
         if [ -f ./.ignore ]; then
@@ -87,7 +87,7 @@ run() {
                     FAIL_ITEM="$PWD \n$FAIL_ITEM"
                 fi
                 # collect data after run
-                COLLECT="$COLLECT $PWD/result/*.xml"
+                COLLECT="$COLLECT $PWD/result/output.xml"
                 echo "Finished with exit code $CODE"
             fi
         fi
@@ -137,7 +137,7 @@ if [ "$REPORT" != "1" ]; then
                 FAIL_ITEM="${ITEMS[$item]} \n$FAIL_ITEM"
             fi
             # collect data after run
-            COLLECT="$COLLECT ${ITEMS[$item]}/result/*.xml"
+            COLLECT="$COLLECT ${ITEMS[$item]}/result/output.xml"
         done
     fi
     
@@ -152,6 +152,6 @@ fi
 # rebot
 PROJ_NAME=$(basename $PWD)
 echo "make project report for $PROJ_NAME"
-rebot --name $PROJ_NAME  $COLLECT
+rebot --name $PROJ_NAME -L INFO $COLLECT
 exit $RETURN
 

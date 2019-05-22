@@ -13,13 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-04-02 08:19:11 +0900 (火, 02  4月 2019) $
-# $Rev: 1970 $
+# $Date: 2019-05-22 05:47:03 +0900 (水, 22  5月 2019) $
+# $Rev: 2022 $
 # $Ver: $
 # $Author: $
 
 from pyVim.connect import SmartConnect, Disconnect
-import ssl,atexit,codecs
+import ssl,atexit,codecs,re
 import Common
 import SSHLibrary
 import sys,os,glob,inspect
@@ -206,7 +206,8 @@ class Hypervisor(object):
         """
         """
         channel     = self._channels[self._current_name]
-        type_list   = channel['type'].split('_')
+        # type_list   = channel['type'].split('_')
+        type_list   = re.split(r'-|_', channel['type'])
         type_list_length = len(type_list)
 
         mod_name = ''
@@ -217,10 +218,9 @@ class Hypervisor(object):
             mod_name = '_'.join(type_list[0:type_list_length-i])
             try:
                 mod  = import_module('hypervisor_mod.'+ mod_name)
-                if hasattr(mod,mod_cmd):
-                    break
+                if hasattr(mod,mod_cmd): break
             except ImportError:
-                BuiltIn().log("   Could not find `%s`, try another one" % mod_name)
+                BuiltIn().log("    Could not find `%s`, try another one" % mod_name)
 
         BuiltIn().log("    using `%s` mod for command `%s`" %  (mod_name,cmd))
         result = getattr(mod,mod_cmd)(self,*args,**kwargs)

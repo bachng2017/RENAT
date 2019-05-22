@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# $Date: 2019-04-05 10:31:41 +0900 (金, 05  4月 2019) $
-# $Rev: 1982 $
+# $Date: 2019-05-22 05:47:03 +0900 (水, 22  5月 2019) $
+# $Rev: 2022 $
 # $Author: $
 # usage: ./run.sh [-n <num>] <other robot argument>
 # ITEM run script
@@ -215,7 +215,7 @@ run . . > >(tee -a ./run.log) 2>&1
 
 TIME2=$(date +"%s")
 
-### update run database
+### log run information
 MSG="$PWD/$PROG $@"
 if [ -z ${RENAT_BATCH} ]; then
     logger -p local5.info -t "renat[$USER]" $TIME1 $TIME2 $RESULT "$MSG"

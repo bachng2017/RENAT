@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-03-26 04:49:39 +0900 (火, 26  3月 2019) $
-# $Rev: 1923 $
+# $Date: 2019-05-22 05:47:03 +0900 (水, 22  5月 2019) $
+# $Rev: 2022 $
 # $Ver: $
 # $Author: $
 
@@ -139,7 +139,7 @@ class Router(object):
                 if hasattr(mod,mod_cmd):
                     break
             except ImportError:
-                BuiltIn().log("   Could not find `%s`, try another one" % mod_name)
+                BuiltIn().log("    Could not find `%s`, try another one" % mod_name)
 
         BuiltIn().log("    using `%s` mod for command `%s`" %  (mod_name,cmd))
         result = getattr(mod,mod_cmd)(self,*args,**kwargs)

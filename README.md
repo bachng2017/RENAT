@@ -283,7 +283,42 @@ Install a typical Centos7 with following parameters:
     ```
 
     *Note*: the password of this `robot` account is set in the RENAT config file `${RENAT_PATH}/config/config.yaml`
-    
+
+- configure renat log
+    - prepare a log folder
+
+    ```
+    $ mkdir /var/log/renat
+    $ chown root:renat /var/log/renat
+    $ chmod 0775 /var/log/renat
+    ``
+
+    - add setting for renat to the end of `/etc/rsyslog.conf`
+
+    ```
+    # All renat log to same place
+    local5.*                        /var/log/renat/renat.log
+    ```
+
+    - and restart the rsyslog daemon
+
+    ```
+    $ service rsyslog restart
+    ```
+
+    - prepare a logrotate file `/etc/logrotate.d/renat`
+
+    ```
+    /var/log/renat/renat.log {
+        daily
+        rotate 90
+        missingok
+        notifempty
+        copytruncate
+        dateext
+        dateformat %Y-%m-%d
+    }
+    ```
 
 - configure jenkins (optional):
     - Change jenkins listen port `JENNKINS_PORT` to `8002` in file `/etc/sysconfig/jenkins`
