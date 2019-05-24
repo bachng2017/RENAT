@@ -41,7 +41,7 @@ For details about Robot Framework see [RobotFramework](http://www.robotframework
 - [Copying And Copyrights](#copying-and-copyrights)
 - [Thanks](#thanks)
 
-For the impatient users, see [renat by docker](#a-glimpse-of-renat-by-docker) for quick trial.
+For the impatient users, see [renat by docker](#a-glimpse-of-renat-by-docker) for a quick trial.
 
 ## Features
 The framework provides an simple way to conduct Network Automated Testing by using simple scenario
