@@ -41,6 +41,8 @@ For details about Robot Framework see [RobotFramework](http://www.robotframework
 - [Copying And Copyrights](#copying-and-copyrights)
 - [Thanks](#thanks)
 
+For the impatient users, see [renat by docker](#a-glimpse-of-renat-by-docker) for quick trial.
+
 ## Features
 The framework provides an simple way to conduct Network Automated Testing by using simple scenario
 
@@ -486,6 +488,19 @@ Install instructions for CentOS6 Python2.x environment could be found in [here](
 3. Adjust the test enviroment
 
     Configure device and authencation information in `$RENAT_PATH/config/device.yaml` and `$RENAT_PATH/config/auth.yaml` to suite to lab environment.
+
+    The relation between configuration files as follow:
+    
+    ```
+    device.yaml         template.yaml             auth.yaml
+    -------------       ------------------        --------------------
+    type: juniper ----->juniper:
+    ip:x.x.x.x            acess: telnet
+                          auth: plaintext ------->plain-text:
+                          profile: default -------->default:
+                                                      user: <user>
+                                                      pass: <password>
+    ```
 
 
 ## Create scenarios
