@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2014 $
+# $Rev: 2060 $
 # $Ver: $
-# $Date: 2019-05-21 15:41:29 +0900 (火, 21  5月 2019) $
+# $Date: 2019-06-07 12:37:50 +0900 (金, 07  6月 2019) $
 # $Author: $
 
 """ Common library for RENAT
@@ -298,7 +298,7 @@ the test and remove the node from its active node list.
 
 """
 
-ROBOT_LIBRARY_VERSION = 'RENAT 0.1.15'
+ROBOT_LIBRARY_VERSION = 'RENAT 0.1.16'
 
 import os,socket
 import glob,fnmatch
@@ -1235,7 +1235,6 @@ def follow_syslog_and_trap(pattern,log_file_name='syslog-trap.log',delay_str='1s
     vchannel_instance = BuiltIn().get_library_instance('VChannel')
 
     wait_msg = "Waiting for `%s` in file `%s`" % (pattern,log_file_name)
-
     BuiltIn().log_to_console(wait_msg)
     BuiltIn().log(wait_msg)
 
@@ -1586,7 +1585,6 @@ def stop_next_run(msg=u'Case run was stopped by user'):
 # set RF global variables and load libraries
 # in doc create mode, there is not RF context, so we need to bypass the errors
 try:
-    
     BuiltIn().set_global_variable('${GLOBAL}',GLOBAL)
     BuiltIn().set_global_variable('${LOCAL}',LOCAL)
     BuiltIn().set_global_variable('${USER}',USER)
@@ -1609,7 +1607,6 @@ try:
 
     # set log level
     BuiltIn().set_log_level(GLOBAL['default']['log-level'])
-
 except Exception as e:
     # incase need to debug uncomment following
     # raise 

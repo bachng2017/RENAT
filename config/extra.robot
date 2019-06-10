@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# $Date: 2018-11-15 11:32:30 +0900 (木, 15 11月 2018) $
-# $Rev: 1591 $
+# $Date: 2019-06-07 12:37:50 +0900 (金, 07  6月 2019) $
+# $Rev: 2060 $
 # $Ver: $
 # $Author: $
 
@@ -11,6 +11,7 @@ Library                     DateTime
 Library                     OperatingSystem
 Library                     ${RENAT_PATH}/Common.py
 Library                     ${RENAT_PATH}/Tool.py
+Library                     ${RENAT_PATH}/AChannel.py
 Library                     ${RENAT_PATH}/VChannel.py
 Library                     ${RENAT_PATH}/Router.py
 Library                     ${RENAT_PATH}/Logger.py

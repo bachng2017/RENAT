@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-12-17 17:32:09 +0900 (月, 17 12月 2018) $
-# $Rev: 1681 $
+# $Date: 2019-06-10 15:04:52 +0900 (月, 10  6月 2019) $
+# $Rev: 2074 $
 # $Ver: $
 # $Author: $
 
@@ -114,7 +114,8 @@ class Samurai(WebApp):
         self._driver.input_text('name=username', auth['username'])
         self._driver.input_text('name=password', auth['password'])
         self._driver.click_button('name=Submit')
-        time.sleep(5)
+        self._driver.wait_until_page_contains_element("//div[@id='infoarea']")
+        BuiltIn().log("Connected to the application `%s` by name `%s`" % (app,name)) 
     
     
     def reconnect(self):
@@ -130,7 +131,7 @@ class Samurai(WebApp):
         self._driver.input_text('name=username', auth['username'])
         self._driver.input_text('name=password', auth['password'])
         self._driver.click_button('name=Submit')
-        time.sleep(5)
+        self._driver.wait_until_page_contains_element("//div[@id='infoarea']")
         BuiltIn().log("Reconnected to the Samurai application(%s)" % name)
 
 
@@ -146,7 +147,6 @@ class Samurai(WebApp):
         self._driver.input_text('name=password', auth['password'])
         self._driver.click_button('name=Submit')
         self._driver.wait_until_page_contains_element("//div[@id='infoarea']")
-        # self.capture_screenshot() 
         BuiltIn().log("Logged-in the application")
 
     @with_reconnect    
@@ -884,7 +884,7 @@ class Samurai(WebApp):
         | basic_direction | direction of the traffic (``incoming`` or ``outgoing``) | | _incoming_ |
         | traffic_enabled | Enable traffic monitoring or not | yes | _${TRUE}_ or _${FALSE}_ | 
         | detection_enabled | Enable detection or not | yes | _${TRUE}_ or _${FALSE}_ |
-        | detection_direction | change detect direction fo all attack type | ``incomming`,``outgoing``,``both`` || _both:check_ |
+        | detection_direction | change detect direction fo all attack type | ``incomming`,``outgoing``,``both`` | _both:check_ |
         | mitigation_enabled | Enable Mitigation or not | yes | _${TRUE}_ or _${FALSE}_ |
         | mitigation_zone_name | Name of the zone for mitigation | | _zone001_ |
         | mitigation_zone_prefix | Prefixes that could mitigate | | _1.1.1.1/32_ |
@@ -924,6 +924,8 @@ class Samurai(WebApp):
         | ...                   | mitigation_comm_list=1.10(180.0.1.10)/2914:666,1.11(180.0.1.11)/2914:777 |
         | ...                   | event_name=test |        event_addr=user@mail.com |
         | ...                   | view_group=SuperGroup |
+
+        *Note*: when there is no setting, `default values` (depending on the application) will be used.
         """
 
         # menu
@@ -989,11 +991,10 @@ class Samurai(WebApp):
         self._driver.select_radio_button("misuse_enabled_flag",detection_enabled) 
 
         # clear all items by default
-        items = self._driver.get_webelements("//td/input[contains(@id,'available')]")
-        for item in items:
-            self._driver.click_element(item)
         # only check necessary 
         if 'detection_direction' in policy and policy['detection_direction']:
+            items = self._driver.get_webelements("//td/input[contains(@id,'available')]")
+            for item in items: self._driver.unselect_checkbox(item)
             direction_config = policy['detection_direction'].lower()
             for config in direction_config.split(','):
                 tmp = config.strip().split(':')
@@ -1001,15 +1002,20 @@ class Samurai(WebApp):
                 check = tmp[1]
                 if direction == 'incoming':
                     items = self._driver.get_webelements("//td[contains(.,'Incoming')]/input[contains(@id,'available')]")
-                elif direction == 'outgoing':
+                    for item in items:
+                        if check == "check": self._driver.select_checkbox(item)
+                if direction == 'outgoing':
                     items = self._driver.get_webelements("//td[contains(.,'Outgoing')]/input[contains(@id,'available')]")
-                for item in items:
-                    self._driver.click_element(item)
+                    for item in items:
+                        if check == "check": self._driver.select_checkbox(item)
+                if direction == "both":
+                    for item in items:
+                        if check == "check": self._driver.select_checkbox(item)
         self.verbose_capture()
         self._driver.click_button(u"//button[.='次へ']")
 
         # mitigation
-        if policy['mitigation_enabled']: mitigation_enabled = 'true'
+        mitigation_enabled =  'mitigation_enabled' in policy and policy['mitigation_enabled']
         if mitigation_enabled == 'true':
             BuiltIn().log("### Mitigation setting ###")
             self.verbose_capture()

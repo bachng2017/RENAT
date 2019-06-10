@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# $Date: 2019-03-29 07:41:02 +0900 (金, 29  3月 2019) $
-# $Rev: 1936 $
+# $Date: 2019-06-10 15:05:55 +0900 (月, 10  6月 2019) $
+# $Rev: 2075 $
 # $Ver: $
 # $Author: $
 
@@ -107,6 +107,7 @@ Lab Setup
     ${HAS_CLEAN}=           Get Variable Value  ${CLEAN}
     Run Keyword If          "${HAS_CLEAN}"!="None"             CleanUp Result
 
+    # connect to all nodes
     VChannel.Connect All
 
     # initialize extra libraries

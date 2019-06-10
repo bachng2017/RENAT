@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-02-18 04:46:17 +0900 (月, 18  2月 2019) $
-# $Rev: 1797 $
+# $Date: 2019-06-07 12:37:50 +0900 (金, 07  6月 2019) $
+# $Rev: 2060 $
 # $Ver: $
 # $Author: $
 
@@ -56,12 +56,6 @@ class Logger(object):
         | Logger.`Switch` | vmx11 |
         """
         self._vchannel.switch(name) 
-    #    buffer = self._vchannel.read()
-    #    channel = self._vchannel.get_current_channel()
-    #    channel['logger'].write(buffer)
-    #    channel['logger'].flush()
-    #    self._vchannel.write(self._vchannel.read())
-
 
     def log(self,msg,with_time=False,mark="***"):
         """ Inserts a message ``msg`` to the current `VChannel` log file. 

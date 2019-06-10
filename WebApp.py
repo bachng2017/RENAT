@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-04-03 16:21:19 +0900 (水, 03  4月 2019) $
-# $Rev: 1974 $
+# $Date: 2019-06-10 15:04:52 +0900 (月, 10  6月 2019) $
+# $Rev: 2074 $
 # $Ver: $
 # $Author: $
 
@@ -44,13 +44,11 @@ def _with_reconnect(keyword, self, *args, **kwargs):
             logout_count = int(self._driver.get_matching_xpath_count("//h1[.='Timeout']"))
             BuiltIn().log("Found `%d` match for Timeout" % logout_count)
             if logout_count == 0: # this is not time out    
+                BuiltIn().log("ERR: unexpected error occurs. Not a timeout event")
                 BuiltIn().log(Common.newline, console = True)
                 BuiltIn().log_to_console(err)
-                BuiltIn().log(Common.newline + "Detail:", console = True)
-                msg= self._driver.get_text('my_contents')
                 BuiltIn().log(msg,console=True)
                 raise
-
             count += 1
             if count < max_count:
                 BuiltIn().log('WARN: Failed to execute the keyword `%s` %d time(s)'  % (keyword.__name__,count))
