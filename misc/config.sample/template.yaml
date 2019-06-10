@@ -1,0 +1,235 @@
+# $Rev: 2072 $
+# $Date: 2019-06-08 13:07:43 +0900 (土, 08  6月 2019) $
+# $Author: $
+
+access-template:
+    ssh-host:
+        access: ssh
+        auth: public-key
+        profile: default
+        prompt: "@.*(>|\\$) "
+        init: 
+            - unalias -a
+        finish:
+            - exit
+    ssh-host-proxy:
+        access: ssh
+        proxy-cmd: "/usr/bin/ssh -l robot -i ~/.ssh/robot_id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p 10.128.3.101"
+        auth: public-key
+        profile: default
+        prompt: "@.*(>|\\$) "
+        init: 
+            - unalias -a
+        finish:
+            - exit
+    juniper-withpage:
+        access: telnet
+        auth: plain-text 
+        profile: default
+        prompt: "@.*(#|>) " 
+    juniper:
+        access: telnet
+        auth: plain-text 
+        profile: default
+        prompt: "@.*(#|>) " 
+        init: 
+            - set cli idle-timeout 0 
+            - set cli screen-length 0
+    cisco:
+        access: telnet
+        auth: plain-text
+        profile: default
+        prompt: ".*(#|>)"
+        login-prompt:    "Username: "
+        password-prompt: "Password: "
+        init:
+            - terminal length 0
+        finish:
+            - quit
+    cisco-xe:
+        access: telnet
+        auth: plain-text
+        profile: default
+        prompt: ".*(#|>)"
+        login-prompt:    "Username: "
+        password-prompt: "Password: "
+        init:
+            - terminal length 0
+        finish:
+            - quit
+    cisco-ssh:
+        access: ssh
+        auth: plain-text
+        profile: default
+        prompt: "@.*(#|>) "
+        init:
+            - terminal length 0
+    gr:
+        access: telnet
+        auth: plain-text
+        profile: flets
+        prompt: ".*(#|>) " 
+        init: 
+            - set terminal pager disable
+    alcatel:
+        access: telnet
+        auth: plain-text
+        profile: default 
+        prompt: ":.*(#|>|\\$) " 
+        login-prompt: "Login:"
+        password-prompt: "Password:"
+        init:
+            - environment no more
+    samurai:
+        access: webapp
+        auth: plain-text
+        profile: samurai
+    samurai-cli:
+        access: ssh
+        auth: plain-text
+        profile: samurai-cli
+        prompt: "@.*(#) "
+        init: 
+            - unalias -a
+    arbor-sp:
+        access: webapp
+        auth: plain-text
+        profile: arbor
+    arbor-tms:
+        access: webapp
+        auth: plain-text
+        profile: arbor
+    smartcs:
+        access: telnet
+        auth: plain-text
+        profile: default
+        prompt: ".*(#|>) "
+        init:
+    apresia-l2:
+        access: telnet
+        auth: plain-text
+        profile: ap-sw
+        prompt: ".*(#|>) "
+        login-prompt:
+        password-prompt: "login:"
+        init:
+            - "\n"
+    yamaha-l2:
+        access: telnet
+        auth: plain-text
+        profile: ymh
+        prompt: ".*(#|>) "
+        login-prompt:
+        password-prompt: "Password:"
+        init:
+    arbor-sp-cli:
+        access: ssh
+        proxy-cmd: "/usr/bin/ssh -l robot -i ~/.ssh/robot_id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p 10.128.3.101"
+        auth: plain-text
+        profile: arbor
+        prompt: "(:.*#|DIAG>) "
+        init:
+    arbor-vsp-cli:
+        access: ssh
+        proxy-cmd: "/usr/bin/ssh -l robot -i ~/.ssh/robot_id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p 10.128.3.101"
+        auth: plain-text
+        profile: arbor
+        prompt: "(:.*#|DIAG>|\\? \\[y\\]) "
+        init:
+        finish:
+            - exit
+    arbor-tms-cli:
+        access: ssh
+        proxy-cmd: "/usr/bin/ssh -l robot -i ~/.ssh/robot_id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p 10.128.3.101"
+        auth: plain-text
+        profile: arbor
+        prompt: ":.*# "
+        init:
+        finish:
+            - exit
+    arbor-tms-hd1000-cli:
+        access: ssh
+        proxy-cmd: "/usr/bin/ssh -l robot -i ~/.ssh/robot_id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p 10.128.3.101"
+        auth: plain-text
+        profile: arbor
+        prompt: ":.*# "
+        init:
+        finish:
+            - exit
+    sandvine-spb:
+        access: ssh
+        auth: plain-text
+        profile: sandvine-spb
+        prompt: ".*(#|>) "
+        init:
+            -   svcli
+    sandvine-sde:
+        access: ssh
+        auth: plain-text
+        profile: sandvine-sde
+        prompt: ".*(#|>) "
+        init:
+            -   svcli
+    sandvine-pts:
+        access: ssh
+        auth: plain-text
+        profile: sandvine-pts
+        prompt: ".*($|>) "
+        init:
+            -   svcli
+    telnet-host:
+        access: telnet
+        auth: plain-text
+        profile: default
+        prompt: ".*(#|$) "
+    vmware:
+        access: vmware
+        auth: plain-text
+        profile: vmware-esxi
+    jump-smartcs:
+        access: jump
+        access-base: telnet
+        auth: plain-text
+        profile: default
+        prompt: "tty.*> "
+        password-prompt: "Password:"
+        target: juniper
+    jump-cisco-xe:
+        access: jump
+        access-base: telnet
+        auth: plain-text
+        profile: default
+        prompt: ".*(#|>)"
+        login-prompt:
+        password-prompt:
+        target: cisco-xe-console
+
+snmp-template:
+       juniper:
+            mib: /ocn-gin/script/Pooling/mib-Juniper.json
+            community: public
+            poller: apollo
+       cisco:
+            mib: /ocn-gin/script/Pooling/mib-Cisco.json
+            community: public
+            poller: apollo
+       arbor-sp-cli:
+            mib: /ocn-gin/script/Pooling/mib-PEAKFLOW-SP.json
+            community: public
+            poller: apollo
+       arbor-tms-cli:
+            mib: /ocn-gin/script/Pooling/mib-PEAKFLOW-TMS.json
+            community: public
+            poller: apollo
+       arbor-vsp-cli:
+            mib: /ocn-gin/script/Pooling/mib-PEAKFLOW-vSP.json
+            community: public
+            poller: apollo
+       arbor-tms-hd1000-cli:
+            mib: /ocn-gin/script/Pooling/mib-PEAKFLOW-TMS-HD1000-10G.json
+            community: public
+            poller: apollo
+       alcatel:
+            mib: /ocn-gin/script/Pooling/mib-AlcatelSR7.json
+            community: public
+            poller: apollo
