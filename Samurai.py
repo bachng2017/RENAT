@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-06-10 15:04:52 +0900 (月, 10  6月 2019) $
-# $Rev: 2074 $
+# $Date: 2019-07-25 23:50:10 +0900 (木, 25 7 2019) $
+# $Rev: 2101 $
 # $Ver: $
 # $Author: $
 
@@ -70,31 +70,11 @@ class Samurai(WebApp):
         self._type = 'samurai'
 
 
-    def connect_all(self):
-        """ Connects to all applications defined in ``local.yaml``
-
-        The name of the connection will be the same of the `webapp` name
-        """
-
-        num = 0
-        if 'webapp' in Common.LOCAL and Common.LOCAL['webapp']:
-            for entry in Common.LOCAL['webapp']:
-                device = Common.LOCAL['webapp'][entry]['device']
-                type = Common.GLOBAL['device'][device]['type']
-                if type.startswith('samurai'):
-                    num += 1
-                    self.connect(entry,entry)
-                    BuiltIn().log("Connected to %d applications" % num)
-        else:
-            BuiltIn().log("WARNING: No application to connect")
-
-
-
     def connect(self,app,name):
         """ Opens a web browser and connects to application and assigns a
         ``name``.
 
-        - `app` is the name of the application (e.ge. samurai-1)
+        - `app` is the name of the application (e.g. samurai-1)
         - `name` is the name of the browser 
         
         If not defined in ``local.yaml`` those following key will have defaut
@@ -110,11 +90,11 @@ class Samurai(WebApp):
         self.open_ff_with_profile(app,name)
         # login
         auth = self._browsers[name]['auth']
-        self._driver.wait_until_element_is_visible('name=username')
-        self._driver.input_text('name=username', auth['username'])
-        self._driver.input_text('name=password', auth['password'])
-        self._driver.click_button('name=Submit')
-        self._driver.wait_until_page_contains_element("//div[@id='infoarea']")
+        self._selenium.wait_until_element_is_visible('name=username')
+        self._selenium.input_text('name=username', auth['username'])
+        self._selenium.input_text('name=password', auth['password'])
+        self._selenium.click_button('name=Submit')
+        self._selenium.wait_until_page_contains_element("//div[@id='infoarea']")
         BuiltIn().log("Connected to the application `%s` by name `%s`" % (app,name)) 
     
     
@@ -124,14 +104,14 @@ class Samurai(WebApp):
         name = self._current_name
         auth            = self._browsers[name]['auth']
         url             = self._browsers[name]['url']
-        self._driver.go_to(url)
-        self._driver.wait_until_element_is_visible('name=username')
+        self._selenium.go_to(url)
+        self._selenium.wait_until_element_is_visible('name=username')
         
         # login
-        self._driver.input_text('name=username', auth['username'])
-        self._driver.input_text('name=password', auth['password'])
-        self._driver.click_button('name=Submit')
-        self._driver.wait_until_page_contains_element("//div[@id='infoarea']")
+        self._selenium.input_text('name=username', auth['username'])
+        self._selenium.input_text('name=password', auth['password'])
+        self._selenium.click_button('name=Submit')
+        self._selenium.wait_until_page_contains_element("//div[@id='infoarea']")
         BuiltIn().log("Reconnected to the Samurai application(%s)" % name)
 
 
@@ -143,10 +123,10 @@ class Samurai(WebApp):
         """
         self.switch(self._current_name) 
         # login
-        self._driver.input_text('name=username', auth['username'])
-        self._driver.input_text('name=password', auth['password'])
-        self._driver.click_button('name=Submit')
-        self._driver.wait_until_page_contains_element("//div[@id='infoarea']")
+        self._selenium.input_text('name=username', auth['username'])
+        self._selenium.input_text('name=password', auth['password'])
+        self._selenium.click_button('name=Submit')
+        self._selenium.wait_until_page_contains_element("//div[@id='infoarea']")
         BuiltIn().log("Logged-in the application")
 
     @with_reconnect    
@@ -155,8 +135,8 @@ class Samurai(WebApp):
         """
     
         self.switch(self._current_name) 
-        self._driver.click_link('logout')
-        self._driver.page_should_contain_image('image/logout_10.gif')
+        self._selenium.click_link('logout')
+        self._selenium.page_should_contain_image('image/logout_10.gif')
 
         BuiltIn().log("Exited samurai application")
    
@@ -184,16 +164,14 @@ class Samurai(WebApp):
         """
         
         self.switch(self._current_name) 
-        self._driver.select_window('MAIN')
+        self._selenium.select_window('MAIN')
 
-        target = self._driver.get_webelement(u'//div[@class="submenu" and contains(.,"%s")]' % menu)
+        target = self._selenium.get_webelement(u'//div[@class="submenu" and contains(.,"%s")]' % menu)
         id = target.get_attribute('id')
         if not target.is_displayed():
-            self._driver.execute_javascript("toggle_disp('%s','mitigation')" % id)
-        self._driver.click_link(menu)
-        self._driver.wait_until_element_is_visible("id=my_contents")
-        # self._driver.wait_until_page_contains_element("infoareain")
-        # get item list (the 1st meaningful column)
+            self._selenium.execute_javascript("toggle_disp('%s','mitigation')" % id)
+        self._selenium.click_link(menu)
+        self._selenium.wait_until_element_is_visible("id=my_contents")
 
         item_list = []
         if locator:
@@ -206,8 +184,7 @@ class Samurai(WebApp):
             else:
                 xpath = locator
             try:
-                # item_list = map(lambda x:x.text,self._driver.get_webelements(xpath))
-                item_list = [ x.text for x in self._driver.get_webelements(xpath) ]
+                item_list = [ x.text for x in self._selenium.get_webelements(xpath) ]
             except Exception:
                 pass 
         
@@ -236,52 +213,52 @@ class Samurai(WebApp):
         """
         self.switch(self._current_name)
 
-        menu = self._driver.get_webelement(u'//div[@id="submenu3"]')
+        menu = self._selenium.get_webelement(u'//div[@id="submenu3"]')
         if not menu.is_displayed():
             BuiltIn().log('Executing the javascript to expand the left menu')
-            self._driver.execute_javascript("toggle_disp('submenu3','mitigation')")
+            self._selenium.execute_javascript("toggle_disp('submenu3','mitigation')")
             BuiltIn().log('Executed the javascript to expand the left menu')
         # self.capture_screenshot()
-        self._driver.wait_until_page_contains_element(u"//a[contains(.,'Active Mitigation')]")
-        self._driver.click_link("Active Mitigation")
-        self._driver.wait_until_page_contains_element(u"//input[@value='Guard実行']")
-        self._driver.click_button(u"//input[@value='Guard実行']")
+        self._selenium.wait_until_page_contains_element(u"//a[contains(.,'Active Mitigation')]")
+        self._selenium.click_link("Active Mitigation")
+        self._selenium.wait_until_page_contains_element(u"//input[@value='Guard実行']")
+        self._selenium.click_button(u"//input[@value='Guard実行']")
         time.sleep(5)
 
         # IP input
-        self._driver.select_window(u"title=Mitigation登録 IPアドレスの決定") 
-        self._driver.select_from_list_by_label("gui_policy",policy)
-        self._driver.input_text("name=address",prefix)
-        self._driver.click_button(u"//input[@value='追加']")
+        self._selenium.select_window(u"title=Mitigation登録 IPアドレスの決定") 
+        self._selenium.select_from_list_by_label("gui_policy",policy)
+        self._selenium.input_text("name=address",prefix)
+        self._selenium.click_button(u"//input[@value='追加']")
 
         # device check
-        self._driver.element_should_not_be_visible(u"//span[contains(.,'有効な mitigation デバイスがありません')]")
+        self._selenium.element_should_not_be_visible(u"//span[contains(.,'有効な mitigation デバイスがありません')]")
 
         # device selection
-        title = self._driver.get_title()
+        title = self._selenium.get_title()
         if title == u"Mitigation 登録 Mitigation Device決定" :
             if device:
-                value = self._driver.get_value("//tr[contains(.,'%s')]/td[1]/input" % device)
-                self._driver.select_radio_button("device_id",value)
+                value = self._selenium.get_value("//tr[contains(.,'%s')]/td[1]/input" % device)
+                self._selenium.select_radio_button("device_id",value)
             BuiltIn().log("Chose device `%s`" % device)
-            self._driver.click_button(u"Mitigation Device 決定") 
+            self._selenium.click_button(u"Mitigation Device 決定") 
 
         # comment input
-        applied_device = self._driver.get_text(u"//td[.='Mitigation デバイス']/../td[2]")
+        applied_device = self._selenium.get_text(u"//td[.='Mitigation デバイス']/../td[2]")
         if force and device not in applied_device:
             raise("Selected device is `%s` which does not contain `%s`" % (applied_device,device))
        
-        self._driver.input_text("name=comment",comment)
+        self._selenium.input_text("name=comment",comment)
 
         # execute
-        self._driver.click_button(u"//input[@value='Mitigation 実行']")
-        id = self._driver.get_text("xpath=//*[text()[contains(.,'Mitigation ID')]]")
+        self._selenium.click_button(u"//input[@value='Mitigation 実行']")
+        id = self._selenium.get_text("xpath=//*[text()[contains(.,'Mitigation ID')]]")
         search = re.search(".*:(.+) .*$", id)
         result = search.group(1)
         
-        self._driver.click_button(u"//input[@value='閉じる']")
-        self._driver.select_window("title= Active Mitigation") 
-        self._driver.reload_page()
+        self._selenium.click_button(u"//input[@value='閉じる']")
+        self._selenium.select_window("title= Active Mitigation") 
+        self._selenium.reload_page()
         time.sleep(5)
         
         BuiltIn().log("Started a new mitigation id=`%s` by device `%s`" % (result,applied_device))
@@ -301,15 +278,15 @@ class Samurai(WebApp):
 
         self.switch(self._current_name)
         self.left_menu(u"Active Mitigation")
-        self._driver.wait_until_page_contains(u"Active Mitigation")
+        self._selenium.wait_until_page_contains(u"Active Mitigation")
 
         try:
-            self._driver.select_window("title= Active Mitigation") 
-            self._driver.reload_page()
-            self._driver.wait_until_element_is_visible("infoarea")
-            self._driver.click_button(u"//input[@onclick='delete_confirm(%s);']" % id)
-            self._driver.confirm_action()
-            self._driver.wait_until_element_is_visible(u"//span[contains(.,'削除を開始しました')]")
+            self._selenium.select_window("title= Active Mitigation") 
+            self._selenium.reload_page()
+            self._selenium.wait_until_element_is_visible("infoarea")
+            self._selenium.click_button(u"//input[@onclick='delete_confirm(%s);']" % id)
+            self._selenium.confirm_action()
+            self._selenium.wait_until_element_is_visible(u"//span[contains(.,'削除を開始しました')]")
             BuiltIn().log("Stopped the mitigation id=%s" % id)
         except Exception as err:
             if raise_error:
@@ -343,25 +320,25 @@ class Samurai(WebApp):
             self.left_menu(u"ユーザ管理(自グループ)")
         else:
             self.left_menu(u"ユーザ管理(他グループ)") 
-            self._driver.select_from_list_by_label("policy_group_id", group)
+            self._selenium.select_from_list_by_label("policy_group_id", group)
    
-        self._driver.wait_until_page_contains_element(u"//input[@value='ユーザの追加']") 
-        self._driver.click_button(u"//input[@value='ユーザの追加']")  
-        self._driver.input_text("user_name",user_info['name'])
-        self._driver.input_text("password1",user_info['password'])
-        self._driver.input_text("password2",user_info['password'])
-        self._driver.select_from_list("privilege_group_id",user_info["privilege"])
+        self._selenium.wait_until_page_contains_element(u"//input[@value='ユーザの追加']") 
+        self._selenium.click_button(u"//input[@value='ユーザの追加']")  
+        self._selenium.input_text("user_name",user_info['name'])
+        self._selenium.input_text("password1",user_info['password'])
+        self._selenium.input_text("password2",user_info['password'])
+        self._selenium.select_from_list("privilege_group_id",user_info["privilege"])
         policy = '' 
         if 'policy' in user_info:
             policy = user_info['policy']
             if policy == '*':
-                self._driver.execute_javascript("change_all_check_box(document.FORM1.policy_id, true)")
+                self._selenium.execute_javascript("change_all_check_box(document.FORM1.policy_id, true)")
             else:
                 for entry in [x.strip() for x in policy.split(',')] :
-                    self._driver.select_checkbox(u"//label[contains(.,'%s')]/../input" % entry) 
+                    self._selenium.select_checkbox(u"//label[contains(.,'%s')]/../input" % entry) 
         #
-        self._driver.click_button(u"//button[contains(.,'追加')]")
-        self._driver.wait_until_page_contains_element(u"//span[contains(.,'ユーザを追加しました')]")
+        self._selenium.click_button(u"//button[contains(.,'追加')]")
+        self._selenium.wait_until_page_contains_element(u"//span[contains(.,'ユーザを追加しました')]")
         BuiltIn().log("Added user `%s`" % user_info['name']) 
         
 
@@ -381,14 +358,14 @@ class Samurai(WebApp):
             self.left_menu(u"ユーザ管理(自グループ)")
         else:
             self.left_menu(u"ユーザ管理(他グループ)") 
-            self._driver.select_from_list_by_label("policy_group_id", group)
+            self._selenium.select_from_list_by_label("policy_group_id", group)
         
-        self._driver.wait_until_page_contains(u"ユーザ管理")
+        self._selenium.wait_until_page_contains(u"ユーザ管理")
         items,selected_items = self.select_items_in_table("//tr/td[3]","../td[1]",*user_list)
         if len(selected_items) > 0:
-            self._driver.click_button(u"//input[@value='削除']")
-            self._driver.confirm_action()
-            self._driver.wait_until_page_contains_element(u"//span[contains(.,'ユーザを削除しました')]")
+            self._selenium.click_button(u"//input[@value='削除']")
+            self._selenium.confirm_action()
+            self._selenium.wait_until_page_contains_element(u"//span[contains(.,'ユーザを削除しました')]")
 
         BuiltIn().log("Deleted %d user" % len(selected_items))
         return len(selected_items)    
@@ -402,7 +379,7 @@ class Samurai(WebApp):
         Items name found by ``xpath`` are used as keys
         """
         BuiltIn().log("Making item map by xpath `%s`" % xpath)
-        items = self._driver.get_webelements(xpath)
+        items = self._selenium.get_webelements(xpath)
         item_map = {}
         for item in items:
             html = item.get_attribute('outerHTML')
@@ -450,7 +427,7 @@ class Samurai(WebApp):
        
         tmp = item_list[0].split(',') 
         if tmp[0] == '*':
-            self._driver.click_link(u"すべてを選択")
+            self._selenium.click_link(u"すべてを選択")
             count = len(item_map)
             result_map = item_map
             for key in result_map:
@@ -488,17 +465,17 @@ class Samurai(WebApp):
             target = result_map[item].find_element_by_xpath(xpath2) 
             action = action_map[item]
             if action == 'click':       
-                self._driver.click_element(target)
+                self._selenium.click_element(target)
                 BuiltIn().log("    Clicked the item")
             if action == 'check':       
                 if not target.is_selected():
-                    self._driver.click_element(target)
+                    self._selenium.click_element(target)
                     BuiltIn().log("    Checked the item")
                 else:
                     BuiltIn().log("    Item is already checked")
             if action == 'uncheck':       
                 if target.is_selected():
-                    self._driver.click_element(target)
+                    self._selenium.click_element(target)
                     BuiltIn().log("    Unchecked the item")
                 else:
                     BuiltIn().log("    Item is already unchecked")
@@ -514,15 +491,15 @@ class Samurai(WebApp):
 #        panel is found.
 #        """
 #        self.left_menu(u"ポリシー管理")
-#        self._driver.wait_until_page_contains_element("//input[@id='filter']")
-#        self._driver.input_text("filter",policy_name)
+#        self._selenium.wait_until_page_contains_element("//input[@id='filter']")
+#        self._selenium.input_text("filter",policy_name)
 #        time.sleep(self._ajax_wait)
 #        item_map = self.make_item_map("//tr/td[3]/div")
 #        item = item_map[policy_name]
 #        button = item.find_element_by_xpath(u"../../td/div/input[@title='編集']")
-#        self._driver.wait_until_page_contains_element(button)
-#        self._driver.click_element(button)
-#        self._driver.wait_until_page_contains_element(u"//button[.='変更']")
+#        self._selenium.wait_until_page_contains_element(button)
+#        self._selenium.click_element(button)
+#        self._selenium.wait_until_page_contains_element(u"//button[.='変更']")
 #
 #        if panel_name == u'基本設定':
 #            panel_xpath = u"//span[starts-with(@class,'submenu_')]//span[normalize-space(.)='%s']" % panel_name
@@ -530,14 +507,14 @@ class Samurai(WebApp):
 #            panel_xpath = u"//a[starts-with(@class,'submenu_')]//span[normalize-space(.)='%s']" % panel_name
 #            
 #        if strict:
-#            self._driver.wait_until_page_contains_element(xpath)
+#            self._selenium.wait_until_page_contains_element(xpath)
 #        if panel_name != u'基本設定':
-#            count = self._driver.get_element_count(panel_xpath)
+#            count = self._selenium.get_element_count(panel_xpath)
 #            if count > 0:
 #                self.verbose_capture()
-#                self._driver.click_element(panel_xpath) 
+#                self._selenium.click_element(panel_xpath) 
 #                time.sleep(1)
-#                self._driver.wait_until_page_contains_element(u"//div[@id='operationarea2']")
+#                self._selenium.wait_until_page_contains_element(u"//div[@id='operationarea2']")
 #                self.verbose_capture()
 #        BuiltIn().log('Showed policy edit panel `%s`' % panel_name)
 
@@ -550,16 +527,16 @@ class Samurai(WebApp):
         result.
         """
         self.left_menu(u"ポリシー管理")
-        self._driver.wait_until_page_contains_element("//input[@id='filter']")
-        self._driver.input_text("filter",policy_name)
+        self._selenium.wait_until_page_contains_element("//input[@id='filter']")
+        self._selenium.input_text("filter",policy_name)
         time.sleep(self._ajax_wait)
         item_map = self.make_item_map("//tr/td[3]/div")
         item = item_map[policy_name]
         button = item.find_element_by_xpath(u"../../td/div/input[@title='編集']")
-        self._driver.wait_until_page_contains_element(button)
-        self._driver.click_element(button)
+        self._selenium.wait_until_page_contains_element(button)
+        self._selenium.click_element(button)
         time.sleep(1)
-        self._driver.wait_until_page_contains_element(u"//button[.='キャンセル']")
+        self._selenium.wait_until_page_contains_element(u"//button[.='キャンセル']")
         self.verbose_capture()
         BuiltIn().log("Showed `basic setting` panel of the policy `%s`" % policy_name)
 
@@ -573,10 +550,10 @@ class Samurai(WebApp):
         """
         self.show_policy_basic(policy_name)
         panel_xpath = u"//a[starts-with(@class,'submenu_')]//span[normalize-space(.)='%s']" % u"Traffic設定"
-        self._driver.wait_until_page_contains_element(panel_xpath)
-        self._driver.click_element(panel_xpath)
+        self._selenium.wait_until_page_contains_element(panel_xpath)
+        self._selenium.click_element(panel_xpath)
         time.sleep(1)
-        self._driver.wait_until_page_contains_element(u"//button[.='キャンセル']")
+        self._selenium.wait_until_page_contains_element(u"//button[.='キャンセル']")
         self.verbose_capture()
         BuiltIn().log("Showed `traffic setting` panel of the policy `%s`" % policy_name)
 
@@ -587,10 +564,10 @@ class Samurai(WebApp):
         """
         self.show_policy_basic(policy_name)
         panel_xpath = u"//a[starts-with(@class,'submenu_')]//span[normalize-space(.)='%s']" % u"Detection設定"
-        self._driver.wait_until_page_contains_element(panel_xpath)
-        self._driver.click_element(panel_xpath)
+        self._selenium.wait_until_page_contains_element(panel_xpath)
+        self._selenium.click_element(panel_xpath)
         time.sleep(1)
-        self._driver.wait_until_page_contains_element(u"//button[.='キャンセル']")
+        self._selenium.wait_until_page_contains_element(u"//button[.='キャンセル']")
         self.verbose_capture()
         BuiltIn().log("Showed `detection setting` panel of the policy `%s`" % policy_name)
     
@@ -602,10 +579,10 @@ class Samurai(WebApp):
         """
         self.show_policy_basic(policy_name)
         panel_xpath = u"//a[starts-with(@class,'submenu_')]//span[normalize-space(.)='%s']" % u"Mitigation設定"
-        self._driver.wait_until_page_contains_element(panel_xpath)
-        self._driver.click_element(panel_xpath)
+        self._selenium.wait_until_page_contains_element(panel_xpath)
+        self._selenium.click_element(panel_xpath)
         time.sleep(1)
-        self._driver.wait_until_page_contains_element(u"//button[.='キャンセル']")
+        self._selenium.wait_until_page_contains_element(u"//button[.='キャンセル']")
         self.verbose_capture()
         BuiltIn().log("Showed mitigation setting of the policy `%s`" % policy_name)
 
@@ -622,19 +599,19 @@ class Samurai(WebApp):
         self.show_policy_basic(policy_name)
         panel_xpath = u"//a[starts-with(@class,'submenu_')]//span[normalize-space(.)='%s']" % u"TMS MO設定"
         if strict:
-            self._driver.wait_until_page_contains_element(panel_xpath)
-        count = self._driver.get_element_count(panel_xpath)
+            self._selenium.wait_until_page_contains_element(panel_xpath)
+        count = self._selenium.get_element_count(panel_xpath)
         if count > 0:
-            self._driver.click_element(panel_xpath)
+            self._selenium.click_element(panel_xpath)
             time.sleep(1)
-            self._driver.wait_until_page_contains_element(u"//button[.='キャンセル']")
-            # self._driver.wait_until_page_contains(u"TMS Managed Object設定")
+            self._selenium.wait_until_page_contains_element(u"//button[.='キャンセル']")
+            # self._selenium.wait_until_page_contains(u"TMS Managed Object設定")
             # not all device information is expanded yet
-            mo_info = self._driver.get_webelements(u"//div[starts-with(@id,'mo_')]")
+            mo_info = self._selenium.get_webelements(u"//div[starts-with(@id,'mo_')]")
             for item in mo_info:
                 id = item.get_attribute('id')
                 if not item.is_displayed():
-                    self._driver.execute_javascript("toggle_disp('%s','%s_img')" % (id,id))
+                    self._selenium.execute_javascript("toggle_disp('%s','%s_img')" % (id,id))
             self.verbose_capture()
             BuiltIn().log("Showed mitigation setting of the policy `%s`" % policy_name)
         else:
@@ -647,10 +624,10 @@ class Samurai(WebApp):
         """
         self.show_policy_basic(policy_name)
         panel_xpath = u"//a[starts-with(@class,'submenu_')]//span[normalize-space(.)='%s']" % u"イベント通知設定"
-        self._driver.wait_until_page_contains_element(panel_xpath)
-        self._driver.click_element(panel_xpath)
+        self._selenium.wait_until_page_contains_element(panel_xpath)
+        self._selenium.click_element(panel_xpath)
         time.sleep(1)
-        self._driver.wait_until_page_contains_element(u"//input[@value='キャンセル']")
+        self._selenium.wait_until_page_contains_element(u"//input[@value='キャンセル']")
         self.verbose_capture()
         BuiltIn().log("Showed NW monitoring setting of the policy `%s`" % policy_name)
 
@@ -671,13 +648,13 @@ class Samurai(WebApp):
         self.show_policy_basic(policy_name)
         panel_xpath = u"//a[starts-with(@class,'submenu_')]//span[normalize-space(.)='%s']" % u"NW 監視設定"
         if strict:
-            self._driver.wait_until_page_contains_element(panel_xpath)
-        count = self._driver.get_element_count(panel_xpath)
+            self._selenium.wait_until_page_contains_element(panel_xpath)
+        count = self._selenium.get_element_count(panel_xpath)
         if count > 0:
-            self._driver.wait_until_page_contains_element(panel_xpath)
-            self._driver.click_element(panel_xpath)
+            self._selenium.wait_until_page_contains_element(panel_xpath)
+            self._selenium.click_element(panel_xpath)
             time.sleep(1)
-            self._driver.wait_until_page_contains_element(u"//button[.='キャンセル']")
+            self._selenium.wait_until_page_contains_element(u"//button[.='キャンセル']")
             self.verbose_capture()
             BuiltIn().log("Showed NW monitoring setting of the policy `%s`" % policy_name)
         else:
@@ -694,10 +671,10 @@ class Samurai(WebApp):
         """
         self.show_policy_basic(policy_name)
         panel_xpath = u"//a[starts-with(@class,'submenu_')]//span[normalize-space(.)='%s']" % u"閲覧設定"
-        self._driver.wait_until_page_contains_element(panel_xpath)
-        self._driver.click_element(panel_xpath)
+        self._selenium.wait_until_page_contains_element(panel_xpath)
+        self._selenium.click_element(panel_xpath)
         time.sleep(1)
-        self._driver.wait_until_page_contains_element(u"//button[.='キャンセル']")
+        self._selenium.wait_until_page_contains_element(u"//button[.='キャンセル']")
         self.verbose_capture()
         BuiltIn().log("Showed NW monitoring setting of the policy `%s`" % policy_name)
 
@@ -716,14 +693,14 @@ class Samurai(WebApp):
         self.show_policy_basic(policy_name)
         if 'basic_alias' in policy:
             changing = True
-            self._driver.input_text("alias_name1", policy['basic_alias'])
+            self._selenium.input_text("alias_name1", policy['basic_alias'])
         if 'basic_cidr_list' in policy:
             changing = True
             cidr_list = [x.strip() for x in policy['basic_cidr_list'].split(',')]
-            self._driver.input_text("detection_cidr", '\n'.join(cidr_list))
+            self._selenium.input_text("detection_cidr", '\n'.join(cidr_list))
         if 'basic_option_filter' in policy:
             changing = True
-            self._driver.input_text("option_filter", policy['basic_option_filter'])
+            self._selenium.input_text("option_filter", policy['basic_option_filter'])
             time.sleep(self._ajax_wait)
         if 'basic_direction' in policy:
             changing = True
@@ -731,12 +708,12 @@ class Samurai(WebApp):
                 basic_direction = 'Incoming'
             else:
                 basic_direction = 'Outgoing'
-            self._driver.select_from_list_by_label("direction",basic_direction)
+            self._selenium.select_from_list_by_label("direction",basic_direction)
         if changing:
             self.verbose_capture()
-            self._driver.click_button("submitbutton")
-            self._driver.wait_until_page_contains_element(u"//input[@value='戻る']")
-            self._driver.click_button(u'戻る')
+            self._selenium.click_button("submitbutton")
+            self._selenium.wait_until_page_contains_element(u"//input[@value='戻る']")
+            self._selenium.click_button(u'戻る')
 
         # traffic setting
         changing = False
@@ -747,12 +724,12 @@ class Samurai(WebApp):
                 traffic_enabled = 'true'
             else:
                 traffic_enabled = 'false'
-            self._driver.select_radio_button("traffic_enabled",traffic_enabled)
+            self._selenium.select_radio_button("traffic_enabled",traffic_enabled)
         if changing:
             changing = True
-            self._driver.click_button("submitbutton")
-            self._driver.wait_until_page_contains_element(u"//input[@value='戻る']")
-            self._driver.click_button(u'戻る')
+            self._selenium.click_button("submitbutton")
+            self._selenium.wait_until_page_contains_element(u"//input[@value='戻る']")
+            self._selenium.click_button(u'戻る')
 
         # detection setting
         changing = False
@@ -763,12 +740,12 @@ class Samurai(WebApp):
                 detection_enabled = 'true'
             else:
                 detection_enabled = 'false'
-            self._driver.select_radio_button("misuse_enabled_flag",detection_enabled)
+            self._selenium.select_radio_button("misuse_enabled_flag",detection_enabled)
         if changing: 
             self.verbose_capture()
-            self._driver.click_button("submitbutton")
-            self._driver.wait_until_page_contains_element(u"//input[@value='戻る']")
-            self._driver.click_button(u'戻る')
+            self._selenium.click_button("submitbutton")
+            self._selenium.wait_until_page_contains_element(u"//input[@value='戻る']")
+            self._selenium.click_button(u'戻る')
 
         # mitigation
         changing = False
@@ -779,39 +756,39 @@ class Samurai(WebApp):
                 mitigation_auto_enabled = "true" 
             else:
                 mitigation_auto_enabled = "false" 
-            self._driver.select_radio_button("auto_enable",mitigation_auto_enabled)
+            self._selenium.select_radio_button("auto_enable",mitigation_auto_enabled)
         if 'mitigation_auto_stop_enabled' in policy:
             changing = True
             if policy['mitigation_auto_stop_enabled']:
                 mitigation_auto_stop_enabled = "true" 
             else:
                 mitigation_auto_stop_enabled = "false" 
-            self._driver.select_radio_button("auto_stop",mitigation_auto_enabled)
+            self._selenium.select_radio_button("auto_stop",mitigation_auto_enabled)
         if 'mitigation_zone_prefix' in policy:
             changing = True
-            self._driver.input_text("prefix0",policy['mitigation_zone_prefix'])
+            self._selenium.input_text("prefix0",policy['mitigation_zone_prefix'])
         if 'mitigation_thr_bps' in policy:
             changing = True
-            self._driver.input_text("thr_bps",policy['mitigation_thr_bps'])
+            self._selenium.input_text("thr_bps",policy['mitigation_thr_bps'])
         if 'mitigation_thr_pps' in policy:
             changing = True
-            self._driver.input_text("thr_pps",policy['mitigation_thr_pps'])
+            self._selenium.input_text("thr_pps",policy['mitigation_thr_pps'])
         if 'mitigation_mo_enabled' in policy:
             changing = True
             if policy['mitigation_mo_enabled']:
                 mitigation_mo_enabled = 'true'
             else:
                 mitigation_mo_enabled = 'false'
-            self._driver.select_radio_button("arbor_mo_enable",mitigation_mo_enabled)
+            self._selenium.select_radio_button("arbor_mo_enable",mitigation_mo_enabled)
         if 'mitigation_device_list' in policy:
             changing = True
             device_list = [x.strip() for x in policy['mitigation_device_list'].split(',')]
             table_map,selected_table_map = self.select_items_in_table('//tr/td[2]','../td[1]', *device_list)
         if changing:
             self.verbose_capture()
-            self._driver.click_button("submitbutton")
-            self._driver.wait_until_page_contains_element(u"//input[@value='戻る']")
-            self._driver.click_button(u'戻る')
+            self._selenium.click_button("submitbutton")
+            self._selenium.wait_until_page_contains_element(u"//input[@value='戻る']")
+            self._selenium.click_button(u'戻る')
 
         # TMS MO
         changing = False
@@ -820,18 +797,18 @@ class Samurai(WebApp):
             changing = True
             mo_name = policy['mitigation_mo_name']
             # not all device information is expanded yet
-            mo_info = self._driver.get_webelements(u"//div[starts-with(@id, 'mo_')]") 
+            mo_info = self._selenium.get_webelements(u"//div[starts-with(@id, 'mo_')]") 
             for item in mo_info: 
                 id = item.get_attribute('id')
                 if not item.is_displayed():
-                    self._driver.execute_javascript("toggle_disp('%s','%s_img')" % (id,id))
-            items = self._driver.get_webelements(u"//tr/td[2][.='%s']/../td[1]" % mo_name)
-            for k in items: self._driver.click_element(k)
+                    self._selenium.execute_javascript("toggle_disp('%s','%s_img')" % (id,id))
+            items = self._selenium.get_webelements(u"//tr/td[2][.='%s']/../td[1]" % mo_name)
+            for k in items: self._selenium.click_element(k)
         if changing:
             self.verbose_capture()
-            self._driver.click_button("submitbutton")
-            self._driver.wait_until_page_contains_element(u"//input[@value='戻る']")
-            self._driver.click_button(u'戻る')
+            self._selenium.click_button("submitbutton")
+            self._selenium.wait_until_page_contains_element(u"//input[@value='戻る']")
+            self._selenium.click_button(u'戻る')
 
         # NW monitoring
         # only Samurai > 16 has this panel
@@ -840,30 +817,30 @@ class Samurai(WebApp):
         self.show_policy_nw_monitor(policy_name)
         if ('nw_monitor_gre1' in policy) or ('nw_monitor_gre2' in policy):
             changing = True
-            gre_elements = self._driver.get_webelements('//input[contains(@id,"gre_addr")]')
+            gre_elements = self._selenium.get_webelements('//input[contains(@id,"gre_addr")]')
             if 'nw_monitor_gre1' in policy:
-                self._driver.input_text(gre_elements[0],policy['nw_monitor_gre1'])
+                self._selenium.input_text(gre_elements[0],policy['nw_monitor_gre1'])
             if 'nw_monitor_gre2' in policy:
-                self._driver.input_text(gre_elements[1],policy['nw_monitor_gre2'])
+                self._selenium.input_text(gre_elements[1],policy['nw_monitor_gre2'])
         if ('nw_monitor_pe1' in policy) or ('nw_monitor_ce1' in policy):
             changing = True
-            pe_elements = self._driver.get_webelements('//select[contains(@name,"pe_id")]')
+            pe_elements = self._selenium.get_webelements('//select[contains(@name,"pe_id")]')
             if 'nw_monitor_pe1' in policy:
-                self._driver.select_from_list_by_label(pe_elements[0],policy['nw_monitor_pe1'])
+                self._selenium.select_from_list_by_label(pe_elements[0],policy['nw_monitor_pe1'])
             if 'nw_monitor_pe2' in policy:
-                self._driver.select_from_list_by_label(pe_elements[1],policy['nw_monitor_pe2'])
+                self._selenium.select_from_list_by_label(pe_elements[1],policy['nw_monitor_pe2'])
         if ('nw_monitor_ce1' in policy) or ('nw_monitor_ce2' in policy):
             changing = True
-            ce_elements = self._driver.get_webelements('//input[contains(@id,"ce_addr")]')
+            ce_elements = self._selenium.get_webelements('//input[contains(@id,"ce_addr")]')
             if 'nw_monitor_ce1' in policy:
-                self._driver.input_text(ce_elements[0],policy['nw_monitor_ce1'])
+                self._selenium.input_text(ce_elements[0],policy['nw_monitor_ce1'])
             if 'nw_monitor_ce2' in policy:
-                self._driver.input_text(ce_elements[1],policy['nw_monitor_ce2'])
+                self._selenium.input_text(ce_elements[1],policy['nw_monitor_ce2'])
         if changing:
             self.verbose_capture()
-            self._driver.click_button("submitbutton")
-            self._driver.wait_until_page_contains_element(u"//input[@value='戻る']")
-            self._driver.click_button(u'戻る')
+            self._selenium.click_button("submitbutton")
+            self._selenium.wait_until_page_contains_element(u"//input[@value='戻る']")
+            self._selenium.click_button(u'戻る')
 
         BuiltIn().log("Changed setting for the policy `%s`" % policy_name)
 
@@ -938,104 +915,104 @@ class Samurai(WebApp):
 
         # basic 
         BuiltIn().log("### Basic setting ###")
-        self._driver.click_button(u"//input[@value='ポリシーの追加']")
+        self._selenium.click_button(u"//input[@value='ポリシーの追加']")
         # if the policy number reached its limit, no more policy is addable
         
-        self._driver.wait_until_element_is_visible("policy_name")
-        self._driver.input_text("policy_name", policy['name'])
+        self._selenium.wait_until_element_is_visible("policy_name")
+        self._selenium.input_text("policy_name", policy['name'])
         if 'basic_alias' in policy: 
-            self._driver.input_text("alias_name1", policy['basic_alias'])
+            self._selenium.input_text("alias_name1", policy['basic_alias'])
         else:
-            self._driver.input_text("alias_name1", policy['name'])
+            self._selenium.input_text("alias_name1", policy['name'])
         if 'basic_port_id' in policy:
-            self._driver.input_text("alias_name2", policy['basic_port_id'])
+            self._selenium.input_text("alias_name2", policy['basic_port_id'])
         if 'basic_facing' in policy:
             if policy['basic_facing'] == 'customer':
                 customer_flag = 'true'
             else:
                 customer_flag = 'false'
-            self._driver.select_from_list_by_value("customer_flag",customer_flag)
+            self._selenium.select_from_list_by_value("customer_flag",customer_flag)
         intf_list = [x.strip() for x in policy['basic_intf_list'].split(',')]
-        self._driver.input_text("detection_interface", '\n'.join(intf_list))
+        self._selenium.input_text("detection_interface", '\n'.join(intf_list))
         if 'basic_cidr_list' in policy:
             cidr_list = [x.strip() for x in policy['basic_cidr_list'].split(',')]
-            self._driver.input_text("detection_cidr", '\n'.join(cidr_list))
+            self._selenium.input_text("detection_cidr", '\n'.join(cidr_list))
         if 'basic_option_filter' in policy: 
-            self._driver.input_text("option_filter", policy['basic_option_filter'])
+            self._selenium.input_text("option_filter", policy['basic_option_filter'])
             time.sleep(self._ajax_wait)
 
         basic_direction = 'Outgoing'
         if 'basic_direction' in policy and policy['basic_direction'].lower() in ['incoming', 'in'] :
                 basic_direction = 'Incoming'
-        self._driver.select_from_list_by_label("direction", basic_direction) 
+        self._selenium.select_from_list_by_label("direction", basic_direction) 
 
         self.verbose_capture()
-        self._driver.click_button("submitbutton")
-        self._driver.wait_until_page_contains(u"ポリシーを追加しました。")
+        self._selenium.click_button("submitbutton")
+        self._selenium.wait_until_page_contains(u"ポリシーを追加しました。")
         self.verbose_capture()
-        self._driver.click_button(u"//button[.='進む']") 
+        self._selenium.click_button(u"//button[.='進む']") 
 
         # traffic setting
         BuiltIn().log("### Traffic setting ###")
         if policy['traffic_enabled']:   traffic_enabled = 'true'
         if traffic_enabled == 'true':
-            self._driver.select_radio_button("traffic_enabled",traffic_enabled) 
+            self._selenium.select_radio_button("traffic_enabled",traffic_enabled) 
         self.verbose_capture()
-        self._driver.click_button(u"//button[.='次へ']")
+        self._selenium.click_button(u"//button[.='次へ']")
 
         # detection setting
         BuiltIn().log("### Detection setting ###")
         detection_enabled = 'false'
         if 'detection_enabled' in policy and policy['detection_enabled']:
             detection_enabled = 'true'
-        self._driver.select_radio_button("misuse_enabled_flag",detection_enabled) 
+        self._selenium.select_radio_button("misuse_enabled_flag",detection_enabled) 
 
         # clear all items by default
         # only check necessary 
         if 'detection_direction' in policy and policy['detection_direction']:
-            items = self._driver.get_webelements("//td/input[contains(@id,'available')]")
-            for item in items: self._driver.unselect_checkbox(item)
+            items = self._selenium.get_webelements("//td/input[contains(@id,'available')]")
+            for item in items: self._selenium.unselect_checkbox(item)
             direction_config = policy['detection_direction'].lower()
             for config in direction_config.split(','):
                 tmp = config.strip().split(':')
                 direction = tmp[0]
                 check = tmp[1]
                 if direction == 'incoming':
-                    items = self._driver.get_webelements("//td[contains(.,'Incoming')]/input[contains(@id,'available')]")
+                    items = self._selenium.get_webelements("//td[contains(.,'Incoming')]/input[contains(@id,'available')]")
                     for item in items:
-                        if check == "check": self._driver.select_checkbox(item)
+                        if check == "check": self._selenium.select_checkbox(item)
                 if direction == 'outgoing':
-                    items = self._driver.get_webelements("//td[contains(.,'Outgoing')]/input[contains(@id,'available')]")
+                    items = self._selenium.get_webelements("//td[contains(.,'Outgoing')]/input[contains(@id,'available')]")
                     for item in items:
-                        if check == "check": self._driver.select_checkbox(item)
+                        if check == "check": self._selenium.select_checkbox(item)
                 if direction == "both":
                     for item in items:
-                        if check == "check": self._driver.select_checkbox(item)
+                        if check == "check": self._selenium.select_checkbox(item)
         self.verbose_capture()
-        self._driver.click_button(u"//button[.='次へ']")
+        self._selenium.click_button(u"//button[.='次へ']")
 
         # mitigation
         mitigation_enabled =  'mitigation_enabled' in policy and policy['mitigation_enabled']
         if mitigation_enabled == 'true':
             BuiltIn().log("### Mitigation setting ###")
             self.verbose_capture()
-            self._driver.click_button("zoneaddbutton")
-            self._driver.input_text("zonename0",policy['mitigation_zone_name'])
-            self._driver.input_text("prefix0",policy['mitigation_zone_prefix'])
+            self._selenium.click_button("zoneaddbutton")
+            self._selenium.input_text("zonename0",policy['mitigation_zone_name'])
+            self._selenium.input_text("prefix0",policy['mitigation_zone_prefix'])
             if policy['mitigation_mo_enabled']:         mitigation_mo_enabled = 'true'
-            self._driver.select_radio_button("arbor_mo_enable",mitigation_mo_enabled)
+            self._selenium.select_radio_button("arbor_mo_enable",mitigation_mo_enabled)
 
             device_list = [x.strip() for x in policy['mitigation_device_list'].split(',')]
             table_map,selected_table_map = self.select_items_in_table("//tr/td[2]","../td[1]", *device_list)
             if 'mitigation_thr_bps' in policy:
-                self._driver.input_text("thr_bps",policy['mitigation_thr_bps'])
+                self._selenium.input_text("thr_bps",policy['mitigation_thr_bps'])
             if 'mitigation_thr_pps' in policy :
-                self._driver.input_text("thr_pps",policy['mitigation_thr_pps'])
+                self._selenium.input_text("thr_pps",policy['mitigation_thr_pps'])
 
             mitigation_auto_enabled = 'false'
             if 'mitigation_auto_enabled' in policy and policy['mitigation_auto_enabled']:
                     mitigation_auto_enabled = 'true'
-            self._driver.select_radio_button("auto_enable",mitigation_auto_enabled)
+            self._selenium.select_radio_button("auto_enable",mitigation_auto_enabled)
 
             mitigation_auto_level = "1" # default
             if 'mitigation_auto_level' in policy:
@@ -1043,28 +1020,28 @@ class Samurai(WebApp):
                     mitigation_auto_level = '0'
                 if policy['mitigation_auto_level'].lower() in ['2','high']:
                     mitigation_auto_level = '2'
-            self._driver.select_radio_button("attack_lv",mitigation_auto_level)
+            self._selenium.select_radio_button("attack_lv",mitigation_auto_level)
 
             mitigation_auto_time = "15"
             if "mitigation_auto_time" in policy:
                 mitigation_auto_time = policy['mitigation_auto_time']
-            self._driver.input_text("attack_ln",mitigation_auto_time)
+            self._selenium.input_text("attack_ln",mitigation_auto_time)
 
             mitigation_auto_stop_enabled = 'false'
             if 'mitigation_auto_stop_enabled' in policy and policy['mitigation_auto_stop_enabled']:
                     mitigation_auto_stop_enabled = 'true'
-            self._driver.select_radio_button("auto_stop",mitigation_auto_stop_enabled)
+            self._selenium.select_radio_button("auto_stop",mitigation_auto_stop_enabled)
 
             mitigation_auto_stop_level = "2" # default
             if 'mitigation_auto_stop_level' in policy:
                 if policy['mitigation_auto_stop_level'].lower() in ['0','low']:
                     mitigation_auto_stop_level = '0'
-            self._driver.select_radio_button("stop_lv",mitigation_auto_stop_level)
+            self._selenium.select_radio_button("stop_lv",mitigation_auto_stop_level)
 
             mitigation_auto_stop_time = "15"
             if "mitigation_auto_stop_time" in policy:
                 mitigation_auto_stop_time = policy['mitigation_auto_stop_time']
-            self._driver.input_text("stop_ln",mitigation_auto_stop_time)
+            self._selenium.input_text("stop_ln",mitigation_auto_stop_time)
         
        
             if 'mitigation_comm_list' in policy: 
@@ -1082,60 +1059,60 @@ class Samurai(WebApp):
                         check_input = item.find_element_by_xpath("../td[1]/input")
                         comm_input =    item.find_element_by_xpath("../td[3]/input")
                         if check == 'check':
-                            self._driver.select_checkbox(check_input)
-                        self._driver.input_text(comm_input,comm) 
+                            self._selenium.select_checkbox(check_input)
+                        self._selenium.input_text(comm_input,comm) 
         self.verbose_capture()
-        self._driver.click_button(u"//button[.='次へ']")
+        self._selenium.click_button(u"//button[.='次へ']")
 
         # MO
         # When peers have been configured, there are no places to set community
         if mitigation_mo_enabled == 'true':
             BuiltIn().log("### MO setting ###")
-            self._driver.wait_until_page_contains_element(u"//b[.='TMS Managed Object設定']")
+            self._selenium.wait_until_page_contains_element(u"//b[.='TMS Managed Object設定']")
             mo_name = policy['mitigation_mo_name']
             # not all device information is expanded yet
-            mo_info = self._driver.get_webelements(u"//div[starts-with(@id, 'mo_')]")
+            mo_info = self._selenium.get_webelements(u"//div[starts-with(@id, 'mo_')]")
             for item in mo_info:
                 id = item.get_attribute('id')
                 if not item.is_displayed():
-                    self._driver.execute_javascript("toggle_disp('%s','%s_img')" % (id,id))
+                    self._selenium.execute_javascript("toggle_disp('%s','%s_img')" % (id,id))
 
-            items = self._driver.get_webelements(u"//tr/td[2][.='%s']/../td[1]" % mo_name)
-            for k in items: self._driver.click_element(k)
+            items = self._selenium.get_webelements(u"//tr/td[2][.='%s']/../td[1]" % mo_name)
+            for k in items: self._selenium.click_element(k)
             self.verbose_capture()
-            self._driver.click_button(u"//button[.='次へ']")
+            self._selenium.click_button(u"//button[.='次へ']")
 
         # Add more setting for Samurai16
         BuiltIn().log("### Monitoring setting ###")
-        nw_monitor = self._driver.get_element_count(u"//div[contains(.,'NW 監視設定')]")
+        nw_monitor = self._selenium.get_element_count(u"//div[contains(.,'NW 監視設定')]")
         if nw_monitor > 0:
             if ('nw_monitor_gre1' in policy) or ('nw_monitor_gre2' in policy):
-                gre_elements = self._driver.get_webelements('//input[contains(@id,"gre_addr")]')
-                self._driver.input_text(gre_elements[0],policy['nw_monitor_gre1'])
-                self._driver.input_text(gre_elements[1],policy['nw_monitor_gre2'])
+                gre_elements = self._selenium.get_webelements('//input[contains(@id,"gre_addr")]')
+                self._selenium.input_text(gre_elements[0],policy['nw_monitor_gre1'])
+                self._selenium.input_text(gre_elements[1],policy['nw_monitor_gre2'])
             if ('nw_monitor_pe1' in policy) or ('nw_monitor_ce1' in policy):
-                pe_elements = self._driver.get_webelements('//select[contains(@name,"pe_id")]')
-                self._driver.select_from_list_by_label(pe_elements[0],policy['nw_monitor_pe1'])
-                self._driver.select_from_list_by_label(pe_elements[1],policy['nw_monitor_pe2'])
+                pe_elements = self._selenium.get_webelements('//select[contains(@name,"pe_id")]')
+                self._selenium.select_from_list_by_label(pe_elements[0],policy['nw_monitor_pe1'])
+                self._selenium.select_from_list_by_label(pe_elements[1],policy['nw_monitor_pe2'])
             if ('nw_monitor_ce1' in policy) or ('nw_monitor_ce2' in policy):
-                ce_elements = self._driver.get_webelements('//input[contains(@id,"ce_addr")]')
-                self._driver.input_text(ce_elements[0],policy['nw_monitor_ce1'])
-                self._driver.input_text(ce_elements[1],policy['nw_monitor_ce2'])
+                ce_elements = self._selenium.get_webelements('//input[contains(@id,"ce_addr")]')
+                self._selenium.input_text(ce_elements[0],policy['nw_monitor_ce1'])
+                self._selenium.input_text(ce_elements[1],policy['nw_monitor_ce2'])
         
             self.verbose_capture()
-            self._driver.click_button(u"//button[.='次へ']")
+            self._selenium.click_button(u"//button[.='次へ']")
 
         # Notify
         BuiltIn().log("### Event setting ###")
         if 'event_name' in policy:
-            self._driver.wait_until_page_contains_element(u"//input[@value='メール通知の追加']")
+            self._selenium.wait_until_page_contains_element(u"//input[@value='メール通知の追加']")
             self.verbose_capture()
-            self._driver.click_button(u"//input[@value='メール通知の追加']")
-            self._driver.input_text("user_name",policy['event_name'])
-            self._driver.input_text("mail_address",policy['event_addr'])
+            self._selenium.click_button(u"//input[@value='メール通知の追加']")
+            self._selenium.input_text("user_name",policy['event_name'])
+            self._selenium.input_text("mail_address",policy['event_addr'])
             self.verbose_capture()
-            self._driver.click_button(u"//button[.='追加']")
-            self._driver.wait_until_page_contains(u"メール通知設定を追加しました")
+            self._selenium.click_button(u"//button[.='追加']")
+            self._selenium.wait_until_page_contains(u"メール通知設定を追加しました")
 
         # View setting
         BuiltIn().log("### View setting ###")
@@ -1160,25 +1137,25 @@ class Samurai(WebApp):
         BuiltIn().log("Changing Policy View Group of the policy `%s`" % name) 
 
         self.left_menu(u"ポリシー管理")
-        self._driver.input_text("filter",name)
+        self._selenium.input_text("filter",name)
         time.sleep(self._ajax_wait)
         item_map = self.make_item_map("//tr/td[3]/div")
         item = item_map[name]
         button = item.find_element_by_xpath("../../td/div/input[@title='編集']")
-        self._driver.click_element(button)
+        self._selenium.click_element(button)
 
         # view ( not check the case when there are multi groups over 1 page)
-        self._driver.click_element(u"//span[normalize-space(.)='閲覧設定']")
+        self._selenium.click_element(u"//span[normalize-space(.)='閲覧設定']")
         #
-        self._driver.wait_until_page_contains_element("//tr/td[2]")
+        self._selenium.wait_until_page_contains_element("//tr/td[2]")
 
         item_map,result_map = self.select_items_in_table("//tr/td[2]","../td[1]",*group_name)
         for item in result_map:
             link = result_map[item].find_element_by_xpath(u"..//a[text()='すべてを選択']")
-            self._driver.click_element(link)
+            self._selenium.click_element(link)
 
-        self._driver.click_button(u"//button[.='変更']")
-        self._driver.click_element(u"//span[contains(.,'閲覧設定を変更しました')]")
+        self._selenium.click_button(u"//button[.='変更']")
+        self._selenium.click_element(u"//span[contains(.,'閲覧設定を変更しました')]")
 
         # list current policies
         self.left_menu(u"ポリシー管理")
@@ -1202,9 +1179,9 @@ class Samurai(WebApp):
     
         all_items,selected_items = self.select_items_in_table('//tr/td[3]/div','../../td[1]',*policy_names)
         if len(selected_items) > 0:
-            self._driver.click_button(u"//input[@value='削除']") 
-            self._driver.confirm_action()
-            self._driver.wait_until_page_contains_element(u"//span[contains(.,'ポリシーを削除しました')]")
+            self._selenium.click_button(u"//input[@value='削除']") 
+            self._selenium.confirm_action()
+            self._selenium.wait_until_page_contains_element(u"//span[contains(.,'ポリシーを削除しました')]")
 
         BuiltIn().log("Deleted %d/%d policies" % (len(selected_items),len(policy_names)))
         return len(selected_items)
@@ -1223,23 +1200,23 @@ class Samurai(WebApp):
         # menu
         self.left_menu(u"ポリシーグループ管理")
     
-        self._driver.click_button(u"//input[@value='ポリシーグループの追加']")
-        self._driver.input_text("policy_group_name",group_name)
+        self._selenium.click_button(u"//input[@value='ポリシーグループの追加']")
+        self._selenium.input_text("policy_group_name",group_name)
 
         count = 0 
         if policy_list:
             if policy_list == "*" :
-                item_list = self._driver.get_webelements("xpath=//*[starts-with(@for,'label')]")
+                item_list = self._selenium.get_webelements("xpath=//*[starts-with(@for,'label')]")
                 count = len(item_list)
-                self._driver.click_link(u"すべてを選択") 
+                self._selenium.click_link(u"すべてを選択") 
             else :
                 item_list = [x.strip() for x in policy_list.split(',')] 
                 for item in item_list:
-                    self._driver.click_element(u"//input[@id=//label[.='%s']/@for]" % item)
+                    self._selenium.click_element(u"//input[@id=//label[.='%s']/@for]" % item)
                 count = len(item_list)
 
-            self._driver.click_button(u"//input[@value='追加']")
-            self._driver.page_should_contain_element(u"//span[contains(.,'ポリシーグループを追加しました')]")
+            self._selenium.click_button(u"//input[@value='追加']")
+            self._selenium.page_should_contain_element(u"//span[contains(.,'ポリシーグループを追加しました')]")
 
         self.left_menu(u"ポリシーグループ管理")
         BuiltIn().log("Added policy group '%s' and bound it to %d policies" % (group_name,count))
@@ -1259,9 +1236,9 @@ class Samurai(WebApp):
         self.left_menu(u"ポリシーグループ管理")
         all_items,selected_items = self.select_items_in_table("//tr/td[3]","../td[1]",*group_list)
         if len(selected_items) > 0:
-            self._driver.click_button(u"//input[contains(@value,'削除')]")
-            self._driver.confirm_action()
-            self._driver.wait_until_page_contains_element(u"//span[contains(.,'ポリシーグループを削除しました')]")
+            self._selenium.click_button(u"//input[contains(@value,'削除')]")
+            self._selenium.confirm_action()
+            self._selenium.wait_until_page_contains_element(u"//span[contains(.,'ポリシーグループを削除しました')]")
 
         BuiltIn().log("Deleted %d policy groups" % len(selected_items))
         return len(selected_items)
@@ -1273,8 +1250,8 @@ class Samurai(WebApp):
 
         Returns the number of elements that have been clicked
         """
-        items = self._driver.get_webelements(xpath)
-        for item in items: self._driver.click_element(item)
+        items = self._selenium.get_webelements(xpath)
+        for item in items: self._selenium.click_element(item)
 
         BuiltIn().logs("Clicked %d items defined by xpath=`%s`" % (len(items),xpath))
         return len(items)
@@ -1285,11 +1262,11 @@ class Samurai(WebApp):
         """ Shows detail information of a mitigation
         """
         self.left_menu(u"Active Mitigation")
-        self._driver.wait_until_page_contains(u"Active Mitigation")
-        self._driver.click_link('%s' % id)
+        self._selenium.wait_until_page_contains(u"Active Mitigation")
+        self._selenium.click_link('%s' % id)
         time.sleep(5)
-        self._driver.select_window(u"title=リアルタイム詳細")
-        self._driver.wait_until_page_contains(u"適用フィルタ情報")
+        self._selenium.select_window(u"title=リアルタイム詳細")
+        self._selenium.wait_until_page_contains(u"適用フィルタ情報")
         
         BuiltIn().log("Showed detail of mitigation id `%s`" % id)
 
@@ -1297,7 +1274,7 @@ class Samurai(WebApp):
     def close_window():
         """ Closes the current window
         """
-        self._driver.close_window()
+        self._selenium.close_window()
         time.sleep(2)
         BuiltIn().log("Closed the current window")
 
@@ -1307,8 +1284,8 @@ class Samurai(WebApp):
         """ Selects a window by its title
         """
         # self.switch(self._current_name)
-        self._driver.select_window(u"title=%s" % title) 
-        self._driver.wait_until_page_contains(title)
+        self._selenium.select_window(u"title=%s" % title) 
+        self._selenium.wait_until_page_contains(title)
         
         BuiltIn().log("Selected window `%s`" % title)
 
@@ -1327,7 +1304,7 @@ class Samurai(WebApp):
         self.left_menu(u"Active Mitigation")
         time.sleep(2)
         try:
-            item_list = self._driver.get_webelements("//div[@id='infoareain']//tr/td[2]") 
+            item_list = self._selenium.get_webelements("//div[@id='infoareain']//tr/td[2]") 
             for item in item_list:
                 item_status = item.find_element_by_xpath(u'../td[5]').text
                 # BuiltIn().log_to_console(item_status)
@@ -1356,20 +1333,26 @@ class Samurai(WebApp):
              
         """
         self.left_menu(u"Mitigation Device管理") 
-        self._driver.wait_until_page_contains_element("//div[@id='dataTable']")
-        edit_button = self._driver.get_webelement(u"//tr/td/div[translate(.,'\u200B','')='%s']/../../td[2]/div/input[@name='change']" % controller)
-        self._driver.click_button(edit_button)
+        self._selenium.wait_until_page_contains_element("//div[@id='dataTable']")
+        edit_button = self._selenium.get_webelement(u"//tr/td/div[translate(.,'\u200B','')='%s']/../../td[2]/div/input[@name='change']" % controller)
+        self._selenium.click_button(edit_button)
         time.sleep(2)
-        self._driver.wait_until_page_contains_element("//button[@id='submitbutton']")
+        self._selenium.wait_until_page_contains_element("//button[@id='submitbutton']")
         if 'tms_group' in config:
             tmp = config['tms_group'].split(':')
-            check_box = self._driver.get_webelement(u"//tr/td[.='%s']/../td[1]//input" % tmp[0])
+            checkbox1 = u"//tr/td[.='%s']/../td[1]//input" % tmp[0]
+            checkbox2 = u"//tr/td[.='%s']/../td[2]//input" % tmp[0]
+            count1 = int(self._selenium.get_matching_xpath_count(checkbox1))
+            if count1 > 0: 
+                check_box = self._selenium.get_webelement(checkbox1)
+            else: 
+                check_box = self._selenium.get_webelement(checkbox2)
             if (tmp[1] == 'check' and not check_box.is_selected()) or (tmp[1] == 'uncheck' and check_box.is_selected()):
-                self._driver.click_element(check_box)
+                self._selenium.click_element(check_box)
                 
             
-        self._driver.click_button("submitbutton")
-        self._driver.wait_until_page_contains(u"Mitigationデバイス情報を変更しました")
+        self._selenium.click_button("submitbutton")
+        self._selenium.wait_until_page_contains(u"Mitigationデバイス情報を変更しました")
         BuiltIn().log("Update mitigation controller setting")
         
     
@@ -1378,16 +1361,16 @@ class Samurai(WebApp):
         """ Updates information of `controller`
         """
         self.left_menu(u"Mitigation Device管理") 
-        self._driver.wait_until_page_contains_element("//div[@id='dataTable']")
+        self._selenium.wait_until_page_contains_element("//div[@id='dataTable']")
         # self.capture_screenshot()
-        edit_button = self._driver.get_webelement(u"//tr/td/div[translate(.,'\u200B','')='%s']/../../td[2]/div/input[@name='change']" % controller)
-        self._driver.click_button(edit_button)
+        edit_button = self._selenium.get_webelement(u"//tr/td/div[translate(.,'\u200B','')='%s']/../../td[2]/div/input[@name='change']" % controller)
+        self._selenium.click_button(edit_button)
         time.sleep(2)
-        self._driver.wait_until_page_contains_element("//button[@id='submitbutton']")
+        self._selenium.wait_until_page_contains_element("//button[@id='submitbutton']")
         self.mark_element("//form[@name='FORM_TMS']")
-        self._driver.click_button(u'TMS情報取得')
+        self._selenium.click_button(u'TMS情報取得')
         time.sleep(DateTime.convert_time(wait))
-        self._driver.handle_alert()
+        self._selenium.handle_alert()
         time.sleep(10) 
         self.wait_until_element_changes()
         BuiltIn().log("Updated mitigation controller information")

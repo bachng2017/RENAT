@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-# $Date: 2018-03-20 00:33:18 +0900 (Tue, 20 Mar 2018) $
-# $Rev: 822 $ 
+# $Date: 2019-07-25 23:50:10 +0900 (木, 25 7 2019) $
+# $Rev: 2101 $ 
 # $Ver: $
 # $Author: $
 
 # Basic setting
 *** Setting ***
 Documentation   This is a sample test item
-Metadata        Log File    [.|${CURDIR}/result] 
+Metadata        Log File    [.|${CURDIR}/${RESULT_FOLDER}] 
 Suite Setup     Lab Setup
 Suite Teardown  Lab Teardown
 

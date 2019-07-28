@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# $Date: 2019-05-22 05:47:03 +0900 (水, 22  5月 2019) $
+# $Date: 2019-05-22 05:47:03 +0900 (水, 22 5 2019) $
 # $Rev: 2022 $
 # $Author: $
 # usage: ./run.sh [-n <num>] <other robot argument>

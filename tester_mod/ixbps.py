@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-09-21 15:22:52 +0900 (Fri, 21 Sep 2018) $
-# $Rev: 1347 $
+# $Date: 2019-07-17 11:17:57 +0900 (水, 17 7 2019) $
+# $Rev: 2094 $
 # $Ver: $
 # $Author: $
 
@@ -173,7 +173,9 @@ def start_test(self,test_name=None,force=True):
         BuiltIn().log("Started a BP test `%s(%s)` with %d ports" % (name,self._test_id,len(ports)))
     else:
         self._test_id = None
-        BuiltIn().log("No reserved ports. Check your local.yaml")
+        msg = "ERR: No reserved ports. Check your local.yaml"
+        BuiltIn().log(msg)
+        raise Exception(msg)
     return self._test_id
 
 

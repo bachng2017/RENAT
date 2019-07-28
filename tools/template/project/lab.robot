@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
-# $Date: 2019-06-10 15:05:55 +0900 (月, 10  6月 2019) $
-# $Rev: 2075 $
+# $Date: 2019-07-27 11:57:14 +0900 (土, 27 7 2019) $
+# $Rev: 2111 $
 # $Ver: $
 # $Author: $
 
 *** Variables ***
 # folder and script for polling process on Apollo
-${WORKING_FOLDER}           ${HOME}/work
-${POLLING_SCRIPT}           /ocn-gin/script/Pooling/Pooling.rb -i 5
+${POLLING_SCRIPT}           ${RENAT_PATH}/tools/Polling.rb -i 5
 
 *** Setting ***
 Resource                    ${RENAT_PATH}/config/extra.robot

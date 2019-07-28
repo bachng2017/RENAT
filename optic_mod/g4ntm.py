@@ -15,7 +15,7 @@
 
 # $Rev: 1187 $
 # $Ver: $
-# $Date: 2018-08-19 01:04:35 +0900 (Sun, 19 Aug 2018) $
+# $Date: 2018-08-19 01:04:35 +0900 (日, 19 8 2018) $
 # $Author: $
 
 """ A library provides control for Telescent Network Topology Management (NTM)

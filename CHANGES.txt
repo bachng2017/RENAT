@@ -15,7 +15,7 @@
 
 # $Rev: 1938 $
 # $Ver: $
-# $Date: 2019-03-30 16:26:40 +0900 (土, 30  3月 2019) $
+# $Date: 2019-03-30 16:26:40 +0900 (土, 30 3 2019) $
 # $Author: $
 
 RENAT(Robotframework Extension for Network Automation Testing)

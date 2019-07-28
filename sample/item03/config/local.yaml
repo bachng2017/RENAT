@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# $Rev: 822 $
+# $Rev: 2109 $
 # $Ver: $
-# $Date: 2018-03-20 00:33:18 +0900 (Tue, 20 Mar 2018) $
+# $Date: 2019-07-26 21:36:47 +0900 (金, 26 7 2019) $
 # $Author: $
 
 # router, server information
@@ -40,5 +40,4 @@ default:
     terminal:
         width: 80
         height: 32
-    result_folder: result
 

@@ -13,11 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-06-10 15:04:52 +0900 (月, 10  6月 2019) $
-# $Rev: 2074 $
+# $Date: 2019-07-25 23:50:10 +0900 (木, 25 7 2019) $
+# $Rev: 2101 $
 # $Ver: $
 # $Author: $
 
+import cv2,tempfile
+import pytesseract
+from difflib import SequenceMatcher
+import numpy as np
 import os,time,re,traceback,shutil
 from decorator import decorate
 import Common
@@ -29,40 +33,49 @@ from selenium.common.exceptions import WebDriverException
 import robot.libraries.DateTime as DateTime
 from selenium import webdriver
 from selenium.webdriver.common.proxy import Proxy, ProxyType
-
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.firefox.options import Options
 
 ### module methods
+
+# reconnect methods currenlty focus on Samurai only
+# need to enhance this
 def _with_reconnect(keyword, self, *args, **kwargs):
     count = 0
-    max_count = int(Common.GLOBAL['default']['max-retry-for-connect'])
+    max_count = int(Common.get_config_value('max-retry','web'))
+    reconnect = Common.get_config_value('reconnect','web',True)
     while count <= max_count:
         try:
             return keyword(self,*args,**kwargs)
         except (AssertionError,ElementNotFound) as err:
             self.capture_screenshot(extra="_warn") # save the last available screen
+            BuiltIn().log("WRN: Save last available screen")
             BuiltIn().log(err)
-            logout_count = int(self._driver.get_matching_xpath_count("//h1[.='Timeout']"))
+
+            logout_count = int(self._selenium.get_matching_xpath_count("//h1[.='Timeout']"))
             BuiltIn().log("Found `%d` match for Timeout" % logout_count)
-            if logout_count == 0: # this is not time out    
-                BuiltIn().log("ERR: unexpected error occurs. Not a timeout event")
-                BuiltIn().log(Common.newline, console = True)
-                BuiltIn().log_to_console(err)
-                BuiltIn().log(msg,console=True)
+            # raise error if not a timeout or reconnect is not expected
+            if logout_count == 0 or (not reconnect):
+                BuiltIn().log("ERR: An unexpected error occurs. Not a timeout event",console=True)
+                BuiltIn().log(err, console=True)
                 raise
             count += 1
             if count < max_count:
-                BuiltIn().log('WARN: Failed to execute the keyword `%s` %d time(s)'  % (keyword.__name__,count))
-                BuiltIn().log('WARN: Will try the keyword again')
+                BuiltIn().log('WRN: Failed to execute the keyword `%s` %d time(s)'  % (keyword.__name__,count))
+                BuiltIn().log('WRN: Will try the keyword again')
                 safe_reconnect(self)
             else:
-                BuiltIn().log('ERROR: Gave up retry for keyword `%s`' % keyword.__name__)
+                BuiltIn().log('ERR: Gave up retry for keyword `%s`' % keyword.__name__)
                 BuiltIn().log(type(err))
                 BuiltIn().log(traceback.format_exc())
-                self.capture_screenshot(extra="_err") # save the last available screen
+                # self.capture_screenshot(extra="_err") # save the last available screen
                 raise
         except Exception as err:
+            BuiltIn().log("ERR: An unexpected error occured", console=True)
+            BuiltIn().log("Save last available screen", console=True)
             self.capture_screenshot(extra="_err") # save the last available screen
             raise 
+
 
 def safe_reconnect(self):
     try:
@@ -143,13 +156,14 @@ class WebApp(object):
         self._type                  = None
         self._verbose               = False
         self._ajax_wait             = 2
-        self._driver                = None
+        self._selenium              = None
+        self._type                  = 'web'
         try:
-            self._driver = BuiltIn().get_library_instance('SeleniumLibrary')
+            self._selenium = BuiltIn().get_library_instance('SeleniumLibrary')
         except RobotNotRunningError as e:
             Common.err("WARN: RENAT is not running")
 
-    
+
     def set_verbose(self,verbose=False):
         """ Set current verbose mode to ``verbose``
         """
@@ -215,6 +229,8 @@ class WebApp(object):
 
         An extra information will be add to the filename if ``extra`` is defined 
 
+        Returns the captured filename.
+
         Examples:
         | Samurai.`Capture Screenshot`  |               | # samurai_0000000001.png |
         | Samurai.`Capture Screenshot`  |   extra=_list | # samurai_0000000002_`list`.png |
@@ -232,8 +248,8 @@ class WebApp(object):
             self._browsers[name]['capture_counter'] = new_counter
         else:
             capture_name = filename
-        total_width     = int(self._driver.execute_javascript("return document.body.offsetWidth;"))
-        total_height    = int(self._driver.execute_javascript("return document.body.parentNode.scrollHeight;"))
+        total_width     = int(self._selenium.execute_javascript("return document.body.offsetWidth;"))
+        total_height    = int(self._selenium.execute_javascript("return document.body.parentNode.scrollHeight;"))
 
         display_info = Common.get_config_value('display')
 
@@ -242,17 +258,18 @@ class WebApp(object):
         if total_height < int(display_info['height']):
            total_height = int(display_info['height'])
         # store old  window size
-        (old_width, old_height) = self._driver.get_window_size()
+        (old_width, old_height) = self._selenium.get_window_size()
 
         # only update windows height
-        self._driver.set_window_size(old_width, total_height)
+        self._selenium.set_window_size(old_width, total_height)
         time.sleep(2)
-        self._driver.capture_page_screenshot(capture_name)  
+        self._selenium.capture_page_screenshot(capture_name)  
         # restore old window size
-        self._driver.set_window_size(old_width, old_height)
-        # self._driver.maximize_browser_window()
+        self._selenium.set_window_size(old_width, old_height)
+        # self._selenium.maximize_browser_window()
         time.sleep(2)
         BuiltIn().log("Captured the current screenshot(%dx%d) to file `%s`" % (total_width,total_height,capture_name))
+        return capture_name
 
 
     def verbose_capture(self,*args,**kwargs):
@@ -270,7 +287,8 @@ class WebApp(object):
         ignore_dead_node = Common.get_config_value('ignore-dead-node')
         try: 
             old_name = self._current_name
-            self._driver.close_browser()
+
+            self._selenium.close_browser()
             del(self._browsers[old_name])
             if len(self._browsers) > 0:
                 self._current_name = list(self._browsers.keys())[-1]
@@ -299,30 +317,9 @@ class WebApp(object):
             return
         browser         = 'firefox'
         login_url       = '/'
-        proxy           = None
-        fp              = None
-        capabilities    = None
-
         ignore_dead_node = Common.get_config_value('ignore-dead-node')
 
-        # collect information about the application that listed 
         app_info = Common.LOCAL['webapp'][app]
-        if 'login-url' in app_info and app_info['login-url']:
-            login_url = app_info['login-url']
-        if 'browser' in app_info and app_info['browser']:
-            browser  = app_info['browser']
-        if 'proxy' in app_info and app_info['proxy']:
-            proxy = Proxy()
-            proxy.proxy_type = ProxyType.MANUAL
-            if 'http' in app_info['proxy']:
-                proxy.http_proxy    = app_info['proxy']['http']
-            if 'ssl' in app_info['proxy']:
-                proxy.ssl_proxy     = app_info['proxy']['ssl']
-            if 'ftp' in app_info['proxy']:
-                proxy.ftp_proxy     = app_info['proxy']['ftp']
-            capabilities = webdriver.DesiredCapabilities.FIREFOX
-            proxy.add_to_capabilities(capabilities)
-
         device = app_info['device']
         device_info = Common.GLOBAL['device'][device]
         ip = device_info['ip']
@@ -333,25 +330,78 @@ class WebApp(object):
         BuiltIn().log('    Using profile `%s`' % profile)
         auth['username']    = Common.GLOBAL['auth']['plain-text'][profile]['user']
         auth['password']    = Common.GLOBAL['auth']['plain-text'][profile]['pass']
-        url = 'https://' + ip + '/' + login_url
+        if 'login-url' in app_info and app_info['login-url']:
+            login_url = app_info['login-url']
+        if 'browser' in app_info and app_info['browser']:
+            browser  = app_info['browser']
 
-        # create a new profile and adjust it
-        fp = webdriver.FirefoxProfile()
+        # firefox options
+        profile_dir = Common.get_result_path() + '/.%s_%s_profile' % (profile,name)
+
+        if not os.path.exists(profile_dir): os.mkdir(profile_dir)
+        os.chmod(profile_dir, 0o777)
+        ff_opt = Options()
+        # ff_opt.log.level = "TRACE"
+        ff_opt.log.level = "INFO"
+        # ff_opt.add_argument("--lang=en_US")
+        # ff_opt.add_argument("-profile")
+        # ff_opt.add_argument(profile_dir)
+
+        # firefox profiles
+        # ff_pf = webdriver.FirefoxProfile()
+        ff_pf = webdriver.FirefoxProfile(profile_dir)
+        BuiltIn().log("Open FF with profile `%s`" % ff_pf.path)
         if 'profile' in app_info and 'download-dir' in app_info['profile']:
             download_path = app_info['profile']['download-path']
         else:
             download_path = Common.get_result_path()
         if 'profile' in app_info and 'auto-save-mime' in app_info['profile']:
             auto_save_mime = app_info['profile']['auto-save-mime']
-            fp.set_preference("browser.helperApps.neverAsk.saveToDisk", app_info['profile']['auto-save-mime'])
-        fp.set_preference("browser.download.folderList",2)
-        fp.set_preference("browser.download.dir",download_path)
-        fp.set_preference("browser.download.manager.showWhenStarting",False);
-        fp.set_preference("browser.download.useDownloadDir",True);
-        fp.set_preference("browser.download.panel.shown",False);
-        fp.set_preference("gfx.canvas.azure.backends","cairo");
-        fp.set_preference("gfx.content.azure.backends","cairo");
-        fp.update_preferences()
+            ff_pf.set_preference("browser.helperApps.neverAsk.saveToDisk", app_info['profile']['auto-save-mime'])
+        ff_pf.set_preference("browser.download.folderList",2)
+        ff_pf.set_preference("browser.download.dir",download_path)
+        ff_pf.set_preference("browser.download.manager.showWhenStarting",False);
+        ff_pf.set_preference("browser.download.useDownloadDir",True);
+        ff_pf.set_preference("browser.download.panel.shown",False);
+        ff_pf.set_preference("gfx.canvas.azure.backends","skia");
+        ff_pf.set_preference("gfx.content.azure.backends","skia");
+        ff_pf.set_preference("general.warnOnAboutConfig", False)
+        ff_pf.set_preference("javascript.enabled",True)
+        # lang = Common.get_config_value('web','lang','ja, en-US, en')
+        lang = Common.get_config_value('web','lang','en-US, en')
+        ff_pf.set_preference("intl.accept_languages", lang)
+        # ff_pf.set_preference("font.language.group","x-western");
+        # ff_pf.set_preference("font.language.group","ja");
+        # ff_pf.set_preference("browser.cache.disk.enable",False)
+        # ff_pf.set_preference("browser.cache.memory.enable",False)
+        # ff_pf.set_preference("browser.cache.offline.enable",False)
+        # ff_pf.set_preference("network.http.use-cache",False)
+        ff_pf.native_events_enabled = True
+        ff_pf.update_preferences()
+
+        # firefox capabilities
+        ff_cap = webdriver.DesiredCapabilities.FIREFOX
+        ff_cap['javascriptEnabled'] = True
+        ff_cap['webStorageEnabled'] = True
+        if 'proxy' in app_info and app_info['proxy']:
+            proxy = Proxy()
+            proxy.proxy_type = ProxyType.MANUAL
+            if 'http' in app_info['proxy']:     proxy.http_proxy  = app_info['proxy']['http']
+            if 'ssl' in app_info['proxy']:      proxy.ssl_proxy   = app_info['proxy']['ssl']
+            if 'https' in app_info['proxy']:    proxy.ssl_proxy   = app_info['proxy']['https']
+            if 'ftp' in app_info['proxy']:      proxy.ftp_proxy   = app_info['proxy']['ftp']
+            proxy.add_to_capabilities(ff_cap)
+        
+        # create webdriver
+        alias = '_%s_%s' % (profile,name)
+        self._selenium.create_webdriver('Firefox',
+            alias = alias,
+            options = ff_opt,
+            firefox_profile=ff_pf,
+            desired_capabilities=ff_cap,
+            service_log_path=Common.get_result_path()+'/selenium.log'
+            )
+        BuiltIn().log('Create a webdriver with alias `%s`' % alias)
 
         # open a browser and retry 3 times if it is necessary
         try:
@@ -359,7 +409,7 @@ class WebApp(object):
             while retry <= 3:
                 try:
                     url = 'https://' + ip + '/' + login_url
-                    self._driver.open_browser(url,browser,'_%s_%s' % (profile,name),False,capabilities,fp.path)
+                    self._selenium.go_to(url)
                     time.sleep(5)
                     break
                 except WebDriverException as err:
@@ -383,21 +433,24 @@ class WebApp(object):
         browser_info = {}
         browser_info['url'] = url
         browser_info['auth'] = auth
-        browser_info['capabilities'] = capabilities
-        browser_info['ff_profile_dir'] = fp.path
+        browser_info['ff_cap'] = ff_cap
+        browser_info['ff_profile_dir'] = ff_pf.path
         browser_info['capture_counter'] = 0
         browser_info['capture_format']  = "%s_%%010d" % app
         browser_info['browser']         = browser
         browser_info['profile']         = profile
+        browser_info['login_url']       = login_url
         self._browsers[name] = browser_info
+        display_info = Common.get_config_value('display')
+        self._selenium.set_window_size(display_info['width'],display_info['height'])
 
-        BuiltIn().log("Opened browser(%s) for %s app with profile `%s`" % (browser,app,fp.path))
+        BuiltIn().log("Opened browser(%s) for %s app with profile `%s`" % (browser,app,ff_pf.path))
 
 
     def switch(self,name):
         """ Switches the current browser to ``name``
         """
-        self._driver.switch_browser('_%s_%s' % (self._browsers[self._current_name]['profile'],name))
+        self._selenium.switch_browser('_%s_%s' % (self._browsers[self._current_name]['profile'],name))
         self._current_name = name
         BuiltIn().log("Switched the current browser to `%s`" % name)
 
@@ -405,15 +458,39 @@ class WebApp(object):
     def close_all(self):
         """ Closes all current opened applications
         """
-        while len(self._browsers) > 0:
+        num = len(self._browsers)
+        while len(self._browsers) > 0: 
             self.close()
-        BuiltIn().log("Closed all the browsers for %s" % self.__class__.__name__)
+        BuiltIn().log("Closed all %d the browsers for %s application" % (num,self.__class__.__name__))
+
+
+    def connect(self,app,name):
+        ''' place holder
+        '''
+        pass
+
+    def connect_all(self):
+        """ Connects to all applications defined in ``local.yaml``
+
+        The name of the connection will be the same of the `webapp` name
+        """
+        num = 0
+        if 'webapp' in Common.LOCAL and Common.LOCAL['webapp']:
+            for entry in Common.LOCAL['webapp']:
+                device = Common.LOCAL['webapp'][entry]['device']
+                type = Common.GLOBAL['device'][device]['type']
+                if type.startswith(self._type):
+                    num += 1
+                    self.connect(entry,entry)
+                    BuiltIn().log("Connected to %d applications" % num)
+        else:
+            BuiltIn().log("WARNING: No application to connect")
 
 
     def mark_element(self,xpath):
         """ Marking an element to check its stattus later
         """
-        element = self._driver.get_webelement(xpath)
+        element = self._selenium.get_webelement(xpath)
         name = self._current_name
         self._browsers[name]['mark_element_id'] = element.id
         self._browsers[name]['mark_element_xpath'] = xpath
@@ -428,16 +505,16 @@ class WebApp(object):
         count = 0
         id      = self._browsers[name]['mark_element_id']
         xpath   = self._browsers[name]['mark_element_xpath']
-        element = self._driver.get_webelement(xpath)
+        element = self._selenium.get_webelement(xpath)
         element_id = element.id
         while count < timeout_sec and element_id == id:
             BuiltIn().log_to_console('.','STDOUT',True)
             delta = DateTime.convert_time(interval)
             time.sleep(delta)
             count += delta
-            element_count = self._driver.get_element_count(xpath)
+            element_count = self._selenium.get_element_count(xpath)
             if element_count > 0:
-                element = self._driver.get_webelement(xpath)
+                element = self._selenium.get_webelement(xpath)
                 element_id = element.id
             else:
                 element_id = -1
@@ -448,4 +525,7 @@ class WebApp(object):
                 raise Exception('ERR: Timeout while waiting for element status changed')
 
         BuiltIn().log('Waited for element status changed')
-  
+
+
+
+   

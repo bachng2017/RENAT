@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-05-14 13:13:14 +0900 (火, 14  5月 2019) $
-# $Rev: 2013 $
+# $Date: 2019-07-17 11:17:57 +0900 (水, 17 7 2019) $
+# $Rev: 2094 $
 # $Ver: $
 # $Author: $
 
@@ -1133,14 +1133,49 @@ def add_quicktest(self,name,test_type=u'rfc2544throughput',tx_mode=u'interleaved
     
     BuiltIn().log("Created a new Quicktest with type `%s` for %d ports " % (test_type,len(vports))) 
 
-    
+
+def get_quicktest_name(self,test_index='0'):
+    """ Return quicktest name by its index
+    """
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+    test_ids = ix.getAttribute(ix.getRoot() + '/quickTest', '-testIds')
+    test = test_ids[int(test_index)]
+    name = ix.getAttribute(test,'-name')
+    BuiltIn().log('Get name for the test id `%d`' % int(test_index))
+    return name
+
+
+def get_quicktest_index(self,test_name):
+    """ Return quicktest name by its name
+    """
+    result = None
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+    test_ids = ix.getAttribute(ix.getRoot() + '/quickTest', '-testIds')
+    count = 0
+    for item in test_ids:
+        name = ix.getAttribute(item,'-name')
+        if name == test_name: 
+            result = count
+            break
+        count += 1
+    BuiltIn().log('Got index for the test name `%s`' % test_name)
+    return result
+
+
+def run_quicktest_by_name(self,test_name,wait_until_finish=True):
+    """ Runs a quicktest by its name
+    """
+    test_index = self.get_quicktest_index(test_name)
+    return self.run_quicktest(test_index,wait_until_finish)
+
 
 def run_quicktest(self,test_index='0',wait_until_finish=True):
-    """ Runs the Quicktest and wait until it finishes
+    """ Runs a quicktest and wait until it finishes
 
     *Warning*: it could take a long time to finish a quicktest
     """
-
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
 
@@ -1250,6 +1285,19 @@ def get_quicktest_result_path(self,test_index=u'-1'):
     BuiltIn().log("Got the path of the newest run: %s" % result_path)
     return result_path
 
+
+def get_quicktest_result_by_name(self,name=None,prefix='',enable_all=True):
+    """ Get quicktest results by its name
+
+    Default(None) is the last one
+    """
+    if name:
+        index = self.get_quicktest_index(name)
+    else:
+        index = -1
+    BuiltIn().log('Got result for quicktest `%s`' % name)
+    return self.get_quicktest_result(index,prefix,enable_all)
+    
 
 
 def get_quicktest_result(self,test_index=u'-1',prefix='',enable_all=True):

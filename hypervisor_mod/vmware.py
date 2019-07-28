@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-05-22 05:47:03 +0900 (水, 22  5月 2019) $
-# $Rev: 2022 $
+# $Date: 2019-07-03 22:31:44 +0900 (水, 03 7 2019) $
+# $Rev: 2082 $
 # $Ver: $
 # $Author: $
 
@@ -269,7 +269,7 @@ def open_console(self,vm_name,width=None,height=None):
 
     render_var = {}
     loader=jinja2.Environment(loader=jinja2.FileSystemLoader(console_folder)).get_template('console.html')
-    console_info = Common.get_config_value('mks-console')
+    console_info = Common.get_config_value('mks-console','hypervisor')
     if width is None:
         render_var['WIDTH'] = console_info['width']
     else:

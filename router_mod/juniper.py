@@ -15,7 +15,7 @@
 
 # $Rev: 1980 $
 # $Ver: $
-# $Date: 2019-04-05 00:22:26 +0900 (金, 05  4月 2019) $
+# $Date: 2019-04-05 00:22:26 +0900 (金, 05 4 2019) $
 # $Author: $
 
 """ Provides keywords for Juniper platform

@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2060 $
+# $Rev: 2110 $
 # $Ver: $
-# $Date: 2019-06-07 12:37:50 +0900 (金, 07  6月 2019) $
+# $Date: 2019-07-27 10:46:44 +0900 (土, 27 7 2019) $
 # $Author: $
 
 """ Common library for RENAT
@@ -1372,6 +1372,8 @@ def get_myid():
 def get_config_value(key,base=u'default',default=None):
     """ Returns value of a key for renat configuration with this other
         LOCAL[base][key] > GLOBAL[base][key] > None
+
+    Users could override the global setting by test's local setting
     """
     if base in LOCAL and key in LOCAL[base]:
         return LOCAL[base][key]
@@ -1380,6 +1382,7 @@ def get_config_value(key,base=u'default',default=None):
     else:
         return default
     return None
+
 
 
 def log_csv(csv_file,index=False,border=0):
@@ -1454,7 +1457,12 @@ def close_display():
 
 
 def screenshot(file_path):
-    """ Capture whole display to a file specified by ``file_path``
+    BuiltIn().log("WRN: This keyword is deprecated. Use `Display Capture` instead",console=True)
+    capture_display(file_path)
+
+
+def capture_display(file_path):
+    """ Capture whole display to file ``file_path``
 
     *Notes*: This keyword saves the whole virtual screen(monitor), while the
     familiar WebApp.`Screenshot Capture` only saves the portion of the web
@@ -1462,7 +1470,6 @@ def screenshot(file_path):
     capture` depending on the content of the browser.
     """
     pyscreenshot.grab(childprocess=True).save(file_path)
-    # pyscreenshot.grab().save(file_path)
     BuiltIn().log("Saved current display to file `%s`" % file_path)
 
 
@@ -1592,6 +1599,7 @@ try:
     BuiltIn().set_global_variable('${NODE}', NODE)
     BuiltIn().set_global_variable('${WEBAPP}', WEBAPP)
     BuiltIn().set_global_variable('${START_TIME}', START_TIME)
+    BuiltIn().set_global_variable('${WORKING_FOLDER}',GLOBAL['default']['working-folder'])
 
     # define Ctrl @A-Z[\]^_ string by ASCII code
     for i,char in enumerate(list('@'+string.ascii_uppercase+'[\]^_')):

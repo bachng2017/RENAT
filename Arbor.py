@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-03-26 04:49:39 +0900 (火, 26  3月 2019) $
-# $Rev: 1923 $
+# $Date: 2019-07-09 12:52:20 +0900 (火, 09 7 2019) $
+# $Rev: 2086 $
 # $Ver: $
 # $Author: $
 
@@ -51,25 +51,7 @@ class Arbor(WebApp):
         super(Arbor,self).__init__()
         self.retry_num = 3
         self.auth = {}
-
-
-    def connect_all(self):
-        """ Connects to all applications defined in ``local.yaml``
-
-        The name of the connection will be the same of the `webapp` name
-        """
-
-        num = 0
-        if 'webapp' in Common.LOCAL and Common.LOCAL['webapp']:
-            for entry in Common.LOCAL['webapp']:
-                device = Common.LOCAL['webapp'][entry]['device']
-                type = Common.GLOBAL['device'][device]['type']
-                if type.startswith('arbor'):
-                    num += 1
-                    self.connect(entry,entry)
-                    BuiltIn().log("Connected to %d applications" % num)
-        else:
-            BuiltIn().log("WARNING: No application to connect")
+        self._type = 'arbor'
 
 
     def connect(self,app,name):
@@ -85,9 +67,9 @@ class Arbor(WebApp):
         self.open_ff_with_profile(app,name)
         # login 
         auth = self._browsers[name]['auth']
-        self._driver.input_text('name=username', auth['username'])
-        self._driver.input_text('name=password', auth['password'])
-        self._driver.click_button('name=Submit')
+        self._selenium.input_text('name=username', auth['username'])
+        self._selenium.input_text('name=password', auth['password'])
+        self._selenium.click_button('name=Submit')
         time.sleep(5)
 
 
@@ -97,13 +79,13 @@ class Arbor(WebApp):
         name = self._current_name
         auth            = self._browsers[name]['auth']
         url             = self._browsers[name]['url']
-        self._driver.go_to(url)
-        self._driver.wait_until_element_is_visible('name=username')
+        self._selenium.go_to(url)
+        self._selenium.wait_until_element_is_visible('name=username')
         
         # login
-        self._driver.input_text('name=username', auth['username'])
-        self._driver.input_text('name=password', auth['password'])
-        self._driver.click_button('name=Submit')
+        self._selenium.input_text('name=username', auth['username'])
+        self._selenium.input_text('name=password', auth['password'])
+        self._selenium.click_button('name=Submit')
         time.sleep(5)
         BuiltIn().log("Reconnected to the Arbor application(%s)" % name)     
     
@@ -118,10 +100,10 @@ class Arbor(WebApp):
         """ Logs-out the current application, the browser remains
         """
         self.switch(self._current_name) 
-        self._driver.click_link("xpath=//a[contains(.,'(Log Out)')]")
+        self._selenium.click_link("xpath=//a[contains(.,'(Log Out)')]")
 
-        if self._driver.get_element_count('logout_confirm') > 0: 
-            self._driver.click_button('logout_confirm')
+        if self._selenium.get_element_count('logout_confirm') > 0: 
+            self._selenium.click_button('logout_confirm')
         BuiltIn().log("Exited Arbor application")
     
     
@@ -131,10 +113,10 @@ class Arbor(WebApp):
         """
         
         self.switch(self._current_name)
-        self._driver.mouse_over("xpath=//a[.='Mitigation']")
-        self._driver.wait_until_element_is_visible("xpath=//a[contains(.,'All Mitigations')]")
-        self._driver.click_link("xpath=//a[contains(.,'All Mitigations')]")
-        self._driver.wait_until_element_is_visible("//div[@class='sp_page_content']")
+        self._selenium.mouse_over("xpath=//a[.='Mitigation']")
+        self._selenium.wait_until_element_is_visible("xpath=//a[contains(.,'All Mitigations')]")
+        self._selenium.click_link("xpath=//a[contains(.,'All Mitigations')]")
+        self._selenium.wait_until_element_is_visible("//div[@class='sp_page_content']")
         self.verbose_capture()
         BuiltIn().log("Displayed all current mitigations")
 
@@ -147,13 +129,13 @@ class Arbor(WebApp):
         """
         self.show_all_mitigations() 
         xpath = "//a[contains(.,'%s')]" %  search_str
-        self._driver.input_text("search_string_id",search_str)
-        self._driver.click_button("search_button")
+        self._selenium.input_text("search_string_id",search_str)
+        self._selenium.click_button("search_button")
         time.sleep(2)
-        self._driver.wait_until_page_contains_element("xpath=//div[@class='sp_page_content']") 
+        self._selenium.wait_until_page_contains_element("xpath=//div[@class='sp_page_content']") 
         time.sleep(2)
-        self._driver.wait_until_element_is_visible("search_button")
-        self._driver.click_link(xpath)
+        self._selenium.wait_until_element_is_visible("search_button")
+        self._selenium.click_link(xpath)
         time.sleep(5)
         self.verbose_capture()
         BuiltIn().log("Showed details of a mitigation searched by `%s`" % search_str)    
@@ -177,7 +159,7 @@ class Arbor(WebApp):
         self.show_detail_mitigation(name)
         for item in method_list:
             xpath = '//table//td[(@class="borderright") and (. = "%s")]/../td[1]/a' % item
-            target = self._driver.get_webelement(xpath)
+            target = self._selenium.get_webelement(xpath)
             target.click()
             time.sleep(2)
         self.verbose_capture()
@@ -214,11 +196,11 @@ class Arbor(WebApp):
         self.show_all_mitigations() 
         # ignore the header line
         xpath = '//table[1]//tr[%s]/td[%s]//a[1]' % (int(order)+1,2)
-        link = self._driver.get_webelement(xpath)
+        link = self._selenium.get_webelement(xpath)
         mitigation_name = link.get_attribute('innerText')
         href=link.get_attribute('href')
         mitigation_id = href.split('&')[1].split('=')[1] 
-        self._driver.click_link(xpath)
+        self._selenium.click_link(xpath)
         time.sleep(5)
         BuiltIn().log("Displayed detail of `%s`th mitigation in the list" % order)
         self.verbose_capture()
@@ -233,9 +215,9 @@ class Arbor(WebApp):
         """
         msg = ''
         xpath = u"//ul[@id='statusmessage_content']//div"
-        count = self._driver.get_element_count(xpath)
+        count = self._selenium.get_element_count(xpath)
         if count > 0:
-            msg = self._driver.get_webelement(xpath).text
+            msg = self._selenium.get_webelement(xpath).text
         BuiltIn().log('Got current status message. Msg is `%s`' % msg)
         return msg
 
@@ -248,11 +230,11 @@ class Arbor(WebApp):
         msg = ''
         # close any current open status message
         xpath = u"//a[@id='statusmessage_link' and @class='collapselink']"
-        msg_count = self._driver.get_element_count(xpath)
+        msg_count = self._selenium.get_element_count(xpath)
         if msg_count > 0:
             msg = self.get_status_msg()
-            self._driver.click_link(xpath)
-        self._driver.wait_until_page_does_not_contain_element(xpath)
+            self._selenium.click_link(xpath)
+        self._selenium.wait_until_page_does_not_contain_element(xpath)
 
         BuiltIn().log('Closed status message `%s`' % msg)
 
@@ -297,16 +279,16 @@ class Arbor(WebApp):
                 xpath = "xpath=%s//a[contains(.,'%s')]" % (menu,item)
             else:
                 xpath = "xpath=%s//a[.='%s']" % (menu,item)
-            self._driver.mouse_over(xpath)
-            # self._driver.click_element(xpath)
+            self._selenium.mouse_over(xpath)
+            # self._selenium.click_element(xpath)
             time.sleep(1)
-            # self._driver.wait_until_element_is_visible(xpath)
+            # self._selenium.wait_until_element_is_visible(xpath)
             if capture_all:
                 capture_name='%s%s%s' % (prefix,item,suffix)
-                self._driver.capture_page_screenshot(capture_name)
+                self._selenium.capture_page_screenshot(capture_name)
             self.verbose_capture()
             if index == len(items):
-                self._driver.click_link(xpath)
+                self._selenium.click_link(xpath)
                 time.sleep(DateTime.convert_time(wait))
 
 
@@ -317,20 +299,20 @@ class Arbor(WebApp):
         to commit. Otherwise, it does nothing
         """
         xpath = u"//button[@name='open_commit' and not(starts-with(@class,'no'))]"
-        count = self._driver.get_element_count(xpath)
+        count = self._selenium.get_element_count(xpath)
         BuiltIn().log('Found %d elements' % count)
         if strict and count == 0:
             raise Exception('ERROR: no changes to commit')
         
         if count > 0:
             self.verbose_capture()
-            self._driver.click_button(xpath)
-            main_window = self._driver.select_window('NEW')
+            self._selenium.click_button(xpath)
+            main_window = self._selenium.select_window('NEW')
             self.verbose_capture()
-            self._driver.click_button(u'commit')
+            self._selenium.click_button(u'commit')
             
-            self._driver.select_window(main_window)
-            self._driver.wait_until_element_is_not_visible(xpath,timeout='20s')
+            self._selenium.select_window(main_window)
+            self._selenium.wait_until_element_is_not_visible(xpath,timeout='20s')
             self.verbose_capture()
             BuiltIn().log('Committed changes')
         else:

@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2067 $
+# $Rev: 2083 $
 # $Ver: $
-# $Date: 2019-06-07 20:00:45 +0900 (金, 07  6月 2019) $
+# $Date: 2019-07-03 22:34:10 +0900 (水, 03 7 2019) $
 # $Author: $
 
 import os,re,sys,threading
@@ -85,7 +85,7 @@ def _log(msg,channel):
 def _with_reconnect(keyword,self,*args,**kwargs):
     """ local method that provide a fail safe reconnect when read/write
     """
-    max_count = int(Common.GLOBAL['default']['max-retry-for-connect'])
+    max_count = int(Common.get_config_value('max-retry','vchannel'))
     interval  = DateTime.convert_time(Common.GLOBAL['default']['interval-between-retry'])
     count = 0
     while count < max_count:
@@ -195,7 +195,10 @@ class VChannel(object):
         if self._prefix != "":
             self._async_channel = None
         else:
-            self._async_channel = BuiltIn().get_library_instance('AChannel')
+            try: 
+                self._async_channel = BuiltIn().get_library_instance('AChannel')
+            except:
+                pass
 
 
     @property
