@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2110 $
+# $Rev: 2116 $
 # $Ver: $
-# $Date: 2019-07-27 10:46:44 +0900 (土, 27 7 2019) $
+# $Date: 2019-07-29 09:41:31 +0900 (月, 29 7 2019) $
 # $Author: $
 
 """ Common library for RENAT
@@ -450,8 +450,7 @@ if _ntm_master_path:
 
 ### expand environment variable and update GLOBAL config
 for entry in ['auth.yaml', 'device.yaml','template.yaml']:
-    with open(_renat_master_folder + '/' + entry) as f:
-    # with open(_tmp_folder + '/' + entry) as f:
+    with codecs.open(_renat_master_folder + '/' + entry,"r","utf-8") as f:
         file_content = f.read()
         retry = 0
         if len(file_content) == 0 and retry < 3:
