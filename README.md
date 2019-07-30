@@ -293,7 +293,7 @@ Install a typical Centos7 with following parameters:
     $ mkdir /var/log/renat
     $ chown root:renat /var/log/renat
     $ chmod 0775 /var/log/renat
-    ``
+    ```
 
     - add setting for renat to the end of `/etc/rsyslog.conf`
 
