@@ -6,7 +6,7 @@ if [[ "$1" == "-h" ]]; then
     echo "usage: $0 -h|-q"
     echo "   -h: print this help"
     echo "   -q: more quiet, do not print out diff information"
-    exit 1 
+    exit 1
 fi
 if [[ "$1" == "-q" ]]; then
     QUIET=$1
@@ -40,7 +40,7 @@ else
   # update project/run.sh
   FILE=$RENAT_PATH/tools/template/project/run.sh
   diff $QUIET $FILE run.sh
-  if [[ $? != 0 ]]; then 
+  if [[ $? != 0 ]]; then
     cp -f $RENAT_PATH/tools/template/project/run.sh .
     echo "updated project run.sh"
     echo "---"
@@ -48,10 +48,10 @@ else
 
   # gitignore
   FILE=$RENAT_PATH/tools/template/project/.gitignore
-  diff $QUIET $FILE run.sh
-  if [[ $? != 0 ]]; then 
-    cp -f $RENAT_PATH/tools/template/project/run.sh .
-    echo "updated item/.gitignore" 
+  diff $QUIET $FILE .gitignore
+  if [[ $? != 0 ]]; then
+    cp -f $RENAT_PATH/tools/template/project/.gitignore .
+    echo "updated item/.gitignore"
     echo "---"
   fi
 
@@ -78,4 +78,4 @@ else
   echo "updated local.yaml"
 fi
 
-  
+

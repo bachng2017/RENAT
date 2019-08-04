@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2083 $
+# $Rev: 2132 $
 # $Ver: $
-# $Date: 2019-07-03 22:34:10 +0900 (水, 03 7 2019) $
+# $Date: 2019-08-03 17:51:40 +0900 (土, 03 8 2019) $
 # $Author: $
 
 import os,re,sys,threading
@@ -714,27 +714,40 @@ class VChannel(object):
         BuiltIn().log("Stopped screen mode for channel `%s`" % self._current_name)
 
 
-    def _get_history(self, screen):
-        # the HistoryScreen.history.top is a StaticDefaultDict that contains # Char element.
+    def _get_history(self):
+        # the HistoryScreen.history.top is a StaticDefaultDict that contains Char element.
         # The Char.data contains the real Unicode char
+        channel = self.get_current_channel()
+        screen = channel['screen']
         return Common.newline.join(''.join(c.data for c in list(row.values())).rstrip() for row in screen.history.top) + Common.newline
 
-
-    def _get_screen(self, screen):
+    def _get_screen(self):
+        """ Gets the content of the current terminal's screen
+        """
+        channel = self.get_current_channel()
+        screen = channel['screen']
         return Common.newline.join(row.rstrip() for row in screen.display).rstrip(Common.newline)   
 
-    def _last_line(self, screen):
-        """ Retuns the last line of the current screen of the channel
+
+    def _last_line(self):
+        """ Returns the last line of the current screen of the channel
         """
+        channel = self.get_current_channel()
+        screen = channel['screen']
         return screen.display[-1].rstrip(Common.newline)
 
 
     def _dump_screen(self):
+        """ dump all the content of the terminal's screen including its history
+        """
         channel = self.get_current_channel()
-        return  self._get_history(channel['screen']) + self._get_screen(channel['screen'])
+        screen = channel['screen']
+        return  self._get_history() + self._get_screen()
 
 
     def switch(self,name):
+        """ Switch the current channel and also its async channel
+        """
         self._switch(name)
         if Common.get_config_value('async-channel','vchannel',False):
             self._async_channel._switch(name)
@@ -1085,20 +1098,12 @@ class VChannel(object):
 
         # feed the data from session to the terminal stream
         channel['stream'].feed(channel['connection'].read())
-        if channel['screen_mode']:
-            try:
-                output = self._dump_screen() + Common.newline
-            except UnicodeDecodeError as err:
-                BuiltIn().log('ERROR: Unicode error in read output')
-                output = err.args[1].decode('utf-8','replace')
-        else:
-            try:
-                # do not need history here
-                output = self._get_screen(channel['screen'])
-                channel['screen'].reset() 
-            except UnicodeDecodeError as err:
-                output = err.args[1].decode('utf-8','replace')
-   
+        try:
+            # dump all the screen including its history
+            output = self._dump_screen() + Common.newline
+            channel['screen'].reset() 
+        except UnicodeDecodeError as err:
+            output = err.args[1].decode('utf-8','replace')
         self.log(output,channel)
         return output
 
@@ -1148,9 +1153,9 @@ class VChannel(object):
             output = channels[self._current_name]['connection'].close_connection() 
             if output is not None: self.log(output,channel)
         except Exception as err:
-            BuiltIn().log('WARN: ignored errors while closing channel')
+            BuiltIn().log('WARN: ignore errors while closing channel')
             BuiltIn().log(err)
-            BuiltIn().log(traceback.format_exc())
+            # BuiltIn().log(traceback.format_exc())
         
         # farewell message    
         finish_msg = Common.newline*2 + "%s %s %s %s" % (mark,datetime.datetime.now().strftime("%I:%M:%S%p on %B %d, %Y:"),msg,mark)

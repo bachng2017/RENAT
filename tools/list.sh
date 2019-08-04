@@ -1,15 +1,23 @@
 #!/bin/bash
-#
+# -*- coding: utf-8 -*-
 # $Rev: $
 # $Ver: $
 # $Date: $
 # $Author: $ 
 
-if [ $# -lt 1 ];  then
-  echo "List information about test items in a RENAT project"
+usage() {
+  echo "Show information about a RENAT project and its items"
   echo "usage: $0 <project>"
   exit 1
-fi
+}
+
+if [ $# -lt 1 ];  then usage; fi
+while getopts ":h:" OPT; do 
+    case $OPT in
+        :|h|\?)  usage ;;
+    esac
+done
+shift $(($OPTIND - 1))
 
 BASE=$(basename $1)
 if [ "$1" == "." ]; then
@@ -72,7 +80,7 @@ for item in $(find $1 -depth -type f -name "run.sh" | sort); do
             if [ "$ITEM" == "." ]; then
                 INFO=$(cat $LOG | grep -B3 "Output:.*$CURPATH/result" | grep total)
             else
-                INFO=$(cat $LOG | grep -B3 "Output:.*$CURPATH/$ITEM/result" | grep total)
+                INFO=$(cat $LOG | grep -B3 "Output:.*$CURPATH/$ITEM/result" | grep total | sed 'N;s/\n/\//g')
             fi
             IGNORE=$(cat $LOG | grep -A1 "Entering.*$CURPATH/$ITEM" | grep .ignore)
             if [ "$IGNORE" == "" ]; then
