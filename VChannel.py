@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2132 $
+# $Rev: 2139 $
 # $Ver: $
-# $Date: 2019-08-03 17:51:40 +0900 (土, 03 8 2019) $
+# $Date: 2019-08-05 17:40:19 +0900 (月, 05 8 2019) $
 # $Author: $
 
 import os,re,sys,threading
@@ -350,6 +350,8 @@ class VChannel(object):
         _finish         = _access_tmpl.get('finish')    # finish  command 
         _login_prompt   = _access_tmpl.get('login-prompt') or Common.get_config_value('default-login-prompt','vchannel')
         _pass_prompt    = _access_tmpl.get('password-prompt') or Common.get_config_value('default-password-prompt','vchannel')
+        _secret_prompt  = _access_tmpl.get('enable-prompt') or _access_tmpl.get('secret-prompt') or 'Password:'
+        _secret_cmd     = _access_tmpl.get('enable-cmd') or _access_tmpl.get('secret-cmd') or 'enable'
         _timeout        = timeout
 
         # using strict prompt or not
@@ -553,11 +555,16 @@ class VChannel(object):
                 _login_prompt = Common.get_config_value('default-login-prompt','vchannel')
                 _pass_prompt = Common.get_config_value('default-password-prompt','vchannel')
  
-                if 'login-prompt' in _target_tmpl:      _login_prompt       = _target_tmpl['login-prompt']
-                if 'password-prompt' in _target_tmpl:   _pass_prompt    = _target_tmpl['password-prompt']
-                if 'init' in _target_tmpl:               _init              = _target_tmpl['init']
-                if 'finish' in _target_tmpl:            _finish             = _target_tmpl['finish']
-                if 'timeout' in _target_tmpl:           _timeout            = _target_tmpl['timeout']
+                if 'login-prompt' in _target_tmpl:     
+                    _login_prompt = _target_tmpl['login-prompt']
+                if 'password-prompt' in _target_tmpl:   
+                    _pass_prompt  = _target_tmpl['password-prompt']
+                if 'init' in _target_tmpl:               
+                    _init = _target_tmpl['init']
+                if 'finish' in _target_tmpl:
+                    _finish  = _target_tmpl['finish']
+                if 'timeout' in _target_tmpl:
+                    _timeout  = _target_tmpl['timeout']
 
                 # update channel and authentication info
                 _auth                   = _target_auth
@@ -642,8 +649,8 @@ class VChannel(object):
             if 'secret' in _auth:
                 BuiltIn().log("Entering ENABLE mode")
                 self._cmd()
-                output = self._cmd('enable',prompt=r"Password:|%s" % _prompt)
-                if "Password:" in output: self._cmd(_auth['secret'])
+                output = self._cmd(_secret_cmd,prompt=r"%s|%s" % (_secret_prompt,_prompt))
+                if _secret_prompt in output: self._cmd(_auth['secret'])
 
             ### execute 1st command after login
             flag = Common.get_config_value('ignore-init-finish','vchannel',False)
