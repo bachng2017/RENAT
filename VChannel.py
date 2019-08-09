@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2139 $
+# $Rev: 2150 $
 # $Ver: $
-# $Date: 2019-08-05 17:40:19 +0900 (月, 05 8 2019) $
+# $Date: 2019-08-07 15:19:12 +0900 (水, 07 8 2019) $
 # $Author: $
 
 import os,re,sys,threading
@@ -686,11 +686,14 @@ class VChannel(object):
         if 'node' in Common.LOCAL and not Common.LOCAL['node']: 
             num = 0
         else:  
-            num = len(Common.LOCAL['node'])
-            for node in Common.LOCAL['node']:
-                alias       = node
-                log_file    = alias + '.log'
-                self.connect(node,alias,log_file)
+            nodes = Common.LOCAL['node']
+            num = len(nodes)
+            for node_name in nodes:
+                if "log" in nodes[node_name]:
+                    log_file = nodes[node_name]['log']
+                else:
+                    log_file    = node_name + '.log'
+                self.connect(node_name,node_name,log_file)
         BuiltIn().log("Connected to all %s nodes defined in ``conf/local.yaml``" % (num))
 
 
