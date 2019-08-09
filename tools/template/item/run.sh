@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# $Date: 2019-05-22 05:47:03 +0900 (水, 22 5 2019) $
-# $Rev: 2022 $
+# $Date: 2019-08-09 11:23:14 +0900 (金, 09 8 2019) $
+# $Rev: 2158 $
 # $Author: $
 # usage: ./run.sh [-n <num>] <other robot argument>
 # ITEM run script
@@ -35,7 +35,7 @@ usage () {
     echo "  -B, --backup            automatically backup result folder with current date information"
     echo "  -r, --dry-run           same meaning with the original --dryrun"
     echo "Predefinded global variables:"
-    echo "  -v CLEAN                execute CleanUp Result keyword before in Setup step"
+    echo "  -v CLEAN | -c | --clean execute CleanUp Result keyword before in Setup step"
     echo "  -v FORCE                run case started by Run Explicit"
     echo ""
 }
@@ -52,6 +52,10 @@ for OPT in "$@"; do
             ;;
         '-b'|'--remove-null-space' )
             RM_NULL_SPACE=1
+            shift 1
+            ;;
+        '-c'|'--clean' )
+            CLEAN="-v CLEAN"
             shift 1
             ;;
         '-d'|'--dir' )
@@ -195,7 +199,7 @@ run() {
                 OPTION="$OPTION --dryrun"
             fi
 
-            robot --name $NAME $PARAM -d ${RESULT_FOLDER} \
+            robot --name $NAME $PARAM -d ${RESULT_FOLDER} ${CLEAN} \
                     -v MYID:$MYID -v RUN_INDEX:$RUN_INDEX -v RESULT_FOLDER:$RESULT_FOLDER \
                     -v RENAT_PATH:$RENAT_PATH $OPTION -K off main.robot
             CODE=$?
