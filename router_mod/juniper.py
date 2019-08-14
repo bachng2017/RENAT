@@ -1735,8 +1735,8 @@ def verify_ldp_neighbour(self,link='default',neighbour='default',notenabled='def
 
     Supports alternative of validating that a neighbour does not exist with the use of 'notenabled=true'
 
-    Verify LDP Neighbour | link=ae8.0 | neighbour=164.39.255.1
-    Verify LDP Neighbour | link=ae8.0 | neighbour=164.39.255.1 | notenabled=true
+    Verify LDP Neighbour | link=ae8.0 | neighbour=127.0.0.1
+    Verify LDP Neighbour | link=ae8.0 | neighbour=127.0.0.1| notenabled=true
     '''
     errors = []
     device = self._vchannel.current_name
@@ -1778,8 +1778,8 @@ def verify_ldp_session(self,neighbour='default',state='operational',notenabled='
 
     Supports alternative of validating that a neighbour does not exist with the use of 'notenabled=true'
 
-    Verify LDP Session | neighbour=164.39.255.13 | state=enabled
-    Verify LDP Session | neighbour=164.39.255.13 | state=enabled | notenabled=true
+    Verify LDP Session | neighbour=127.0.0.1 | state=enabled
+    Verify LDP Session | neighbour=127.0.0.1 | state=enabled | notenabled=true
     '''
     errors = []
     device = self._vchannel.current_name
@@ -1825,7 +1825,7 @@ def verify_ldp_hellos(self,neighbour='default',state='enabled'):
 
     Will accept arguments of state=enabled/disabled dependent on desired state
 
-    Verify LDP Hellos | neighbour=164.39.255.13 | state=enabled
+    Verify LDP Hellos | neighbour=127.0.0.1 | state=enabled
     '''
     errors = []
     device = self._vchannel.current_name
@@ -1899,8 +1899,8 @@ def verify_bgp_peer_address_family(self, instance='default',family='inet-vpn',pe
 
     Does not require instance, Defaults to default instance if no instance specified.
 
-    Verify BGP Peer Address Family | peer_group=V4_RR1_JUL_IBGP | family=inet-vpn
-    Verify BGP Peer Address Family | instance=customerinstance | peer_group=V4_RR1_JUL_IBGP | family=inet-vpn
+    Verify BGP Peer Address Family | peer_group=V4_IBGP  | family=inet-vpn
+    Verify BGP Peer Address Family | instance=customerinstance | peer_group=V4_IBGP  | family=inet-vpn
 
     '''
     errors = []
@@ -1946,8 +1946,8 @@ def verify_bgp_local_address(self, address='default',link='default',group='defau
 
     Does not require instance, Defaults to default instance if no instance specified.
 
-    Verify BGP Local Address | group=V4_RR1_TRA_IBGP | address=164.39.255.2 | 
-    Verify BGP Local Address | instance=customer instance | group=V4_RR1_TRA_IBGP | address=164.39.255.2 | 
+    Verify BGP Local Address | group=V4_IBGP | address=127.0.0.1 | 
+    Verify BGP Local Address | instance=customer instance | group=V4_IBGP  | address=127.0.0.1 | 
 
     '''
     errors = []
