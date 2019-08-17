@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-07-25 23:50:10 +0900 (木, 25 7 2019) $
-# $Rev: 2101 $
+# $Date: 2019-08-17 17:34:00 +0900 (土, 17 8 2019) $
+# $Rev: 2168 $
 # $Ver: $
 # $Author: $
 
@@ -263,6 +263,7 @@ class WebApp(object):
         # only update windows height
         self._selenium.set_window_size(old_width, total_height)
         time.sleep(2)
+        self._selenium.set_screenshot_directory(Common.get_result_path())
         self._selenium.capture_page_screenshot(capture_name)  
         # restore old window size
         self._selenium.set_window_size(old_width, old_height)
@@ -334,6 +335,10 @@ class WebApp(object):
             login_url = app_info['login-url']
         if 'browser' in app_info and app_info['browser']:
             browser  = app_info['browser']
+        if 'local-storage' in app_info and app_info['local-storage']:
+            local_storage = app_info['local-storage']
+        else:
+            local_storage = None
 
         # firefox options
         profile_dir = Common.get_result_path() + '/.%s_%s_profile' % (profile,name)
@@ -437,9 +442,10 @@ class WebApp(object):
         browser_info['ff_profile_dir'] = ff_pf.path
         browser_info['capture_counter'] = 0
         browser_info['capture_format']  = "%s_%%010d" % app
-        browser_info['browser']         = browser
-        browser_info['profile']         = profile
-        browser_info['login_url']       = login_url
+        browser_info['browser']  = browser
+        browser_info['profile']  = profile
+        browser_info['login_url']  = login_url
+        browser_info['local-storage'] = local_storage
         self._browsers[name] = browser_info
         display_info = Common.get_config_value('display')
         self._selenium.set_window_size(display_info['width'],display_info['height'])
@@ -526,6 +532,11 @@ class WebApp(object):
 
         BuiltIn().log('Waited for element status changed')
 
-
-
+    
+    def wait_and_click(self,xpath):
+        """ Waits and clicks an element by its xpath
+        """
+        self.capture_screenshot()
+        self._selenium.wait_until_element_is_visible(xpath)
+        self._selenium.click_element(xpath)
    

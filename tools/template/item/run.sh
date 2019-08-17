@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# $Date: 2019-08-09 11:23:14 +0900 (金, 09 8 2019) $
-# $Rev: 2158 $
+# $Date: 2019-08-11 03:03:48 +0900 (日, 11 8 2019) $
+# $Rev: 2163 $
 # $Author: $
 # usage: ./run.sh [-n <num>] <other robot argument>
 # ITEM run script
@@ -159,6 +159,12 @@ run() {
             fi
         done
     fi
+    
+    if [ -z $RESULT_FOLDER ]; then
+        RESULT_FOLDER_BASE="result"
+    else
+        RESULT_FOLDER_BASE=$RESULT_FOLDER
+    fi    
 
     if [ -f ./.ignore ] && [ -z $FORCE ]; then
         echo "   .ignore found, ignore this folder"
@@ -180,11 +186,11 @@ run() {
                 rm "./.stop"
                 break    
             fi
-            if [ -z $RESULT_FOLDER ]; then
-                    RESULT_FOLDER="result"
-            fi
-            if [ $RUN_INDEX -gt 1 ]; then
-                RESULT_FOLDER="result_$RUN_INDEX"
+
+            if [ $NUM -eq 1 ]; then
+                RESULT_FOLDER=$RESULT_FOLDER_BASE
+            else
+                RESULT_FOLDER="${RESULT_FOLDER_BASE}_${RUN_INDEX}"
             fi
 
             # backup result folder if it exists
@@ -199,7 +205,13 @@ run() {
                 OPTION="$OPTION --dryrun"
             fi
 
-            robot --name $NAME $PARAM -d ${RESULT_FOLDER} ${CLEAN} \
+            if [ $NUM -gt 1 ]; then
+                ITEM_NAME="$NAME.$RUN_INDEX"
+            else
+                ITEM_NAME=$NAME
+            fi
+
+            robot --name $ITEM_NAME $PARAM -d ${RESULT_FOLDER} ${CLEAN} \
                     -v MYID:$MYID -v RUN_INDEX:$RUN_INDEX -v RESULT_FOLDER:$RESULT_FOLDER \
                     -v RENAT_PATH:$RENAT_PATH $OPTION -K off main.robot
             CODE=$?
@@ -216,6 +228,14 @@ run() {
 
 > ./run.log
 run . . > >(tee -a ./run.log) 2>&1
+
+# collect
+if [ $NUM -gt 1 ]; then
+    if [ ! -d $SULT_FOLDER_BASE ] ; then 
+        mkdir $RESULT_FOLDER_BASE
+    fi
+    rebot -L INFO -d $RESULT_FOLDER_BASE "${RESULT_FOLDER_BASE}_*/output.xml"
+fi
 
 TIME2=$(date +"%s")
 
