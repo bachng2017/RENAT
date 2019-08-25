@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-07-25 23:50:10 +0900 (木, 25 7 2019) $
-# $Rev: 2101 $
+# $Date: 2019-08-24 16:20:58 +0900 (土, 24 8 2019) $
+# $Rev: 2178 $
 # $Ver: $
 # $Author: $
 
@@ -57,7 +57,7 @@ class Samurai(WebApp):
     to configure the ``local.yaml`` file.
 
 
-    `Selenium2Library` keywords still could be used together within this library.
+    `SeleniumLibrary` keywords still could be used together within this library.
     See [http://robotframework.org/Selenium2Library/Selenium2Library.html|Selenium2Library] for more details.
     """
 

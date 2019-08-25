@@ -9,10 +9,8 @@ node:
 {%- for node in node_list %}
     {{ node }}:
         device: {{ node }}
-        snmp-polling: yes
-        follow-remote-log: yes
-        mib: 
-        tag:
+        snmp-polling: no
+        follow-remote-log: no
 {%- endfor %}
 
 # web application setting

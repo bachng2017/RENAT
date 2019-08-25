@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-08-17 17:34:00 +0900 (土, 17 8 2019) $
-# $Rev: 2168 $
+# $Date: 2019-08-24 16:20:58 +0900 (土, 24 8 2019) $
+# $Rev: 2178 $
 # $Ver: $
 # $Author: $
 
@@ -156,8 +156,8 @@ class WebApp(object):
         self._type                  = None
         self._verbose               = False
         self._ajax_wait             = 2
-        self._selenium              = None
         self._type                  = 'web'
+        self._selenium              = None  # SeleniumLibrary instance
         try:
             self._selenium = BuiltIn().get_library_instance('SeleniumLibrary')
         except RobotNotRunningError as e:
@@ -535,8 +535,10 @@ class WebApp(object):
     
     def wait_and_click(self,xpath):
         """ Waits and clicks an element by its xpath
+
+        Sample:
+        | Wait and Click | //button[normalize-space(.)="OK"] |
         """
         self.capture_screenshot()
         self._selenium.wait_until_element_is_visible(xpath)
         self._selenium.click_element(xpath)
-   
