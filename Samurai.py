@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-08-24 16:20:58 +0900 (土, 24 8 2019) $
-# $Rev: 2178 $
+# $Date: 2019-08-27 03:50:34 +0900 (火, 27 8 2019) $
+# $Rev: 2184 $
 # $Ver: $
 # $Author: $
 
@@ -379,6 +379,7 @@ class Samurai(WebApp):
         Items name found by ``xpath`` are used as keys
         """
         BuiltIn().log("Making item map by xpath `%s`" % xpath)
+        self._selenium.wait_until_page_contains_element(xpath)
         items = self._selenium.get_webelements(xpath)
         item_map = {}
         for item in items:
