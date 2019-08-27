@@ -826,7 +826,8 @@ def _check_link_status_state(output,status):
 
 def _verify_route_engine_status(output):
     """ Attempts to verify that RE0 has the mastership.
-    Failure indicates either RO0 is missing or another RE has the master role.
+
+    Failure indicates either RE0 is missing or another RE has the master role.
     """ 
     masterstatus = re.search(r'Current state.*(Master)',output)
     if masterstatus != None:
@@ -836,11 +837,11 @@ def _verify_route_engine_status(output):
     
 
 def get_interface_information(self,state='all'):
-    '''Captures the information about interfaces in a defined state.
+    '''Captures the information about interfaces in a defined state. (Up or down)
 
     If no state specified it will capture all interfaces
 
-    Get Interface Information | state=up
+    Get Interface Information | state=up |
     '''
     device = self._vchannel.current_name
 
@@ -974,7 +975,7 @@ def check_chassis_power(self):
 def clear_bgp_routes(self,table='inet.0'):
     ''' Clears the specified route table of bgp routes
 
-    Clear BGP Routes | table=inet.0
+    Clear BGP Routes | table=inet.0 |
     '''
     self._vchannel.cmd('clear bgp table %s' % table)    
 
@@ -984,7 +985,7 @@ def check_lfm_status(self,link='default',status='Down',state='Down'):
 
     If arguments are specified in the form of Link, Status and State then it will validate these parameters
 
-    Check LFM Status | link= ae1 | status up | state=up
+    Check LFM Status | link= ae1 | status up | state=up |
     '''
     def _check_int_lfm_status(output,link=None,expected_status=None,expected_state=None):
         #Create errors for appending into
@@ -1040,7 +1041,7 @@ def check_lfm_status(self,link='default',status='Down',state='Down'):
 def check_link_error_status(self,link='default'):
     ''' Checks specified interface link for any errors, Having Any errors will produce a failure
 
-    Check Link Error Status | link=ae1.0
+    Check Link Error Status | link=ae1.0 |
     '''
     #Create errors for appending into
     errors = []
@@ -1092,8 +1093,8 @@ def check_mtu(self,link,link_type,expected_mtu):
     '''Used to check the MTU on the specified link
     No arguments are optional all must be provided when issuing the command
 
-    Example - Check MTU | xe-0/0/0 | physical | 1514
-            - Check MTU | xe-0/0/0.0 | logical | 1514
+    Example - Check MTU | xe-0/0/0 | physical | 1514 |
+            - Check MTU | xe-0/0/0.0 | logical | 1514 |
 
     incorrect use of physical and logical can lead to unexpected results/failures.
 
@@ -1154,7 +1155,7 @@ def check_mtu(self,link,link_type,expected_mtu):
 def check_link_status(self,link,status='up',description=None):
     ''' Checks specified interface link is in the state desired.
 
-    Check Link Status | link=ae1.0
+    Check Link Status | link=ae1.0 |
     '''
     #Create errors for appending into
     errors = []
@@ -1202,7 +1203,7 @@ def get_route_summary(self,table='inet.0'):
 
     ``table`` could be ``inet.0`` or ``inet.6``
 
-    Get Route Summary | table=inet.0
+    Get Route Summary | table=inet.0 |
     """
     #Create errors for appending into
     errors = []
@@ -1230,7 +1231,7 @@ def get_route_summary_txt(self,table='inet.0',file_out='default'):
 
     ``table`` could be ``inet.0`` or ``inet.6``
 
-    Get Route Summary | table=inet.0 | fileout=route.txt
+    Get Route Summary | table=inet.0 | fileout=route.txt |
     '''
     #Create errors for appending into
     errors = []
@@ -1286,8 +1287,8 @@ def engine_switch_test(self,checkstatus=''):
     
     check_status=True causes the test to ensure RE0 is master.
 
-    Verify Route Engine
-    Verify Route Engine | check_status=True
+    Verify Route Engine |
+    Verify Route Engine | check_status=True |
     """ 
     #Create errors for appending into
     errors = []
@@ -1315,8 +1316,8 @@ def verify_route_engine(self,checkstatus=''):
     
     check_status=True causes the test to ensure RE0 is master.
 
-    Verify Route Engine
-    Verify Route Engine | check_status=True
+    Verify Route Engine | 
+    Verify Route Engine | check_status=True |
     """ 
 
     #Create errors for appending into
@@ -1393,8 +1394,8 @@ def check_isis_adjacency(self,link='default',level='0',state='default'):
 
     Currently assumes only deisred state is up
 
-    Check ISIS Adjacency
-    Check ISIS Adjacency | ae1
+    Check ISIS Adjacency |
+    Check ISIS Adjacency | ae1 |
     '''
     #Create errors for appending into
     errors = []
@@ -1443,7 +1444,7 @@ def check_isis_interface(self,link='default', level='0',state='enabled'):
 
     Valid states: point to point, passive, disabled
 
-    Check ISIS Interface | link=ae8.0 | level=2 | state=point to point
+    Check ISIS Interface | link=ae8.0 | level=2 | state=point to point |
     '''
     #Create errors for appending into
     errors = []
@@ -1486,8 +1487,8 @@ def check_isis_level_configuration(self,level='0',state='enabled'):
 
     Checks if the specified level is enabled or disabled based on arguments.
 
-    Check ISIS Level Configuration | level=1 | state=disabled
-    Check ISIS Level Configuration | level=2 | state=enabled
+    Check ISIS Level Configuration | level=1 | state=disabled |
+    Check ISIS Level Configuration | level=2 | state=enabled |
     '''
     #Create errors for appending into
     errors = []
@@ -1525,7 +1526,7 @@ def verify_isis_protocol(self,protocol='ipv4',state='enabled'):
 
     If no argument supplied IPv4 is automatically checked.
 
-    Verify ISIS Protocol | protocol=Ipv4 | state=enabled
+    Verify ISIS Protocol | protocol=Ipv4 | state=enabled |
     '''
     #Create errors for appending into
     errors = []
@@ -1567,7 +1568,7 @@ def verify_isis_wide_metrics(self,level='0',state='enabled'):
 
     If no state argument supplied enabled is automatically checked.
 
-    Verify ISIS Wide Metrics | level=2 | state=enabled
+    Verify ISIS Wide Metrics | level=2 | state=enabled |
     '''
     errors = []
     device = self._vchannel.current_name
@@ -1612,7 +1613,7 @@ def verify_isis_link_costs(self,link='default', level='0',metric='enabled'):
 
     All arguments required 
 
-    Verify ISIS Link Costs | link=ae8.0  | level=2 | metric=10
+    Verify ISIS Link Costs | link=ae8.0  | level=2 | metric=10 |
     '''
     errors = []
     device = self._vchannel.current_name
@@ -1735,8 +1736,8 @@ def verify_ldp_neighbour(self,link='default',neighbour='default',notenabled='def
 
     Supports alternative of validating that a neighbour does not exist with the use of 'notenabled=true'
 
-    Verify LDP Neighbour | link=ae8.0 | neighbour=127.0.0.1
-    Verify LDP Neighbour | link=ae8.0 | neighbour=127.0.0.1| notenabled=true
+    Verify LDP Neighbour | link=ae8.0 | neighbour=127.0.0.1 |
+    Verify LDP Neighbour | link=ae8.0 | neighbour=127.0.0.1 | notenabled=true |
     '''
     errors = []
     device = self._vchannel.current_name
@@ -1771,61 +1772,12 @@ def verify_ldp_neighbour(self,link='default',neighbour='default',notenabled='def
     if len(errors) > 0:
         raise Exception(errors)
 
-def verify_ldp_session(self,neighbour='default',state='operational',notenabled='default'):
-    '''Verifies that the expected neighbour session is seen at the other side of an LDP link,
-
-    Assumes the default state of operational if no other specified.
-
-    Supports alternative of validating that a neighbour does not exist with the use of 'notenabled=true'
-
-    Verify LDP Session | neighbour=127.0.0.1 | state=enabled
-    Verify LDP Session | neighbour=127.0.0.1 | state=enabled | notenabled=true
-    '''
-    errors = []
-    device = self._vchannel.current_name
-
-    try:
-        ip_address(neighbour)
-    except:
-        errors.append('Neighbour address provided not a valid IPV4 address')
-    # if state == 'default':
-    #     errors.append('%s No State Specified, Please Check Test Script' % device)
-    #Raise errors if initial input sanity tests fail
-    if len(errors) > 0:
-        raise Exception(errors) 
-
-    current_state = re.findall(r'\s\s(\w+)\s\s\w+\s',output)
-    current_status = re.findall(r'\s\s\w+\s\s(\w+)\s',output)
-
-    if notenabled != 'default':
-        output = self._vchannel.cmd(' show ldp session %s' % neighbour)
-        if _check_if_output_empty(output) != True:
-            return True   
-        else:
-            errors.append('%s - Neighbour %s in state %s, Please check configuration' %(device, neighbour, current_state))     
-    else:
-        output = self._vchannel.cmd(' show ldp session %s' % neighbour)
-        if _check_if_output_empty(output) != True:
-            raise Exception('%s - Returned Output Was Empty - Please check supplied variables.' % device)  
-        if current_status[0].casefold() in ['closed','opening']:
-            errors.append('%s - Neighbour %s in connection state %s, Please check configuration' %(device, neighbour, current_state))
-        if current_state[0].casefold() in ['Nonexistent', 'Connecting', 'Initialized', 'OpenRec', 'OpenSent', 'Closing']:
-            errors.append('%s - Neighbour %s in state %s, Please check configuration' %(device, neighbour, current_state))
-        if current_state[0].casefold() == state:
-            return True
-        if current_state[0].casefold() != state:
-            errors.append('%s - Neighbour %s is not in the Expected State: %s - Expected: %s, Please check configuration' %(device, neighbour, current_state[0],state))
-
-    #Raise errors if tests fail
-    if len(errors) > 0:
-        raise Exception(errors)
-
 def verify_ldp_hellos(self,neighbour='default',state='enabled'):
     '''Verifies that the expected neighbour session has link protection enabled,
 
     Will accept arguments of state=enabled/disabled dependent on desired state
 
-    Verify LDP Hellos | neighbour=127.0.0.1 | state=enabled
+    Verify LDP Hellos | neighbour=127.0.0.1 | state=enabled |
     '''
     errors = []
     device = self._vchannel.current_name
@@ -1860,8 +1812,8 @@ def verify_ldp_igp_tracking(self,instance='default'):
 
     Assumes no routing instance if no instance specified.
 
-    Verify LDP IGP Tracking
-    Verify LDP IGP Tracking | instance=customerinstance
+    Verify LDP IGP Tracking |
+    Verify LDP IGP Tracking | instance=customerinstance |
     '''
     errors = []
     device = self._vchannel.current_name
@@ -1899,8 +1851,8 @@ def verify_bgp_peer_address_family(self, instance='default',family='inet-vpn',pe
 
     Does not require instance, Defaults to default instance if no instance specified.
 
-    Verify BGP Peer Address Family | peer_group=V4_IBGP  | family=inet-vpn
-    Verify BGP Peer Address Family | instance=customerinstance | peer_group=V4_IBGP  | family=inet-vpn
+    Verify BGP Peer Address Family | peer_group=V4_IBGP  | family=inet-vpn |
+    Verify BGP Peer Address Family | instance=customerinstance | peer_group=V4_IBGP  | family=inet-vpn |
 
     '''
     errors = []
@@ -2116,7 +2068,7 @@ def verify_boot_process(self):
 def verify_ftp(self,source='default',destination='default'):
     '''Verifies FTP functionality by attempting to copy to or from a specified location
 
-    Verify FTP | source=ftp://ftp:nobody@127.0.0.1/test.txt | destination=test.txt
+    Verify FTP | source=ftp://ftp:nobody@127.0.0.1/test.txt | destination=test.txt |
     '''
     errors = []
     device = self._vchannel.current_name
@@ -2138,4 +2090,4 @@ def verify_ftp(self,source='default',destination='default'):
 
     #Raise errors if initial input sanity tests fail
     if len(errors) > 0:
-        raise Exception(errors) 
+        raise Exception(errors)
