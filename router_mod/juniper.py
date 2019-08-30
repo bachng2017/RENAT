@@ -43,6 +43,10 @@ from openpyxl.styles import Font, Color
 from openpyxl import Workbook
 from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.styles import Alignment
+from ipaddress import ip_address
+import pandas as pd 
+import numpy as np
+import random
 
 
 def get_version(self):
@@ -841,7 +845,7 @@ def get_interface_information(self,state='all'):
 
     If no state specified it will capture all interfaces
 
-    Get Interface Information | state=up |
+    | Get Interface Information | state=up |
     '''
     device = self._vchannel.current_name
 
@@ -863,7 +867,7 @@ def get_interface_information(self,state='all'):
 def check_chassis_environment(self):
     '''Checks the chassis environment at a high level, validating if any errors exist within the environment
 
-    Check Chassis Environment
+    | Check Chassis Environment |
     '''
     device = self._vchannel.current_name
 
@@ -880,6 +884,8 @@ def check_chassis_environment(self):
 #Check the output differences noted in the test and what i saw on CR
 def check_chassis_environment_fans(self):
     '''Validates the status of the fans.
+
+    | Check Chassis Environment Fans |
     '''
     output = self._vchannel.cmd('show chassis environment | grep fan')
     if 'Check' in output:
@@ -890,7 +896,7 @@ def check_chassis_environment_fans(self):
 def check_chassis_pem_modules(self):
     '''Checks the status of all Power Entry Modules (PEM) for any errors exist within the environment.
 
-    Check Chassis PEM Modules
+    | Check Chassis PEM Modules |
     '''
     device = self._vchannel.current_name
     output = self._vchannel.cmd('show chassis environment pem | no-more')
@@ -905,7 +911,7 @@ def check_chassis_pem_modules(self):
 def check_chassis_craft_interface_alarm_status(self):
     '''Checks the alarm status of the craft interface.
 
-    Check Chassis Craft Interface Alarm Status
+    | Check Chassis Craft Interface Alarm Status |
     '''
     device = self._vchannel.current_name
 
@@ -943,7 +949,7 @@ def verify_chassis_alarm_status(self):
 def check_chassis_routing_engine(self):
     ''' Checks the routing engine has no failure the alarm status of the chassis.
 
-    Check Chassis Routing Engine
+    | Check Chassis Routing Engine |
     '''
     device = self._vchannel.current_name
 
@@ -959,7 +965,7 @@ def check_chassis_routing_engine(self):
 def check_chassis_power(self):
     ''' Checks the power status of the chassis.
 
-    Check Chassis Power
+    | Check Chassis Power |
     '''
     device = self._vchannel.current_name
 
@@ -975,7 +981,7 @@ def check_chassis_power(self):
 def clear_bgp_routes(self,table='inet.0'):
     ''' Clears the specified route table of bgp routes
 
-    Clear BGP Routes | table=inet.0 |
+    | Clear BGP Routes | table=inet.0 |
     '''
     self._vchannel.cmd('clear bgp table %s' % table)    
 
@@ -985,7 +991,7 @@ def check_lfm_status(self,link='default',status='Down',state='Down'):
 
     If arguments are specified in the form of Link, Status and State then it will validate these parameters
 
-    Check LFM Status | link= ae1 | status up | state=up |
+    | Check LFM Status | link= ae1 | status up | state=up |
     '''
     def _check_int_lfm_status(output,link=None,expected_status=None,expected_state=None):
         #Create errors for appending into
@@ -1041,7 +1047,7 @@ def check_lfm_status(self,link='default',status='Down',state='Down'):
 def check_link_error_status(self,link='default'):
     ''' Checks specified interface link for any errors, Having Any errors will produce a failure
 
-    Check Link Error Status | link=ae1.0 |
+    | Check Link Error Status | link=ae1.0 |
     '''
     #Create errors for appending into
     errors = []
@@ -1093,8 +1099,9 @@ def check_mtu(self,link,link_type,expected_mtu):
     '''Used to check the MTU on the specified link
     No arguments are optional all must be provided when issuing the command
 
-    Example - Check MTU | xe-0/0/0 | physical | 1514 |
-            - Check MTU | xe-0/0/0.0 | logical | 1514 |
+    Example:
+    | Check MTU | xe-0/0/0 | physical | 1514 |
+    | Check MTU | xe-0/0/0.0 | logical | 1514 |
 
     incorrect use of physical and logical can lead to unexpected results/failures.
 
@@ -1155,7 +1162,7 @@ def check_mtu(self,link,link_type,expected_mtu):
 def check_link_status(self,link,status='up',description=None):
     ''' Checks specified interface link is in the state desired.
 
-    Check Link Status | link=ae1.0 |
+    | Check Link Status | link=ae1.0 |
     '''
     #Create errors for appending into
     errors = []
@@ -1174,7 +1181,7 @@ def check_link_status(self,link,status='up',description=None):
 def get_chassis_full(self):
     ''' Gets the full output of the command 'show chassis hardware'
 
-    Get Chassis Full
+    | Get Chassis Full |
     '''
     #Create errors for appending into
     errors = []
@@ -1203,7 +1210,7 @@ def get_route_summary(self,table='inet.0'):
 
     ``table`` could be ``inet.0`` or ``inet.6``
 
-    Get Route Summary | table=inet.0 |
+    | Get Route Summary | table=inet.0 |
     """
     #Create errors for appending into
     errors = []
@@ -1231,7 +1238,7 @@ def get_route_summary_txt(self,table='inet.0',file_out='default'):
 
     ``table`` could be ``inet.0`` or ``inet.6``
 
-    Get Route Summary | table=inet.0 | fileout=route.txt |
+    | Get Route Summary | table=inet.0 | fileout=route.txt |
     '''
     #Create errors for appending into
     errors = []
@@ -1260,7 +1267,7 @@ def get_route_summary_txt(self,table='inet.0',file_out='default'):
 def verify_commit_mode(self):
     ''' Verifies the commit mode of the router is set to synchronize
 
-    Verify Commit Mode
+    | Verify Commit Mode |
     '''
     #Create errors for appending into
     errors = []
@@ -1287,8 +1294,8 @@ def engine_switch_test(self,checkstatus=''):
     
     check_status=True causes the test to ensure RE0 is master.
 
-    Verify Route Engine |
-    Verify Route Engine | check_status=True |
+    | Verify Route Engine |
+    | Verify Route Engine | check_status=True |
     """ 
     #Create errors for appending into
     errors = []
@@ -1316,8 +1323,8 @@ def verify_route_engine(self,checkstatus=''):
     
     check_status=True causes the test to ensure RE0 is master.
 
-    Verify Route Engine | 
-    Verify Route Engine | check_status=True |
+    | Verify Route Engine | 
+    | Verify Route Engine | check_status=True |
     """ 
 
     #Create errors for appending into
@@ -1394,8 +1401,8 @@ def check_isis_adjacency(self,link='default',level='0',state='default'):
 
     Currently assumes only deisred state is up
 
-    Check ISIS Adjacency |
-    Check ISIS Adjacency | ae1 |
+    | Check ISIS Adjacency |
+    | Check ISIS Adjacency | ae1 |
     '''
     #Create errors for appending into
     errors = []
@@ -1444,7 +1451,7 @@ def check_isis_interface(self,link='default', level='0',state='enabled'):
 
     Valid states: point to point, passive, disabled
 
-    Check ISIS Interface | link=ae8.0 | level=2 | state=point to point |
+    | Check ISIS Interface | link=ae8.0 | level=2 | state=point to point |
     '''
     #Create errors for appending into
     errors = []
@@ -1487,8 +1494,8 @@ def check_isis_level_configuration(self,level='0',state='enabled'):
 
     Checks if the specified level is enabled or disabled based on arguments.
 
-    Check ISIS Level Configuration | level=1 | state=disabled |
-    Check ISIS Level Configuration | level=2 | state=enabled |
+    | Check ISIS Level Configuration | level=1 | state=disabled |
+    | Check ISIS Level Configuration | level=2 | state=enabled |
     '''
     #Create errors for appending into
     errors = []
@@ -1526,7 +1533,7 @@ def verify_isis_protocol(self,protocol='ipv4',state='enabled'):
 
     If no argument supplied IPv4 is automatically checked.
 
-    Verify ISIS Protocol | protocol=Ipv4 | state=enabled |
+    | Verify ISIS Protocol | protocol=Ipv4 | state=enabled |
     '''
     #Create errors for appending into
     errors = []
@@ -1568,7 +1575,7 @@ def verify_isis_wide_metrics(self,level='0',state='enabled'):
 
     If no state argument supplied enabled is automatically checked.
 
-    Verify ISIS Wide Metrics | level=2 | state=enabled |
+    | Verify ISIS Wide Metrics | level=2 | state=enabled |
     '''
     errors = []
     device = self._vchannel.current_name
@@ -1613,7 +1620,7 @@ def verify_isis_link_costs(self,link='default', level='0',metric='enabled'):
 
     All arguments required 
 
-    Verify ISIS Link Costs | link=ae8.0  | level=2 | metric=10 |
+    | Verify ISIS Link Costs | link=ae8.0  | level=2 | metric=10 |
     '''
     errors = []
     device = self._vchannel.current_name
@@ -1657,7 +1664,7 @@ def verify_isis_link_costs(self,link='default', level='0',metric='enabled'):
 def verify_isis_adjacency_authentication(self,link='default',level='0',authentication='md5',key_chain='iih'):
     '''Checks the specified link matches md5 enabled authentication has the for ISIS.
 
-    Verify ISIS Adjacency Authentication | link=ae8 | level=2
+    | Verify ISIS Adjacency Authentication | link=ae8 | level=2 |
     '''
     errors = []
     device = self._vchannel.current_name
@@ -1736,8 +1743,8 @@ def verify_ldp_neighbour(self,link='default',neighbour='default',notenabled='def
 
     Supports alternative of validating that a neighbour does not exist with the use of 'notenabled=true'
 
-    Verify LDP Neighbour | link=ae8.0 | neighbour=127.0.0.1 |
-    Verify LDP Neighbour | link=ae8.0 | neighbour=127.0.0.1 | notenabled=true |
+    | Verify LDP Neighbour | link=ae8.0 | neighbour=127.0.0.1 |
+    | Verify LDP Neighbour | link=ae8.0 | neighbour=127.0.0.1 | notenabled=true |
     '''
     errors = []
     device = self._vchannel.current_name
@@ -1777,7 +1784,7 @@ def verify_ldp_hellos(self,neighbour='default',state='enabled'):
 
     Will accept arguments of state=enabled/disabled dependent on desired state
 
-    Verify LDP Hellos | neighbour=127.0.0.1 | state=enabled |
+    | Verify LDP Hellos | neighbour=127.0.0.1 | state=enabled |
     '''
     errors = []
     device = self._vchannel.current_name
@@ -1812,8 +1819,8 @@ def verify_ldp_igp_tracking(self,instance='default'):
 
     Assumes no routing instance if no instance specified.
 
-    Verify LDP IGP Tracking |
-    Verify LDP IGP Tracking | instance=customerinstance |
+    | Verify LDP IGP Tracking |
+    | Verify LDP IGP Tracking | instance=customerinstance |
     '''
     errors = []
     device = self._vchannel.current_name
@@ -1851,8 +1858,8 @@ def verify_bgp_peer_address_family(self, instance='default',family='inet-vpn',pe
 
     Does not require instance, Defaults to default instance if no instance specified.
 
-    Verify BGP Peer Address Family | peer_group=V4_IBGP  | family=inet-vpn |
-    Verify BGP Peer Address Family | instance=customerinstance | peer_group=V4_IBGP  | family=inet-vpn |
+    | Verify BGP Peer Address Family | peer_group=V4_IBGP  | family=inet-vpn |
+    | Verify BGP Peer Address Family | instance=customerinstance | peer_group=V4_IBGP  | family=inet-vpn |
 
     '''
     errors = []
@@ -1898,8 +1905,8 @@ def verify_bgp_local_address(self, address='default',link='default',group='defau
 
     Does not require instance, Defaults to default instance if no instance specified.
 
-    Verify BGP Local Address | group=V4_IBGP | address=127.0.0.1 | 
-    Verify BGP Local Address | instance=customer instance | group=V4_IBGP  | address=127.0.0.1 | 
+    | Verify BGP Local Address | group=V4_IBGP | address=127.0.0.1 | 
+    | Verify BGP Local Address | instance=customer instance | group=V4_IBGP  | address=127.0.0.1 | 
 
     '''
     errors = []
@@ -1961,8 +1968,7 @@ def verify_bgp_local_address(self, address='default',link='default',group='defau
 def verify_ntp_configuration(self):
     '''Verifies that existence but not VALIDITY of NTP configuration on the router.
 
-    Verify NTP Configuration 
-
+    | Verify NTP Configuration |
     '''
     output = self._vchannel.cmd('show configuration system ntp')
     if _check_if_output_empty(output) != True:
@@ -1971,7 +1977,7 @@ def verify_ntp_configuration(self):
 def verify_ntp_synchronisation(self):
     '''Verifies that NTP is currently in sync with a suitable server
 
-    Verify NTP Syncronisation
+    | Verify NTP Syncronisation |
     '''
     device = self._vchannel.current_name
 
@@ -2000,7 +2006,7 @@ def verify_secure_access_protocols(self):
 
     Errors searched for - 'finger','telnet','tftp-server'
 
-    Verify Secure Access Protocols
+    | Verify Secure Access Protocols |
     '''
     errors = []
     device = self._vchannel.current_name
@@ -2022,7 +2028,7 @@ def verify_syslog(self):
 
     Errors searched for - 'core dump','error','failure','critical','exception'
 
-    Verify Syslog
+    | Verify Syslog |
     '''
     errors = []
     device = self._vchannel.current_name
@@ -2047,7 +2053,7 @@ def verify_boot_process(self):
 
     Errors searched for - 'core dump','error','failure','critical','exception'
 
-    Verify Boot Process
+    | Verify Boot Process |
 
     '''
     errors = []
@@ -2068,7 +2074,7 @@ def verify_boot_process(self):
 def verify_ftp(self,source='default',destination='default'):
     '''Verifies FTP functionality by attempting to copy to or from a specified location
 
-    Verify FTP | source=ftp://ftp:nobody@127.0.0.1/test.txt | destination=test.txt |
+    | Verify FTP | source=ftp://ftp:nobody@127.0.0.1/test.txt | destination=test.txt |
     '''
     errors = []
     device = self._vchannel.current_name
