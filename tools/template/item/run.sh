@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# $Date: 2019-08-11 03:03:48 +0900 (日, 11 8 2019) $
-# $Rev: 2163 $
+# $Date: 2019-09-01 19:21:06 +0900 (日, 01 9 2019) $
+# $Rev: 2193 $
 # $Author: $
 # usage: ./run.sh [-n <num>] <other robot argument>
 # ITEM run script
@@ -25,8 +25,9 @@ usage () {
     echo "  -n, --number NUM        repeat the test NUM times"
     echo "  -f, --force             force the test to run, does not care about .ignore files"
     echo "  -a, --all               run the item and all its sub items"
-    echo "  -b, --rm-null-space     automatically remove the null space char (\u200b) in the scenario"
+    echo "  -p, --rm-null-space     automatically remove the null space char (\u200b) in the scenario"
     echo "RF Options:"
+    echo "  -b, --debug FILE        print detail debug information"
     echo "  -d, --dir FOLDER        make default result forder to FOLDER"
     echo "  -X                      stop immediately if a step fails (default is not set)"
     echo "  -v VAR:VALUE            define a global RF variable ${VAR} with value VALUE"
@@ -40,7 +41,9 @@ usage () {
     echo ""
 }
 
-for OPT in "$@"; do
+# for OPT in "$@"; do
+OPT=$1
+while  [ ! -z "$OPT" ]; do
     case "$OPT" in 
         '-h'|'--help' )
             usage
@@ -50,7 +53,7 @@ for OPT in "$@"; do
             BACKUP=1
             shift 1
             ;;
-        '-b'|'--remove-null-space' )
+        '-p'|'--remove-null-space' )
             RM_NULL_SPACE=1
             shift 1
             ;;
@@ -60,7 +63,7 @@ for OPT in "$@"; do
             ;;
         '-d'|'--dir' )
             if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
-                echo "$PROG: option requires an number argument -- $1" 1>&2
+                echo "$PROG: option -d requires an argument -- $1" 1>&2
                 exit 1
             fi
             RESULT_FOLDER=$2
@@ -80,10 +83,18 @@ for OPT in "$@"; do
             ;; 
         '-n'|'--number' )
             if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
-                echo "$PROG: option requires an number argument -- $1" 1>&2
+                echo "$PROG: option -n requires an number argument -- $1" 1>&2
                 exit 1
             fi
             NUM="$2"
+            shift 2
+            ;;
+        '-b'|'--debug' )
+            if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
+                echo "$PROG: option -b requires an argument -- $1" 1>&2
+                exit 1
+            fi
+            DEBUG="$2"
             shift 2
             ;;
         '--'|'-' )
@@ -91,11 +102,12 @@ for OPT in "$@"; do
             PARAM+=( "$@" )
             break
             ;;
-        *)
+        * )
             PARAM+=" $1"
             shift 1
-            ;;    
+            ;;
     esac
+    OPT=$1
 done
 
 
@@ -210,12 +222,14 @@ run() {
             else
                 ITEM_NAME=$NAME
             fi
-
-            robot --name $ITEM_NAME $PARAM -d ${RESULT_FOLDER} ${CLEAN} \
+            robot --name $ITEM_NAME -d "$(pwd)/${RESULT_FOLDER}" ${CLEAN} \
+                    -b "$(pwd)/${RESULT_FOLDER}/${DEBUG}" \
                     -v MYID:$MYID -v RUN_INDEX:$RUN_INDEX -v RESULT_FOLDER:$RESULT_FOLDER \
-                    -v RENAT_PATH:$RENAT_PATH $OPTION -K off main.robot
+                    -v RENAT_PATH:$RENAT_PATH $OPTION -K off $PARAM main.robot
             CODE=$?
             RESULT=$(expr $RESULT + $CODE)
+            COLLECT="$COLLECT $RESULT_FOLDER/output.xml"
+            echo
             echo
           done
     fi
@@ -230,11 +244,12 @@ run() {
 run . . > >(tee -a ./run.log) 2>&1
 
 # collect
+NAME=$(basename $(pwd))
 if [ $NUM -gt 1 ]; then
     if [ ! -d $SULT_FOLDER_BASE ] ; then 
         mkdir $RESULT_FOLDER_BASE
     fi
-    rebot -L INFO -d $RESULT_FOLDER_BASE "${RESULT_FOLDER_BASE}_*/output.xml"
+    rebot --prerebotmodifier $RENAT_PATH/RebotRebaseImg.py -N "$NAME($NUM runs)" -L INFO -d $RESULT_FOLDER_BASE $COLLECT
 fi
 
 TIME2=$(date +"%s")

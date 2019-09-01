@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# $Date: 2019-04-19 17:38:37 +0900 (金, 19 4 2019) $
-# $Rev: 1996 $
+# $Date: 2019-09-01 19:21:06 +0900 (日, 01 9 2019) $
+# $Rev: 2193 $
 # $Ver: $
 # $Author: $
 # suite run script
@@ -101,7 +101,8 @@ run() {
 }
 
 # main run
-for OPT in "$@"; do
+OPT=$1
+while [ ! -z "$OPT" ]; do
     case "$OPT" in
         '-h'|'--help' )
             usage
@@ -120,6 +121,7 @@ for OPT in "$@"; do
             shift 1
             ;;
     esac
+    OPT=$1
 done
 
 run . .
