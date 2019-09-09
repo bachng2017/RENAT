@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-08-24 16:20:58 +0900 (土, 24 8 2019) $
-# $Rev: 2178 $
+# $Date: 2019-09-07 09:51:32 +0900 (土, 07 9 2019) $
+# $Rev: 2204 $
 # $Ver: $
 # $Author: $
 
@@ -37,6 +37,16 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.firefox.options import Options
 
 ### module methods
+
+def _session_check(f, self, *args, **kwargs):
+    BuiltIn().log("Check session timeout ...")
+    error = Common.get_config_value('session-error','web') or "Session Timeout"
+    if self._selenium.get_element_count(error) > 0:
+        self._selenium.reload_page()
+    return f(self, *args, **kwargs)
+
+def session_check(f):
+    return decorate(f, _session_check)
 
 # reconnect methods currenlty focus on Samurai only
 # need to enhance this

@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2116 $
+# $Rev: 2220 $
 # $Ver: $
-# $Date: 2019-07-29 09:41:31 +0900 (月, 29 7 2019) $
+# $Date: 2019-09-09 04:42:54 +0900 (月, 09 9 2019) $
 # $Author: $
 
 """ Common library for RENAT
@@ -298,7 +298,7 @@ the test and remove the node from its active node list.
 
 """
 
-ROBOT_LIBRARY_VERSION = 'RENAT 0.1.16'
+ROBOT_LIBRARY_VERSION = 'RENAT 0.1.17'
 
 import os,socket
 import glob,fnmatch
@@ -770,9 +770,10 @@ def str2seq(str_index,size):
     return None
 
 
-def csv_select(src_file,dst_file,str_row=':',str_col=':',has_header=None):
+def csv_select(src_file,row=u':',col=u':',dst_file=None,flatten=False,header=None):
     """ Select part of the CSV file and write it to other file
-    ``str_row`` and ``str_col`` are used to specify necessary rows and columns.
+
+    ``row`` and ``col`` are used to specify necessary rows and columns.
     They are using the same format with slice for Python list. 
         - :  and : means all rows and columns
         - :2 and : means first 2 rows and all columns
@@ -785,20 +786,39 @@ def csv_select(src_file,dst_file,str_row=':',str_col=':',has_header=None):
           For convenience, ':' means all the data, ':x' means first 'x' data
 
     Examples:
-    | `CSV Select`  |    result/data05.csv |  result/result3.csv  | 0,1,2 |  0,1 |
-    | `CSV Select`  |    result/data05.csv |  result/result4.csv  | :     |  0,1 |
-    | `CSV Select`  |    result/data05.csv |  result/result5.csv  | :2    |  :   |
-    | `CSV Select`  |    result/data05.csv |  result/result6.csv  | 0:3   |  :   |
-    | `CSV Select`  |    result/data05.csv |  result/result7.csv  | 0:5:2 |  :   |
+    | `CSV Select`  |    result/data05.csv |  0,1,2 |  0,1 | result/result3.csv |
+    | `CSV Select`  |    result/data05.csv |  :     |  0,1 | result/result4.csv |
+    | `CSV Select`  |    result/data05.csv |  :2    |  :   | result/result5.csv | 
+    | `CSV Select`  |    result/data05.csv |  0:3   |  :   | result/result6.csv | 
+    | `CSV Select`  |    result/data05.csv |  0:5:2 |  :   | result/result7.csv |
+    | `CSV Select`  |    result/data05.csv |  0:5:2 |  :   |
     
     """
-
-    src_pd = pandas.read_csv(src_file,header=has_header)
+    src_pd = pandas.read_csv(src_file,header=header)
     s = src_pd.shape
+    data = src_pd.iloc[str2seq(row,s[0]),str2seq(col,s[1])]
+    if dst_file:
+        data.to_csv(dst_file,index=None,header=header)
+        BuiltIn().log("Wrote to CSV file `%s`" % dst_file)
+    else:
+        BuiltIn().log("Select data from CSV file `%s`" % src_file)
+    if flatten:
+        result = data.values.flatten().tolist()
+    else:
+        result = data.values.tolist()
+    return result
 
-    result = src_pd.iloc[str2seq(str_row,s[0]),str2seq(str_col,s[1])]
-    result.to_csv(dst_file,index=None,header=has_header)
-    BuiltIn().log("Wrote to CSV file `%s`" % dst_file)
+
+def csv_to_list(filepath,col=u"0",header=None):
+    """ Return a column of value from csv to list
+
+    Exmaple:
+    | ${LIST}= | CSV To List | 100 |
+    """
+    df = pandas.read_csv(filepath,header=header)
+    result = df.iloc[:,int(col)].values.tolist()
+    BuiltIn().log("Return %d values from `%s`" % (len(result),filepath))
+    return result
 
 
 def csv_concat(src_pattern, dst_name,input_header=None,result_header=True):
@@ -1216,41 +1236,43 @@ def fold_str(str):
     return result
 
 
-def follow_syslog_and_trap(pattern,log_file_name='syslog-trap.log',delay_str='1s'):
+def follow_syslog_and_trap(pattern,logname=u"syslog-trap.log",delay=u'2s'):
     """ Pauses the execution and wait for the pattern is matched if the file
     `log_file_name` located in the current result folder.
 
     By default the `log_file_name` is `./result/syslog-trap.log` which is
     created by `Follow Syslog and Trap` keyword.
 
-    The keyword should be in tests between `Follow Syslog adn Trap Start` and
+    The keyword should be in tests between `Follow Syslog and Trap Start` and
     `Follow Syslog and Trap Stop` keywords.
     """
-
-    match_pattern = re.compile(pattern)
-    log_file = open(os.getcwd() + '/' +  _result_folder + '/' + log_file_name)
-    log_file.seek(0,os.SEEK_END)
-
-    vchannel_instance = BuiltIn().get_library_instance('VChannel')
-
-    wait_msg = "Waiting for `%s` in file `%s`" % (pattern,log_file_name)
-    BuiltIn().log_to_console(wait_msg)
-    BuiltIn().log(wait_msg)
-
-    renat_batch = BuiltIn().get_variable_value('${RENAT_BATCH}')
-    if renat_batch is None: 
-        while True:
-            line = log_file.readline()
-            if not line or line == '':
-                time.sleep(DateTime.convert_time(delay_str))
-                vchannel_instance.flush_all() 
-            else:
-                if match_pattern.search(line): break
-    else:
+    if BuiltIn().get_variable_value('${RENAT_BATCH}') is not None:
         BuiltIn().log("Pausing is ignored in batch mode")
+        return
+        
+    match_pattern = re.compile(pattern)
+    
+    filepath = "%s/%s_%s" % ( BuiltIn().get_variable_value("${WORKING_FOLDER}"), 
+                                BuiltIn().get_variable_value("${MYID}"),
+                                logname)
+    logfile = open(filepath,'rt',1)
+    logfile.seek(0,os.SEEK_END)
 
-    log_file.close()
-    BuiltIn().log('Found pattern `%s` in log file `%s`' % (pattern,log_file_name))
+    wait_msg = "Waiting for `%s` in remote file `%s`" % (pattern,filepath)
+    BuiltIn().log(wait_msg,console=True)
+
+    matched = False
+    while not matched:
+        lines = logfile.readlines()
+        for line in lines:
+            BuiltIn().log_to_console(line)
+            if match_pattern.search(line): 
+                matched = True
+                break
+        time.sleep(DateTime.convert_time(delay))
+    logfile.close()
+    BuiltIn().log('Found pattern `%s` in log file `%s`' % (pattern,logname))
+
 
 def set_multi_item_variable(*vars):
     """ Set multiple varibles to be `suite variable` at the same time
@@ -1435,7 +1457,6 @@ def start_display():
     display_info = get_config_value('display')
     logging.getLogger("easyprocess").setLevel(logging.INFO)
     DISPLAY = Display(visible=0, size=(display_info['width'],display_info['height']))
-    # DISPLAY = Display(visible=0, size=(display_info['width'],display_info['height']),fbdir=get_result_path())
     DISPLAY.start()
     time.sleep(2)
     BuiltIn().log('Started a virtual display as `%s`' % DISPLAY.new_display_var)
@@ -1446,10 +1467,6 @@ def close_display():
     """
     global DISPLAY
     # tmpfile = '/tmp/xvfb.%s' % DISPLAY.new_display_var.replace(':','')
-    # cmd = '/usr/bin/xwd -display %s -root -out %s' % (DISPLAY.new_display_var, tmpfile)
-    # BuiltIn().log_to_console(cmd)
-    # subprocess.Popen(cmd,shell=True)
-    # screenshot.grab(childprocess=True).save('/tmp/test.png')
     DISPLAY.stop()
     DISPLAY.sendstop()
     BuiltIn().log('Closed the virtual display')
@@ -1588,6 +1605,15 @@ def stop_next_run(msg=u'Case run was stopped by user'):
     BuiltIn().log("Do not run the test on next round")
 
 
+def log_timestamp(console=False,format=u'%Y/%m/%d %H:%M:%S'):
+    """ Log current timestamp
+    """
+    stamp = datetime.datetime.now().strftime(format)
+    BuiltIn().log(stamp,console=console)
+    
+    
+
+
 # set RF global variables and load libraries
 # in doc create mode, there is not RF context, so we need to bypass the errors
 try:
@@ -1618,6 +1644,6 @@ except Exception as e:
     # incase need to debug uncomment following
     # raise 
     msg = "WARN: Error happened  while setting global configuration"
-    log(msg)
+    # log(msg)
     BuiltIn().log(msg)
     

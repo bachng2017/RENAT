@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2150 $
+# $Rev: 2219 $
 # $Ver: $
-# $Date: 2019-08-07 15:19:12 +0900 (水, 07 8 2019) $
+# $Date: 2019-09-09 03:04:44 +0900 (月, 09 9 2019) $
 # $Author: $
 
 import os,re,sys,threading
@@ -100,7 +100,8 @@ def _with_reconnect(keyword,self,*args,**kwargs):
                 time.sleep(interval)
                 self.reconnect(self._current_name)
             else:
-                err_msg = "ERROR: error while processing command. Tunning ``terminal-timeout`` in RENAT config file or check your command"
+                err_msg =   "ERROR: error while processing command. Tunning " \
+                            "``terminal-timeout`` in RENAT config file or check your command"
                 BuiltIn().log(err_msg)
                 BuiltIn().log("ErrorType: %s" % type(err))
                 BuiltIn().log("Detail error is:")
@@ -182,7 +183,7 @@ class VChannel(object):
     ROBOT_LIBRARY_VERSION = Common.version()
 
 
-    def __init__(self,prefix=u""):
+    def __init__(self,aprefix=u""):
         self._current_id = 0
         self._current_name = None
         self._max_id = 0
@@ -191,8 +192,8 @@ class VChannel(object):
         self._backup_channels = {}
         self._cmd_threads = {}
         self._cmd_thread_id = 0
-        self._prefix = prefix
-        if self._prefix != "":
+        self._aprefix = aprefix
+        if self._aprefix != "":
             self._async_channel = None
         else:
             try: 
@@ -216,7 +217,12 @@ class VChannel(object):
         """ Returns the current active channel
         """
         if not self._current_name in self._channels:
-            raise Exception("ERR: Could not find channel name `%s`. Check your module available or `async-channel` is global configuration for AChannel usage" % self._current_name)
+            err_msg =   "ERR: Could not find channel name `%s`. Check your " \
+                        "module available or `async-channel` is global "\
+                        "configuration for AChannel usage" % \
+                        "self._current_name"
+            BuiltIn().log(err_msg)
+            raise Exception(err_msg)
         return self._channels[self._current_name]
 
 
@@ -242,7 +248,7 @@ class VChannel(object):
                 output = channel['connection'].read() 
                 self.log(output,channel)
             except Exception as err:
-                BuiltIn().log("WARN: error happend while update channel `%s` but is ignored" % name)
+                BuiltIn().log(  "WARN: error happend while update channel `%s` but is ignored" % name)
 
 
     def log(self,msg,channel=None):
@@ -270,11 +276,10 @@ class VChannel(object):
         
 
     def _reconnect(self,name):
-        _name = self._prefix + name
-        BuiltIn().log("Reconnect to `%s`" % _name)
+        BuiltIn().log("Reconnect to `%s`" % name)
 
         # remember the current channel
-        backup_channel = self._backup_channels[_name]
+        backup_channel = self._backup_channels[name]
         _node       = backup_channel['node']
         _name       = backup_channel['name']
         _log_file   = backup_channel['log-file']
@@ -285,10 +290,10 @@ class VChannel(object):
 
         # reconect to the node. Appending the log
         if name in self._channels: 
-            self._channels.pop(_name)
-            BuiltIn().log("    Removed `%s` from current channel" % _name)
+            self._channels.pop(name)
+            BuiltIn().log("    Removed `%s` from current channels" % name)
         self._connect(_node, name, _log_file, _timeout, _w, _h, 'a+')
-        BuiltIn().log("Reconnected successfully to `%s`" % (_name))
+        BuiltIn().log("Reconnected successfully to `%s`" % (name))
         
 
     def connect(self,node,name,log_file,\
@@ -325,7 +330,6 @@ class VChannel(object):
 
         See ``Common`` for more detail about the yaml config files.
         """
-
         if name in self._channels: 
             raise Exception("Channel `%s` already existed. Use different name instead" % name)
 
@@ -359,7 +363,7 @@ class VChannel(object):
         if Common.get_config_value('prompt-strict','vchannel',True):
             if _prompt[-1] != '$': _prompt += '$'
 
-        BuiltIn().log("Opening connection to `%s(%s):%s` as name `%s` by `%s`" % (node,_ip,_port,self._prefix+name,_access))
+        BuiltIn().log("Opening connection to `%s(%s):%s` as name `%s` by `%s`" % (node,_ip,_port,self._aprefix+name,_access))
 
         channel_info = {}
 
@@ -373,7 +377,7 @@ class VChannel(object):
                 s = "%sx%s" % (w,h)
                 local_id = _telnet.open_connection(_ip, port=_port, 
                                                     #    terminal_emulation=True,
-                                                        alias=self._prefix+name,terminal_type='vt100', window_size=s,
+                                                        alias=name,terminal_type='vt100', window_size=s,
                                                         prompt=_prompt,prompt_is_regexp=True,
                                                     #    default_log_level="INFO",
                                                     #    telnetlib_log_level="TRACE",
@@ -407,7 +411,7 @@ class VChannel(object):
                 output  = ""
                 local_id = _ssh.open_connection(_ip,
                                 port=_port,
-                                alias=self._prefix+name,term_type='vt100',width=w,height=h,
+                                alias=name,term_type='vt100',width=w,height=h,
                                 timeout=_timeout,prompt="REGEXP:%s" % _prompt)
                 # SSH with plaintext
                 if _auth_type == 'plain-text':
@@ -445,7 +449,7 @@ class VChannel(object):
                     s = "%sx%s" % (w,h)
                     local_id = _telnet.open_connection(_ip,
                                     port=_port, 
-                                    alias=self._prefix+name,terminal_type='vt100', window_size=s,
+                                    alias=name,terminal_type='vt100', window_size=s,
                                     prompt=_prompt,prompt_is_regexp=True,
                                     default_log_level="INFO",
                                     telnetlib_log_level="TRACE",
@@ -507,7 +511,7 @@ class VChannel(object):
                     _ssh    = SSHLibrary.SSHLibrary(timeout='3m')
                     _port   = _port or 22
                     out     = ""
-                    local_id = _ssh.open_connection(_ip,alias=self._prefix+name,term_type='vt100',width=w,
+                    local_id = _ssh.open_connection(_ip,alias=name,term_type='vt100',width=w,
                                         height=h,timeout=_timeout,
                                         prompt="REGEXP:%s" % _prompt)
                     # SSH with plaintext
@@ -603,12 +607,12 @@ class VChannel(object):
             # open/create a log file for this connection in result_folder
             result_folder = Common.get_result_folder()
             
-            _log_file  = self._prefix + log_file
+            _log_file  = self._aprefix + log_file
             channel_info['logger']  = codecs.open(result_folder + '/' + _log_file,mode,'utf-8')
     
             # common channel info
             channel_info['node']        = node
-            channel_info['name']        = self._prefix + name
+            channel_info['name']        = name
             channel_info['log-file']    = _log_file
             channel_info['w']           = w
             channel_info['h']           = h
@@ -631,11 +635,11 @@ class VChannel(object):
       
             self._current_id            = id
             self._max_id                = id
-            self._current_name          = self._prefix+name
+            self._current_name          = name
         
             # remember this info by name(alias)
-            self._channels[self._prefix+name]   = channel_info 
-            self._backup_channels[self._prefix+name] = channel_info
+            self._channels[name]   = channel_info 
+            self._backup_channels[name] = channel_info
     
             # by default switch to the connected device
             self._switch(name)
@@ -659,17 +663,16 @@ class VChannel(object):
                     BuiltIn().log("Executing init command: %s" % (item))
                     self._cmd(item)
 
-            BuiltIn().log("Opened connection to `%s(%s)`" % (self._prefix+name,_ip))
+            BuiltIn().log("Opened connection to `%s(%s)`" % (self._aprefix+name,_ip))
         except Exception as err:
             if not ignore_dead_node: 
-                err_msg = "ERROR: Error occured when connecting to `%s(%s)`" % (self._prefix + name,_ip)
-                BuiltIn().log(err_msg)
-                # BuiltIn().log_to_console(err_msg)
+                err_msg = "ERROR: Error occured when connecting to `%s(%s)`" % (self._aprefix + name,_ip)
+                BuiltIn().log(err_msg,console=True)
                 raise 
             else:
-                warn_msg = "WARN: Error occured when connect to `%s(%s)` but was ignored" % (self._prefix + name,_ip)
+                warn_msg = "WARN: Error occured when connect to `%s(%s)` but was ignored" % (self._aprefix + name,_ip)
                 BuiltIn().log(warn_msg,console=True)
-                del Common.LOCAL['node'][self._prefix + name]
+                del Common.LOCAL['node'][name]
 
         return id
 
@@ -779,22 +782,21 @@ class VChannel(object):
         | VChannel.`Switch` | vmx12 | 
         """
         output = ""
-        _name = self._prefix + name
-        BuiltIn().log('Switching current vchannel to `%s`' % _name)
+        BuiltIn().log('Switching current vchannel to `%s`' % name)
         old_name = self._current_name
 
-        if _name in self._channels: 
-            self._current_name = _name
-            channel = self._channels[_name]
+        if name in self._channels: 
+            self._current_name = name
+            channel = self._channels[name]
             self._current_id = channel['id']
 
             channel['connection'].switch_connection(channel['local-id'])
             output = self.read()
 
-            BuiltIn().log("Switched current channel to `%s(%s)`" % (_name,channel['ip']))
+            BuiltIn().log("Switched current channel to `%s(%s)`" % (name,channel['ip']))
             return channel['id'], channel['local-id'], output
         else:
-            err_msg = "ERROR: Could not find `%s` in current channels" % _name
+            err_msg = "ERROR: Could not find `%s` in current channels" % name
             BuiltIn().log(err_msg)
             raise Exception(err_msg)
 

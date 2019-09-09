@@ -64,17 +64,20 @@ else
        echo "updated $entry/../run.sh"
        ln -sf ../lab.robot $entry/../lab.robot
        echo "updated lab.robot"
+       diff $QUIET $RENAT_PATH/tools/template/item/.gitignore $entry/../.gitignore
+       cp -f $RENAT_PATH/tools/template/item/.gitignore $entry/../.gitignore
+       echo "updated $entry/../.gitignore"
        echo "---"
     else
        echo "ignore $entry because it does not look like an item folder"
     fi
   done
 
-  find . -name "main.robot" -exec sed -i 's/chibalab.robot/lab.robot/' {} \;
-  find . -name "main.robot" -exec sed -i 's/\.\.\/lab\.robot/lab\.robot/' {} \;
+  find . -name "main.robot" -exec sed --follow-symlinks -i 's/chibalab.robot/lab.robot/' {} \;
+  find . -name "main.robot" -exec sed --follow-symlinks -i 's/\.\.\/lab\.robot/lab\.robot/' {} \;
   echo "updated main.robot"
 
-  find . -name "local.yaml" -exec sed -i '/^  *result_folder: result/d' {} \;
+  find . -name "local.yaml" -exec sed --follow-symlinks -i '/^  *result_folder: result/d' {} \;
   echo "updated local.yaml"
 fi
 

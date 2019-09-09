@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2067 $
+# $Rev: 2215 $
 # $Ver: $
-# $Date: 2019-06-07 20:00:45 +0900 (金, 07 6 2019) $
+# $Date: 2019-09-08 09:15:32 +0900 (日, 08 9 2019) $
 # $Author: $
 
 import threading,traceback,time,datetime
@@ -28,7 +28,8 @@ def _thread_cmd(self,cmd):
         channel = self._channels[self._current_name]
         self._cmd(cmd)
     except Exception as err:
-        BuiltIn().log("WARN: A running thread for channel `%s` is terminated" % (channel['node']),console=False)
+        BuiltIn().log("WARN: A running thread for channel `%s` is \
+            terminated" % (channel['node']),console=False)
         BuiltIn().log(err,console=False)
         BuiltIn().log(traceback.format_exc(),console=False)
 
@@ -45,13 +46,15 @@ def _thread_repeat_cmd(stop,self,cmd,interval,with_time):
             time.sleep(DateTime.convert_time(interval))
 
     except Exception as err:
-        BuiltIn().log("WARN: A running thread for channel `%s` is terminated" % (channel['node']),console=False)
+        BuiltIn().log("WARN: A running thread for channel `%s` is \
+            terminated" % (channel['node']),console=False)
         BuiltIn().log(err,console=False)
         BuiltIn().log(traceback.format_exc(),console=False)
 
 
 class AChannel(VChannel.VChannel):
-    """ AChannel derives from VChannel and is used for parallel actions besides the main scenario.
+    """ AChannel derives from VChannel and is used for parallel actions \
+    besides the main scenario.
 
     Likes VChannel, AChannel handles a virtual terminal for each node. 
 
