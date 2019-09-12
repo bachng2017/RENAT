@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2219 $
+# $Rev: 2231 $
 # $Ver: $
-# $Date: 2019-09-09 03:04:44 +0900 (月, 09 9 2019) $
+# $Date: 2019-09-10 11:34:04 +0900 (火, 10 9 2019) $
 # $Author: $
 
 import os,re,sys,threading
@@ -999,6 +999,7 @@ class VChannel(object):
     def cmd(self,cmd='',prompt=None,
             timeout=None,error_on_timeout=True,
             remove_prompt=False,
+            delay=0,
             match_err='\r\n(unknown command.|syntax error, expecting <command>.)\r\n'):
         """Executes a ``command`` and wait until for the prompt. 
   
@@ -1011,6 +1012,13 @@ class VChannel(object):
         `timeout` is the timeout for this `Cmd`. If `timeout` is not define, the
         local `vchannel/cmd-timeout` or global `vchannel/cmd-timeout` will be
         used.
+
+        By default, the keyword execute the command and wait for the prompt.
+        This works fine in common cases but not good for very long output. In
+        this case, specify a bigger than zero (0.5 or sommething) will increase
+        the performance. When ``delay`` is bigger than zero, the keyword execute
+        the command once,  read the output and wait for ``delay`` before repeat
+        the read. This will be repeated until there is no more output. 
 
         The keyword returns error when the output matches the ``match_err`` and
         the default config value `cmd-auto-check` is ``True``
@@ -1028,13 +1036,14 @@ class VChannel(object):
         | Router.Cmd   | reload   | prompt=\\[yes/no\\]:${SPACE} | # reload a Cisco router |
         | Router.Cmd   | no       | prompt=\\[confirm\\] | [ is escaped twice |
         """
-        return self._cmd(cmd,prompt,timeout,error_on_timeout,remove_prompt,match_err)
+        return self._cmd(cmd,prompt,timeout,error_on_timeout,remove_prompt,delay,match_err)
         
 
     @with_reconnect
-    def _cmd(self,cmd='',prompt=None,
-            timeout=None,error_on_timeout=True,
+    def _cmd(self, cmd='', prompt=None,
+            timeout=None, error_on_timeout=True,
             remove_prompt=False,
+            delay=0,
             match_err='\r\n(unknown command.|syntax error, expecting <command>.)\r\n'):
         """ Local command execution
         """
@@ -1057,7 +1066,27 @@ class VChannel(object):
         # only TelnetLib has set_timeout attr
         self._set_conn_timeout(channel['connection'],timeout)
         try:
-            output = channel['connection'].read_until_regexp(cur_prompt)
+            if delay == 0:
+                output = channel['connection'].read_until_regexp(cur_prompt)
+            else:
+                BuiltIn().log("using delay=`%s` option" % delay) 
+                output = ''
+                try:
+                    tmp = channel['connection'].read(delay=delay)
+                    output += tmp
+                    while tmp != '':
+                        tmp = channel['connection'].read(delay=delay) 
+                        output += tmp
+                except TypeError as err:
+                    time.sleep(DateTime.convert_time(delay))
+                    tmp = channel['connection'].read()
+                    output += tmp
+                    while tmp != '':
+                        tmp = channel['connection'].read()
+                        output += tmp
+                        time.sleep(DateTime.convert_time(delay))
+                except:
+                    raise    
             self.log(output,channel)
         except:
             if error_on_timeout: raise
