@@ -23,62 +23,89 @@ else
   for i in $(find . -type f -name "chibalab.robot"); do
     LAB=$(echo $i | sed 's/chiba//')
     mv $i $LAB
+    echo "moved chibalab.robot to lab.robot"
   done
-  echo "moved chibalab.robot to lab.robot"
+  echo
 
   # update lab robot
+  echo "try fixing lab.robot ..."
   FILE=$RENAT_PATH/tools/template/project/lab.robot
   if [[ -f ./lab.robot ]]; then
         diff $QUIET  $FILE lab.robot
         if [[ $? != 0 ]]; then
             cp -f $FILE .
-            echo "updated lab.robot"
-            echo "---"
+            echo "updated $FILE"
         fi
   fi
+  echo
 
   # update project/run.sh
+  echo "try fixing project/run.sh ..."
   FILE=$RENAT_PATH/tools/template/project/run.sh
   diff $QUIET $FILE run.sh
   if [[ $? != 0 ]]; then
     cp -f $RENAT_PATH/tools/template/project/run.sh .
-    echo "updated project run.sh"
+    echo "updated project $FILE"
     echo "---"
   fi
+  echo 
 
   # gitignore
+  echo "try fixing gitignore ..."
   FILE=$RENAT_PATH/tools/template/project/.gitignore
   diff $QUIET $FILE .gitignore
   if [[ $? != 0 ]]; then
     cp -f $RENAT_PATH/tools/template/project/.gitignore .
     echo "updated item/.gitignore"
-    echo "---"
   fi
+  echo
 
   # update lab.robot for items
+  echo "try fixing items ..."
   RUN_FILE=$RENAT_PATH/tools/template/item/run.sh
   for entry in $(find . -type d -name config); do
     if [[ -f $entry/../main.robot ]] && [[ -f $entry/../lab.robot ]] ; then
        diff $QUIET $RUN_FILE  $entry/../run.sh
-       cp -f $RUN_FILE $entry/../run.sh
-       echo "updated $entry/../run.sh"
-       ln -sf ../lab.robot $entry/../lab.robot
-       echo "updated lab.robot"
+       if [[ $? != 0 ]]; then
+         cp -f $RUN_FILE $entry/../run.sh
+         echo "updated $entry/../run.sh"
+         ln -sf ../lab.robot $entry/../lab.robot
+         echo "updated lab.robot"
+       fi
        diff $QUIET $RENAT_PATH/tools/template/item/.gitignore $entry/../.gitignore
-       cp -f $RENAT_PATH/tools/template/item/.gitignore $entry/../.gitignore
-       echo "updated $entry/../.gitignore"
-       echo "---"
+       if [[ $? != 0 ]]; then
+         cp -f $RENAT_PATH/tools/template/item/.gitignore $entry/../.gitignore
+         echo "updated $entry/../.gitignore"
+       fi
     else
        echo "ignore $entry because it does not look like an item folder"
     fi
   done
+  echo 
 
+  echo "try fixing lab.robot symbolic ..."
   find . -name "main.robot" -exec sed --follow-symlinks -i 's/chibalab.robot/lab.robot/' {} \;
   find . -name "main.robot" -exec sed --follow-symlinks -i 's/\.\.\/lab\.robot/lab\.robot/' {} \;
-  echo "updated main.robot"
+  echo 
 
+  echo "try fixing local.yaml ..."
   find . -name "local.yaml" -exec sed --follow-symlinks -i '/^  *result_folder: result/d' {} \;
-  echo "updated local.yaml"
+  echo
+
+  # try to fix snmp polling issue
+  echo "try fixing Follow Syslog Start issue ..."
+  for entry in $(find . -type f -name local.yaml); do
+    FLAG=$(grep 'Start Follow Syslog' $(dirname $entry)/../*.robot)
+    if [ ! -z "$FLAG" ]; then
+      grep -n 'snmp-polling: *yes\|follow-remote-log: *yes' $entry
+      if [ $? == 0 ]; then 
+        sed -i '/snmp-polling: *yes/d' $entry 
+        sed -i '/follow-remote-log: *yes/d' $entry
+        echo "updated $entry"
+      fi
+    fi
+  done
+  echo
 fi
 
 
