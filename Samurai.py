@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-08-27 03:50:34 +0900 (火, 27 8 2019) $
-# $Rev: 2184 $
+# $Date: 2019-09-18 12:54:42 +0900 (水, 18 9 2019) $
+# $Rev: 2245 $
 # $Ver: $
 # $Author: $
 
@@ -494,7 +494,7 @@ class Samurai(WebApp):
 #        self.left_menu(u"ポリシー管理")
 #        self._selenium.wait_until_page_contains_element("//input[@id='filter']")
 #        self._selenium.input_text("filter",policy_name)
-#        time.sleep(self._ajax_wait)
+#        time.sleep(self._ajax_timeout)
 #        item_map = self.make_item_map("//tr/td[3]/div")
 #        item = item_map[policy_name]
 #        button = item.find_element_by_xpath(u"../../td/div/input[@title='編集']")
@@ -530,7 +530,7 @@ class Samurai(WebApp):
         self.left_menu(u"ポリシー管理")
         self._selenium.wait_until_page_contains_element("//input[@id='filter']")
         self._selenium.input_text("filter",policy_name)
-        time.sleep(self._ajax_wait)
+        time.sleep(self._ajax_timeout)
         item_map = self.make_item_map("//tr/td[3]/div")
         item = item_map[policy_name]
         button = item.find_element_by_xpath(u"../../td/div/input[@title='編集']")
@@ -702,7 +702,7 @@ class Samurai(WebApp):
         if 'basic_option_filter' in policy:
             changing = True
             self._selenium.input_text("option_filter", policy['basic_option_filter'])
-            time.sleep(self._ajax_wait)
+            time.sleep(self._ajax_timeout)
         if 'basic_direction' in policy:
             changing = True
             if policy['basic_direction'].lower() in ['incoming', 'in'] :
@@ -940,7 +940,7 @@ class Samurai(WebApp):
             self._selenium.input_text("detection_cidr", '\n'.join(cidr_list))
         if 'basic_option_filter' in policy: 
             self._selenium.input_text("option_filter", policy['basic_option_filter'])
-            time.sleep(self._ajax_wait)
+            time.sleep(self._ajax_timeout)
 
         basic_direction = 'Outgoing'
         if 'basic_direction' in policy and policy['basic_direction'].lower() in ['incoming', 'in'] :
@@ -1139,7 +1139,7 @@ class Samurai(WebApp):
 
         self.left_menu(u"ポリシー管理")
         self._selenium.input_text("filter",name)
-        time.sleep(self._ajax_wait)
+        time.sleep(self._ajax_timeout)
         item_map = self.make_item_map("//tr/td[3]/div")
         item = item_map[name]
         button = item.find_element_by_xpath("../../td/div/input[@title='編集']")

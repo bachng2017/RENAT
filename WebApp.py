@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-09-07 09:51:32 +0900 (土, 07 9 2019) $
-# $Rev: 2204 $
+# $Date: 2019-09-18 12:54:42 +0900 (水, 18 9 2019) $
+# $Rev: 2245 $
 # $Ver: $
 # $Author: $
 
@@ -165,7 +165,7 @@ class WebApp(object):
         self._current_app           = None
         self._type                  = None
         self._verbose               = False
-        self._ajax_wait             = 2
+        self._ajax_timeout          = int(Common.get_config_value('ajax-timeout','web','5'))
         self._type                  = 'web'
         self._selenium              = None  # SeleniumLibrary instance
         try:
@@ -188,11 +188,11 @@ class WebApp(object):
         return self._verbose
 
     
-    def set_ajax_wait(self,wait_time='2s'):
+    def set_ajax_timeout(self,wait_time='2s'):
         """ Set the ajax wait time
         """
-        old_value = self._ajax_wait
-        self._ajax_wait = DateTime.convert_time(wait_time)
+        old_value = self._ajax_timeout
+        self._ajax_timeout = DateTime.convert_time(wait_time)
         BuiltIn().log("Set the ajax wait_time to `%d` seconds")
         return old_value
 

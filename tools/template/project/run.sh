@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# $Date: 2019-09-01 19:21:06 +0900 (日, 01 9 2019) $
-# $Rev: 2193 $
+# $Date: 2019-09-18 00:06:35 +0900 (水, 18 9 2019) $
+# $Rev: 2243 $
 # $Ver: $
 # $Author: $
 # suite run script
@@ -14,7 +14,7 @@ RETURN=0
 SUCCEED=0
 FAIL=0
 FAIL_ITEM=""
-COLLECT=""
+REPORT_FOLDER=""
 
 usage() {
     echo "usage: $PROG [RF OPTIONS]"
@@ -24,7 +24,7 @@ usage() {
     echo "Some useful options:"
     echo "  -h/--help               print this usage"
     echo "  -p/--parallel           parallelly run the items"
-    echo "  -r/--report             remake reports with existed results"
+    echo "  -r/--report             remake reports with existed results (without run the test)"
     echo "  -v CLEAN                ccleanup result folder before run the test"
     echo "  -X                      stop immediately if a step fails (default is not set)"
     echo "  -v VAR:VALUE            define a global RF variable ${VAR} with value VALUE"
@@ -61,40 +61,37 @@ run() {
         if [ -f $folder/run.sh ]; then
             run $folder $NAME
         fi
-    done    
+    done
 
-    if [ "$REPORT" == "1" ]; then
-        if [ -f $PWD/result/output.xml ]; then
-            COLLECT="$COLLECT $PWD/result/output.xml"
-        fi
-    else
-        if [ -f ./.ignore ]; then
-            echo "   .ignore found, ignore this folder"
-            cat .ignore 
-        elif [ -f ./main.robot ]; then
-            if [ "$PARALLEL" = "1" ]; then 
-                ./run.sh $PARAM &
-                PIDS="$PIDS $!" 
-                ITEMS[$!]=$PWD
+    if [ -f ./.ignore ]; then
+        echo "   .ignore found, ignore this folder"
+        cat .ignore 
+    elif [ -f ./main.robot ]; then
+        if [ "$PARALLEL" == "1" ]; then 
+            ./run.sh $PARAM &
+            PIDS="$PIDS $!" 
+            ITEMS[$!]=$PWD
+        else
+            ./run.sh $PARAM
+            CODE=$?
+            RETURN=$(expr $RETURN + $CODE)
+            if [ $CODE -eq 0 ]; then
+                SUCCEED=$(expr $SUCCEED + 1)
             else
-                ./run.sh $PARAM
-                CODE=$?
-                RETURN=$(expr $RETURN + $CODE)
-                if [ $CODE -eq 0 ]; then
-                    SUCCEED=$(expr $SUCCEED + 1)
-                else
-                    FAIL=$(expr $FAIL + 1)
-                    FAIL_ITEM="$PWD \n$FAIL_ITEM"
-                fi
-                # collect data after run
-                COLLECT="$COLLECT $PWD/result/output.xml"
-                echo "Finished with exit code $CODE"
+                FAIL=$(expr $FAIL + 1)
+                FAIL_ITEM="$PWD \n$FAIL_ITEM"
             fi
+            # collect data after run
+            for item in $(find $PWD/$RESULT_FOLDER -name output.xml); do
+                REPORT_FOLDER+=" $item"
+            done
+            echo "Finished with exit code $CODE"
         fi
-        echo ""
-        echo ""
-        echo ""
     fi
+    echo
+    echo
+    echo
+
     if [ "$ITEM_PATH" != "." ]; then
         cd ..
     fi
@@ -116,6 +113,14 @@ while [ ! -z "$OPT" ]; do
             REPORT=1
             shift 1
             ;;
+        '-d'|'--dir' )
+            if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
+                echo "$PROG: option -d requires an argument -- $1" 1>&2
+                exit 1
+            fi
+            RESULT_FOLDER=$2
+            shift 2
+            ;;
         *)
             PARAM+=" $1"
             shift 1
@@ -123,12 +128,18 @@ while [ ! -z "$OPT" ]; do
     esac
     OPT=$1
 done
+if [ -z "$RESULT_FOLDER" ]; then
+    RESULT_FOLDER="result"
+fi
+PARAM+=" -d $RESULT_FOLDER"
 
-run . .
 
-if [ "$REPORT" != "1" ]; then
-    # collect result from parallel process
-    if [ "$PARALLEL" = "1" ]; then 
+if [ -z "$REPORT" ]; then
+    #
+    run . .
+   
+    # collect data in case tests are run parallelly 
+    if [ "$PARALLEL" == "1" ]; then 
         for item in $PIDS; do
             wait $item
             CODE=$?  
@@ -138,22 +149,31 @@ if [ "$REPORT" != "1" ]; then
                 FAIL=$(expr $FAIL + 1)
                 FAIL_ITEM="${ITEMS[$item]} \n$FAIL_ITEM"
             fi
-            # collect data after run
-            COLLECT="$COLLECT ${ITEMS[$item]}/result/output.xml"
+            # collect data after the run
+            for item in $(find ${ITEMS[$item]}/$RESULT_FOLDER -name output.xml); do
+                REPORT_FOLDER+=" $item"
+            done
         done
     fi
-    
-    # summerize
+        
+    # summarize
     echo "---"
     echo "succeeded items: " $SUCCEED
     echo "failed items:    " $FAIL
     echo -e $FAIL_ITEM
-    echo ""
+    echo
 fi
- 
-# rebot
+
 PROJ_NAME=$(basename $PWD)
-echo "make project report for $PROJ_NAME"
-rebot --name $PROJ_NAME -L INFO $COLLECT
+if [ -z "$REPORT_FOLDER" ]; then
+  for item in $(find . -name output.xml | sort); do
+    REPORT_FOLDER+=" $item"
+  done
+fi
+COUNT=$(echo "$REPORT_FOLDER" | wc -w)
+echo "Make reports for project $PROJ_NAME from $COUNT folders:"
+echo "$REPORT_FOLDER"
+rebot --name $PROJ_NAME -L INFO $REPORT_FOLDER
+
 exit $RETURN
 

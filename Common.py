@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2220 $
+# $Rev: 2245 $
 # $Ver: $
-# $Date: 2019-09-09 04:42:54 +0900 (月, 09 9 2019) $
+# $Date: 2019-09-18 12:54:42 +0900 (水, 18 9 2019) $
 # $Author: $
 
 """ Common library for RENAT
@@ -1056,7 +1056,7 @@ def pause(msg="",time_out='3h',error_on_timeout=True,default_input=''):
     return input
 
 
-def diff_file(path1,path2,newline=True):
+def diff_file(path1,path2,method=u'uniq',newline=True):
     """ Shows difference between files
 
     Returns the diff result (multi lines)
@@ -1069,10 +1069,13 @@ def diff_file(path1,path2,newline=True):
     if newline:
         f1[-1] = f1[-1]+'\n'
         f2[-1] = f2[-1]+'\n'
-    
-
-    d = difflib.context_diff(f1,f2,fromfile=path1,tofile=path2)
-    result  = ''.join(d)
+   
+    diff = [] 
+    if method == 'context':
+        diff = difflib.context_diff(f1,f2,fromfile=path1,tofile=path2)
+    if method == 'uniq':
+        diff = difflib.ndiff(f1,f2)
+    result = ''.join(filter(lambda x: not x.startswith(' '),list(diff)))
 
     BuiltIn().log("Compared `%s` and `%s`" % (path1,path2))
     return result
