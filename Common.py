@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2245 $
+# $Rev: 2254 $
 # $Ver: $
-# $Date: 2019-09-18 12:54:42 +0900 (水, 18 9 2019) $
+# $Date: 2019-09-29 20:11:58 +0900 (日, 29 9 2019) $
 # $Author: $
 
 """ Common library for RENAT
@@ -1459,7 +1459,9 @@ def start_display():
     global DISPLAY
     display_info = get_config_value('display')
     logging.getLogger("easyprocess").setLevel(logging.INFO)
-    DISPLAY = Display(visible=0, size=(display_info['width'],display_info['height']))
+    w = int(display_info['width']) + 100
+    h = int(display_info['height']) + 100
+    DISPLAY = Display(visible=0, size=(w,h))
     DISPLAY.start()
     time.sleep(2)
     BuiltIn().log('Started a virtual display as `%s`' % DISPLAY.new_display_var)

@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-09-18 12:54:42 +0900 (水, 18 9 2019) $
-# $Rev: 2245 $
+# $Date: 2019-09-20 09:42:03 +0900 (金, 20 9 2019) $
+# $Rev: 2252 $
 # $Ver: $
 # $Author: $
 
@@ -115,6 +115,13 @@ class Samurai(WebApp):
         BuiltIn().log("Reconnected to the Samurai application(%s)" % name)
 
 
+    def wait_until_load_finish(self, timeout=u"2m"):
+        """ Waits until the loading finishes
+        """
+        self._selenium.wait_until_page_does_not_contain_element('//img[@src="image/ajax-loader.gif"]',timeout)
+        BuiltIn().log("Finished loading") 
+
+
     def login(self):
         """ Logs-in into the application
 
@@ -193,6 +200,8 @@ class Samurai(WebApp):
                 item_list = item_list[1:]
             else:
                 BuiltIn().log("    Found zero elements")
+
+        self.wait_until_load_finish()
 
         BuiltIn().log("Chose left menu `%s`" % menu)
         return item_list

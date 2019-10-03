@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-09-18 12:54:42 +0900 (水, 18 9 2019) $
-# $Rev: 2245 $
+# $Date: 2019-09-24 18:27:05 +0900 (火, 24 9 2019) $
+# $Rev: 2253 $
 # $Ver: $
 # $Author: $
 
@@ -259,7 +259,15 @@ class WebApp(object):
         else:
             capture_name = filename
         total_width     = int(self._selenium.execute_javascript("return document.body.offsetWidth;"))
-        total_height    = int(self._selenium.execute_javascript("return document.body.parentNode.scrollHeight;"))
+        # total_height    = int(self._selenium.execute_javascript("return document.body.parentNode.scrollHeight;"))
+
+        script_text=""" return Math.max(document.body.scrollHeight, \
+document.documentElement.scrollHeight, \
+document.body.offsetHeight, \
+document.documentElement.offsetHeight, \
+document.body.clientHeight, \
+document.documentElement.clientHeight); """
+        total_height = int(self._selenium.execute_javascript(script_text))
 
         display_info = Common.get_config_value('display')
 
