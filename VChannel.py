@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2231 $
+# $Rev: 2259 $
 # $Ver: $
-# $Date: 2019-09-10 11:34:04 +0900 (火, 10 9 2019) $
+# $Date: 2019-10-07 11:30:22 +0900 (月, 07 10 2019) $
 # $Author: $
 
 import os,re,sys,threading
@@ -999,7 +999,7 @@ class VChannel(object):
     def cmd(self,cmd='',prompt=None,
             timeout=None,error_on_timeout=True,
             remove_prompt=False,
-            delay=0,
+            delay=u'0s',
             match_err='\r\n(unknown command.|syntax error, expecting <command>.)\r\n'):
         """Executes a ``command`` and wait until for the prompt. 
   
@@ -1015,7 +1015,7 @@ class VChannel(object):
 
         By default, the keyword execute the command and wait for the prompt.
         This works fine in common cases but not good for very long output. In
-        this case, specify a bigger than zero (0.5 or sommething) will increase
+        this case, specify a bigger than zero (eg: 0.5 or sommething) will increase
         the performance. When ``delay`` is bigger than zero, the keyword execute
         the command once,  read the output and wait for ``delay`` before repeat
         the read. This will be repeated until there is no more output. 
@@ -1032,9 +1032,10 @@ class VChannel(object):
  [./Common.html|Common] for details about the config files.
         
         Sample:
-        | Router.Cmd   | version |
-        | Router.Cmd   | reload   | prompt=\\[yes/no\\]:${SPACE} | # reload a Cisco router |
-        | Router.Cmd   | no       | prompt=\\[confirm\\] | [ is escaped twice |
+        | Router.`Cmd`   | version |
+        | Router.`Cmd`   | reload   | prompt=\\[yes/no\\]:${SPACE} | # reload a Cisco router |
+        | Router.`Cmd`   | no       | prompt=\\[confirm\\] | [ is escaped twice |
+        | Router.`Cmd`   | show configuration | display set |  delay=0.5s |
         """
         return self._cmd(cmd,prompt,timeout,error_on_timeout,remove_prompt,delay,match_err)
         
@@ -1043,7 +1044,7 @@ class VChannel(object):
     def _cmd(self, cmd='', prompt=None,
             timeout=None, error_on_timeout=True,
             remove_prompt=False,
-            delay=0,
+            delay=u"0s",
             match_err='\r\n(unknown command.|syntax error, expecting <command>.)\r\n'):
         """ Local command execution
         """
@@ -1063,28 +1064,30 @@ class VChannel(object):
         cur_prompt = prompt or channel['prompt']
         output = ''
 
+        delay_time = DateTime.convert_time(delay)
+
         # only TelnetLib has set_timeout attr
         self._set_conn_timeout(channel['connection'],timeout)
         try:
-            if delay == 0:
+            if delay_time == 0:
                 output = channel['connection'].read_until_regexp(cur_prompt)
             else:
                 BuiltIn().log("using delay=`%s` option" % delay) 
                 output = ''
                 try:
-                    tmp = channel['connection'].read(delay=delay)
+                    tmp = channel['connection'].read(delay=delay_time)
                     output += tmp
                     while tmp != '':
-                        tmp = channel['connection'].read(delay=delay) 
+                        tmp = channel['connection'].read(delay=delay_time) 
                         output += tmp
                 except TypeError as err:
-                    time.sleep(DateTime.convert_time(delay))
+                    time.sleep(delay_time)
                     tmp = channel['connection'].read()
                     output += tmp
                     while tmp != '':
                         tmp = channel['connection'].read()
                         output += tmp
-                        time.sleep(DateTime.convert_time(delay))
+                        time.sleep(delay_time)
                 except:
                     raise    
             self.log(output,channel)
@@ -1269,7 +1272,7 @@ class VChannel(object):
         return  ip  
 
 
-    def exec_file(self,file_name,vars='',comment='# ',step=False,mode='cmd',str_error='syntax,rror'):
+    def exec_file(self,file_name, vars='',comment='# ',step=False,mode='cmd',delay=u'0s', str_error='syntax,rror'):
         """ Executes commands listed in ``file_name``
         Lines started with ``comment`` character is considered as comments
 
@@ -1329,7 +1332,7 @@ class VChannel(object):
             str_cmd = line.rstrip()
             if str_cmd == '': continue # ignore null line
             if mode.lower() == 'cmd': 
-                output = self._cmd(str_cmd)
+                output = self._cmd(str_cmd,delay=delay)
             else:
                 output = self.write(str_cmd)
 
