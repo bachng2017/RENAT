@@ -1,4 +1,0 @@
-show system users
-{% for int in LOCAL['interface-list'] %}
-show interface {{int}}
-{% endfor %}

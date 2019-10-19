@@ -1,6 +1,0 @@
-show system users
-show version
-{% for i in [1,2,3] %}
-show interface et-0/0/{{i}}
-{% endfor %}
-
