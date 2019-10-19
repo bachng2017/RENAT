@@ -1,0 +1,34 @@
+# $Rev: 822 $
+# $Ver: $
+# $Date: 2018-03-20 00:33:18 +0900 (火, 20  3月 2018) $
+# $Author: $
+
+node:
+    vmx11:
+        device: vmx11
+        snmp-polling: yes
+    apollo:
+        device: vmx12
+        snmp-polling: yes 
+   
+tester:
+    tester01:
+        device: ixnet03_8009
+        config: vmx_traffic.ixncfg
+        real_port: 
+
+port-mapping:
+    uplink01:
+        device: vmx11
+        port: ge-0/0/0
+    downlink01:
+        device: vmx12
+        port: ge-0/0/2
+
+default:
+    terminal:
+        width: 80
+        height: 32
+    result_folder: result
+
+

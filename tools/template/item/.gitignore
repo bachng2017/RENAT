@@ -1,0 +1,8 @@
+tmp/*
+result/*
+result_*
+setpath.bashrc
+run.log
+.ignore
+!.gitkeep
+!.gitignore

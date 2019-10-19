@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+<xsl:output method="text"/>
+<xsl:template match="/">
+<xsl:apply-templates/>
+</xsl:template>
+<xsl:template match="Results">
+Testname,Date
+<xsl:value-of select="TestName"/>,<xsl:value-of select="Date"/>
+<xsl:apply-templates select="ClientStatistics"/>
+<xsl:apply-templates select="ServerStatistics"/>
+</xsl:template>
+  
+<xsl:template match="ClientStatistics">
+ClientStatistics,
+<xsl:apply-templates select="Block"/>
+</xsl:template>
+
+<xsl:template match="ServerStatistics">
+ServerStatistics,
+<xsl:apply-templates select="Block"/>
+</xsl:template>
+    
+<xsl:template match="Block">
+<xsl:value-of select="@name"/>,
+<xsl:apply-templates select="Statistic" mode="header"/>
+<xsl:text>&#10;</xsl:text>
+<xsl:apply-templates select="Statistic" mode="standard"/>
+<xsl:text>&#10;</xsl:text>
+</xsl:template>
+
+<xsl:template match="Statistic" mode="header"><xsl:value-of select="name"/>,</xsl:template>
+<xsl:template match="Statistic" mode="standard"><xsl:value-of select="value"/>,</xsl:template>
+</xsl:stylesheet>

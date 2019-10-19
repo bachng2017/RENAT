@@ -1,0 +1,26 @@
+# $Rev: 2072 $
+# $Date: 2019-06-08 13:07:43 +0900 (土, 08  6月 2019) $
+# $Author: $
+
+auth:
+    plain-text: 
+        default:
+            user: <user>
+            pass: <password>
+        samurai:
+            user: <user>
+            pass: <password>
+        alcatel:
+            user: <user>
+            pass: <password>
+        vmware-esxi:
+            user: <user>
+            pass: <password>
+
+    public-key: # for Public Key authentication
+        default:
+            user: robot
+            key: $HOME/.ssh/robot_id_rsa
+        test:
+            user: jenkins
+            key:  /var/lib/jenkins/.ssh/id_rsa

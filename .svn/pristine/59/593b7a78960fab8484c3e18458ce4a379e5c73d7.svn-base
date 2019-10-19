@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+  <xsl:output method="html"/>
+
+  <xsl:template match="/">
+    <xsl:apply-templates/>
+  </xsl:template>
+
+  <xsl:template match="Results">
+    <h3>    
+    Testname: <xsl:value-of select="TestName"/><BR/>
+    Date: <xsl:value-of select="Date"/>
+    </h3>
+
+    <a href="#client">ClientStatistics</a><br/>
+    <a href="#server">ServerStatistics</a>
+
+    <xsl:apply-templates select="ClientStatistics"/>
+    <xsl:apply-templates select="ServerStatistics"/>
+  </xsl:template>
+  
+  <xsl:template match="ClientStatistics">
+    <h3 id="client">ClientStatistics <a href="#">Goto Top</a></h3>
+    <xsl:apply-templates select="Block"/>
+  </xsl:template>
+
+  <xsl:template match="ServerStatistics">
+    <h3 id="server">ServerStatistics <a href="#">Goto Top</a></h3>
+    <xsl:apply-templates select="Block"/>
+  </xsl:template>
+    
+  <xsl:template match="Block">
+    <xsl:value-of select="@name"/>
+    <table border="1" style="border: 1px solid black; border-collapse: collapse;">
+    <tr><xsl:apply-templates select="Statistic" mode="header"/></tr>
+    <tr><xsl:apply-templates select="Statistic" mode="standard"/></tr>
+    </table>
+    <br/>
+  </xsl:template>
+
+  <xsl:template match="Statistic" mode="header">
+    <th bgcolor="f2f2f2"><xsl:value-of select="name"/></th>
+  </xsl:template>
+
+  <xsl:template match="Statistic" mode="standard">
+    <td><xsl:value-of select="value"/></td>
+  </xsl:template>
+
+
+
+</xsl:stylesheet>

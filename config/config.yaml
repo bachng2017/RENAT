@@ -1,0 +1,51 @@
+# -*- coding: utf-8 -*-
+default:
+    robot-server: 10.128.64.99
+    robot-password: ntt0cn
+    working-folder: /mnt/fsv01/21_Users/${USER}/working
+    renat-master-folder: /mnt/fsv01/00_Master/renat
+    calient-master-path: /mnt/fsv01/00_Master/renat/calient.xlsm 
+    ntm-master-path: /mnt/fsv01/00_Master/renat/g4ntm.xlsm 
+    ix-remote-tmp: C:/Windows/Temp
+    interval-between-retry: 15s
+    terminal-timeout: 20m
+    cmd-auto-check: False
+    newline: "\r\n"
+    slack-cmd: /home/robot/work/slack/renat_bot.sh
+    slack-proxy: 10.128.3.103:4713
+    # log-level: TRACE
+    # log-level: ERROR
+    log-level: INFO
+    # log-level: DEBUG
+    ignore-dead-node: FALSE
+    display:
+        width:  1921
+        height: 1080
+
+vchannel:
+    async-channel: yes
+    max-retry: 3
+    wait-time-before-close: 2s
+    ignore-init-finish: False
+    prompt-strict: yes
+    default-login-prompt: "login: "
+    default-password-prompt: "Password:"
+
+web:
+    reconnect: yes
+    max-retry: 3
+    ajax-timeout: 5 
+
+hypervisor:
+    mks-console:
+        width:  1024
+        height: 768
+
+extra-lib:
+    - Tester
+    - OpticalSwitch
+    - Samurai
+    - Arbor
+    - Hypervisor
+#    - Fic
+

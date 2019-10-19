@@ -1,0 +1,43 @@
+# -*- coding: utf-8 -*-
+# $Rev: 2109 $
+# $Ver: $
+# $Date: 2019-07-26 21:36:47 +0900 (金, 26  7月 2019) $
+# $Author: $
+
+# router, server information
+node:
+
+    target:
+        device: vmx14
+        snmp-polling: yes
+        follow-remote-log: yes
+        mib: 
+        tag:
+
+
+# web application information
+webapp:   
+
+
+# L1 switch information
+optic:
+    connection:
+
+# tester information
+tester:
+
+    tester:
+        device: ixnet03_8009
+        config: bgp.ixncfg
+        real_port:
+            -   chassis:    10.128.4.41
+                card: 4
+                port: 4
+
+
+# other default information
+default:
+    terminal:
+        width: 80
+        height: 32
+

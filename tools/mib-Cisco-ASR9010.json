@@ -1,0 +1,13 @@
+{"_comment": "MIB CiscoASR9010",
+"miblist":[
+{"description":"CPU-RSP0","disp":"gauge","oid":"1.3.6.1.4.1.9.9.109.1.1.1.1.7.66" },
+{"description":"CPU-RSP1","disp":"gauge","oid":"1.3.6.1.4.1.9.9.109.1.1.1.1.7.82" },
+{"description":"CPU-LC0" ,"disp":"gauge","oid":"1.3.6.1.4.1.9.9.109.1.1.1.1.7.2050" },
+{"description":"CPU-LC1" ,"disp":"gauge","oid":"1.3.6.1.4.1.9.9.109.1.1.1.1.7.2066" },
+{"description":"CPU-LC2" ,"disp":"gauge","oid":"1.3.6.1.4.1.9.9.109.1.1.1.1.7.2082" },
+{"description":"CPU-LC3" ,"disp":"gauge","oid":"1.3.6.1.4.1.9.9.109.1.1.1.1.7.2098" },
+{"description":"CPU-LC4" ,"disp":"gauge","oid":"1.3.6.1.4.1.9.9.109.1.1.1.1.7.2146" },
+{"description":"CPU-LC5" ,"disp":"gauge","oid":"1.3.6.1.4.1.9.9.109.1.1.1.1.7.2162" },
+{"description":"CPU-LC6" ,"disp":"gauge","oid":"1.3.6.1.4.1.9.9.109.1.1.1.1.7.2178" },
+{"description":"CPU-LC7" ,"disp":"gauge","oid":"1.3.6.1.4.1.9.9.109.1.1.1.1.7.2194" }
+]}

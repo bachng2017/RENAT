@@ -1,0 +1,27 @@
+# -*- coding: utf-8 -*-
+# $Rev: 2117 $
+# $Date: 2019-07-29 09:55:17 +0900 (月, 29  7月 2019) $
+# $Author: $
+
+auth:
+    plain-text: 
+        default:
+            user: <user>
+            pass: <password>
+        samurai:
+            user: <user>
+            pass: <password>
+        alcatel:
+            user: <user>
+            pass: <password>
+        vmware-esxi:
+            user: <user>
+            pass: <password>
+
+    public-key: # for Public Key authentication
+        default:
+            user: robot
+            key: $HOME/.ssh/robot_id_rsa
+        test:
+            user: jenkins
+            key:  /var/lib/jenkins/.ssh/id_rsa

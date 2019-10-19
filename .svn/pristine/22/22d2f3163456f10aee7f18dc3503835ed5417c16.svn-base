@@ -1,0 +1,63 @@
+diff -Naru SSHLibrary/pythonclient.py SSHLibrary.work/pythonclient.py
+--- SSHLibrary/pythonclient.py	2019-03-25 10:53:49.539586971 +0900
++++ SSHLibrary.work/pythonclient.py	2019-03-25 10:54:14.572406911 +0900
+@@ -85,24 +85,48 @@
+             return conf.lookup(host)['hostname'] if not None else host
+         return host
+ 
+-    def _login(self, username, password, look_for_keys=False):
++    def _login(self, username, password, look_for_keys=False, proxy_cmd=None):
+         self.config.host = self._read_ssh_config_host(self.config.host)
+         try:
+-            self.client.connect(self.config.host, self.config.port, username,
+-                                password, look_for_keys=look_for_keys,
+-                                allow_agent=look_for_keys,
+-                                timeout=float(self.config.timeout))
++#            self.client.connect(self.config.host, self.config.port, username,
++#                                password, look_for_keys=look_for_keys,
++#                                allow_agent=look_for_keys,
++#                                timeout=float(self.config.timeout))
++            if proxy_cmd:
++                proxy = paramiko.ProxyCommand(proxy_cmd)
++                self.client.connect(self.config.host, self.config.port, username,
++                                    password, look_for_keys=look_for_keys,
++                                    allow_agent=look_for_keys,
++                                    timeout=float(self.config.timeout), sock=proxy)
++            else:
++                self.client.connect(self.config.host, self.config.port, username,
++                                    password, look_for_keys=look_for_keys,
++                                    allow_agent=look_for_keys,
++                                    timeout=float(self.config.timeout))
+         except paramiko.AuthenticationException:
+             raise SSHClientException
+ 
+-    def _login_with_public_key(self, username, key_file, password, allow_agent, look_for_keys):
++    def _login_with_public_key(self, username, key_file, password, allow_agent, look_for_keys, proxy_cmd=None):
+         self.config.host = self._read_ssh_config_host(self.config.host)
+         try:
+-            self.client.connect(self.config.host, self.config.port, username,
+-                                password, key_filename=key_file,
+-                                allow_agent=allow_agent,
+-                                look_for_keys=look_for_keys,
+-                                timeout=float(self.config.timeout))
++#            self.client.connect(self.config.host, self.config.port, username,
++#                                password, key_filename=key_file,
++#                                allow_agent=allow_agent,
++#                                look_for_keys=look_for_keys,
++#                                timeout=float(self.config.timeout))
++            if proxy_cmd:
++                proxy = paramiko.ProxyCommand(proxy_cmd)
++                self.client.connect(self.config.host, self.config.port, username,
++                                    password, key_filename=key_file,
++                                    allow_agent=allow_agent,
++                                    look_for_keys=look_for_keys,
++                                    timeout=float(self.config.timeout), sock=proxy)
++            else:
++                self.client.connect(self.config.host, self.config.port, username,
++                                    password, key_filename=key_file,
++                                    allow_agent=allow_agent,
++                                    look_for_keys=look_for_keys,
++                                    timeout=float(self.config.timeout))
+         except paramiko.AuthenticationException:
+             raise SSHClientException
+ 

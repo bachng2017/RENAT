@@ -1,0 +1,38 @@
+default:
+    robot-server: 127.0.0.1
+    robot-password: <password>
+    renat-master-folder: $RENAT_PATH/config
+    calient-master-path: 
+    ntm-master-path: 
+    ix-remote-tmp: C:/Windows/Temp
+    max-retry-for-connect: 3
+    interval-between-retry: 15s
+    terminal-timeout: 20m
+    cmd-auto-check: False
+    newline: "\r\n"
+    slack-cmd: /home/robot/work/slack/renat_bot.sh
+    slack-proxy: 10.128.3.103:4713
+    log-level: DEBUG
+    ignore-dead-node: FALSE
+    mks-console:
+        width:  1024
+        height: 768
+    display:
+        width:  1921
+        height: 1080
+
+vchannel:
+    async-channel: yes
+    wait-time-before-close: 2s
+    ignore-init-finish: False
+    prompt-strict: yes
+    default-login-prompt: "login: "
+    default-password-prompt: "Password:"
+
+extra-lib:
+#    - Tester
+#    - OpticalSwitch
+#    - Samurai
+#    - Arbor
+    - Hypervisor
+

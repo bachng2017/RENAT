@@ -1,0 +1,157 @@
+# $Rev: 2072 $
+# $Date: 2019-06-08 13:07:43 +0900 (土, 08  6月 2019) $
+# $Author: $
+
+device:
+    # Testers
+    ixnet01_8009:
+        type: ixnet
+        description: TCL server 8.01
+        ip: 10.128.4.21
+        port: 8009
+    ixload01:
+        type: ixload
+        description: IxLoad client
+        ip: 10.128.4.20
+    ixbps01:
+        type: ixbps
+        description: Breaking point
+        ip: 10.128.4.45
+    # BB naming rule - Routers
+    mx480-51:
+        type: juniper
+        description: mx480-51
+        ip: 10.128.30.51
+    gr8632r-10-61:
+        type: gr8600
+        description: gr8632r-10-61
+        ip: 10.128.10.61
+    mx960-10-75:
+        type: juniper
+        description: mx960-10-75
+        ip: 10.128.10.75
+    # Common naming rule - Routers - BB segment -- 10.128.30.0
+    mx960-30-14:
+        type: juniper
+        description: mx960-30-14
+        ip: 10.128.30.14
+#    mx2020-30-15:
+#        type: juniper
+#        description: mx2020-30-15
+#        ip: 10.128.30.15
+#    mx2010-30-16:
+#        type: juniper
+#        description: mx2010-30-16
+#        ip: 10.128.30.16
+    mx480-30-21:
+        type: juniper
+        description: mx480-30-21
+        ip: 10.128.30.21
+    mx480-30-22:
+        type: juniper
+        description: mx480-30-22
+        ip: 10.128.30.22
+    mx2020-30-25:
+        type: juniper
+        description: mx2020-30-25
+        ip: 10.128.30.25
+    # Common naming rule - Routers - XXX segment -- 10.128.31.0
+    mx480-31-11:
+        type: juniper
+        description: mx480-31-11
+        ip: 10.128.31.11
+    # VMX
+    vmx11:
+        type: juniper
+        description: vmx11
+        ip: 10.128.64.11
+    vmx12:
+        type: juniper
+        description: vmx12
+        ip: 10.128.64.12
+    # Common naming rule - BB_Routers - VMX -- 10.128.25.0
+    vmx1:
+        type: juniper
+        description: vmxBB_1
+        ip: 10.128.25.1
+    vmx2:
+        type: juniper
+        description: vmxBB_2
+        ip: 10.128.25.2
+    vmx3:
+        type: juniper
+        description: vmxBB_3
+        ip: 10.128.25.3    
+    vmx101:
+        type: juniper
+        description: vmxBB_101
+        ip: 10.128.25.101
+    # Common naming rule - Routers - VMX -- 10.128.65.0
+    vmx-65-05:
+        type: juniper
+        description: vmx-65-05
+        ip: 10.128.65.5
+    # Telecent NTM
+    g4ntm-4-64:
+        type: g4ntm
+        description: robot patch
+        ip: 10.128.4.64
+        port: 9888
+    # Calient Optical Switch
+    calient01:
+        type: calient
+        description: 10G optical switch
+        ip: 10.128.30.76
+    calient-4-60:
+        type: calient
+        description: 10G optical switch aisle capping
+        ip: 10.128.4.60
+    # Samurai
+    samurai14-cloud:
+        type: samurai
+        description: old Cloud Samurai14 
+        ip: 91.128.1.128
+    samurai14-a:
+        type: samurai
+        description: Samurai A
+        ip: 203.105.73.234
+    # Console Server
+    smartcs-3-201:
+        type: smartcs
+        description: console server
+        ip: 10.128.3.201
+    smartcs-3-202:
+        type: smartcs
+        description: console server
+        ip: 10.128.3.202
+    # alcatel
+    alcatel-18-34:
+        type: alcatel
+        description: 7750 SR-7
+        ip: 10.128.18.34
+    alcatel-18-35:
+        type: alcatel
+        description: 7750 SR-7
+        ip: 10.128.18.35
+    # cisco
+    cisco-18-12:
+        type: cisco_asr
+        description: Cisco ASR
+        ip: 10.128.18.12
+    # juniper_ptx
+    ptx1000-34-18:
+        type: juniper
+        description: ptx1000-34-18
+        ip: 10.128.34.18
+    # juniper_EX2200c_SW
+    ex2200c-18-255:
+        type: juniper
+        description: ex2200c-18-255
+        ip: 10.128.18.255
+    # esxi
+    esxi-3-15:
+        type: vmware
+        description: a shared ESXI server
+        ip: 10.128.3.15
+
+ 

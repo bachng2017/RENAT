@@ -1,0 +1,39 @@
+# -*- coding: utf-8 -*-
+# $Rev$
+# $Ver: $
+# $Date$
+# $Author$
+
+# router, server information
+node:
+
+    vmx11:
+        device: vmx11
+        snmp-polling: yes
+        follow-remote-log: yes
+        mib: 
+        tag:
+
+
+# web application information
+webapp:   
+
+
+# L1 switch information
+optic:
+    connection:
+
+# tester information
+tester:
+
+interface-list:
+    - et-0/0/0
+    - et-0/0/1
+
+
+# other default information
+default:
+    terminal:
+        width: 80
+        height: 32
+
