@@ -22,6 +22,8 @@ RENAT(Robotframework Extension for Network Automation Testing)
 
 == What's new ==
 
+=== 0.1.17 ===
+
 === 0.1.16 ===
 - change item run.sh from -b to -p
 - fix --debug (-b) for correct debug file while running witn -n option
