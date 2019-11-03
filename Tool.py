@@ -102,8 +102,8 @@ class Tool(object):
         BuiltIn().log(output2)
 
         # change owner of the captured file
-        # username = Common.current_username()
-        # usergroup = Common.current_usergroup()
+        username = Common.current_username()
+        usergroup = Common.current_usergroup()
         output = subprocess.check_output('sudo /bin/chown %s:%s %s' % (username,usergroup,result_file),shell=True)
 
         BuiltIn().log('Executed tcpdump command `%s`' % cmd)
