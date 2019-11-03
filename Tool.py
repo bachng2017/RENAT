@@ -65,7 +65,7 @@ class Tool(object):
         """ Uses hping3 for multi purposes
         """
         BuiltIn().log('Execute hping')
-        cmd_line = 'sudo -S hping3 ' + ' '.join(args)
+        cmd_line = 'sudo -S /usr/sbin/hping3 ' + ' '.join(args)
         result = subprocess.check_output(cmd_line,stderr=subprocess.STDOUT,shell=True)
         BuiltIn().log(result)
         BuiltIn().log('Executed hping')
