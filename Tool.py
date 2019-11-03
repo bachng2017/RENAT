@@ -94,15 +94,16 @@ class Tool(object):
         cmd = 'sudo tcpdump %s -w %s' % (params,result_file)
         proc1 = subprocess.Popen(cmd,stderr=subprocess.STDOUT,stdout=subprocess.PIPE,shell=True,preexec_fn=os.setpgrp)
         time.sleep(DateTime.convert_time(timeout))
-        output2 = subprocess.check_output('sudo kill %s' % proc1.pid,shell=True)
         output1 = b'\n'.join(proc1.stdout.readlines())
+
+        time.sleep(1)
+        BuiltIn().log(output1)
+        output2 = subprocess.check_output('sudo kill %s' % proc1.pid,shell=True)
 
         # change owner of the captured file
         username = Common.current_username()
         usergroup = Common.current_usergroup()
         output = subprocess.check_output('sudo chown %s:%s %s' % (username,usergroup,result_file),shell=True)
 
-        time.sleep(1)
-        BuiltIn().log(output1)
         BuiltIn().log('Executed tcpdump command `%s`' % cmd)
        
