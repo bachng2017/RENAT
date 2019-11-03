@@ -53,7 +53,7 @@ class Tool(object):
         """ Merges multi pcap files into one
         """
         BuiltIn().log("Merges pcap files")
-        cmd_line = 'mergecap ' + ' '.join(args) + ' -w ' + result_file
+        cmd_line = '/usr/sbin/mergecap ' + ' '.join(args) + ' -w ' + result_file
         result =  subprocess.check_output(cmd_line,stderr=subprocess.STDOUT,shell=True)
          
         BuiltIn().log("Merged `%d` files to `%s`" % (len(args),result_file))
