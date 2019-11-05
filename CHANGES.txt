@@ -15,12 +15,14 @@
 
 # $Rev: 2204 $
 # $Ver: $
-# $Date: 2019-09-07 09:51:32 +0900 (土, 07 9 2019) $
+# $Date: 2019-09-07 09:51:32 +0900 (土, 07  9月 2019) $
 # $Author: $
 
 RENAT(Robotframework Extension for Network Automation Testing)
 
 == What's new ==
+
+=== 0.1.17 ===
 
 === 0.1.16 ===
 - change item run.sh from -b to -p

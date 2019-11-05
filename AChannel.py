@@ -15,7 +15,7 @@
 
 # $Rev: 2215 $
 # $Ver: $
-# $Date: 2019-09-08 09:15:32 +0900 (日, 08 9 2019) $
+# $Date: 2019-09-08 09:15:32 +0900 (日, 08  9月 2019) $
 # $Author: $
 
 import threading,traceback,time,datetime

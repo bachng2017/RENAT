@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# $Date: 2019-09-01 19:21:06 +0900 (日, 01 9 2019) $
+# $Date: 2019-09-01 19:21:06 +0900 (日, 01  9月 2019) $
 # $Rev: 2193 $
 # $Author: $
 # usage: ./run.sh [-n <num>] <other robot argument>

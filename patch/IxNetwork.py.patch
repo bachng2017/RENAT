@@ -1,0 +1,10 @@
+--- IxNetwork.py.org	2019-01-22 00:30:44.926527456 +0900
++++ IxNetwork.py	2019-01-22 01:14:57.179068777 +0900
+@@ -427,6 +427,7 @@
+ 
+ 		if len(self._decoratedResult) > 0 and self._decoratedResult[0].startswith('\01'):
+ 			self._decoratedResult[0] = self._decoratedResult[0].replace('\01', '')
++			self._decoratedResult[0] = self._decoratedResult[0].replace('\\', '/')
+ 			return eval("".join(self._decoratedResult))
+ 		else:
+ 			return "".join(self._decoratedResult)

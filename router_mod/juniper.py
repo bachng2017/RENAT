@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1980 $
+# $Rev: 2236 $
 # $Ver: $
-# $Date: 2019-04-05 00:22:26 +0900 (金, 05 4 2019) $
+# $Date: 2019-09-12 23:36:24 +0900 (木, 12  9月 2019) $
 # $Author: $
 
 """ Provides keywords for Juniper platform

@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-07-09 12:52:20 +0900 (火, 09 7 2019) $
+# $Date: 2019-07-09 12:52:20 +0900 (火, 09  7月 2019) $
 # $Rev: 2086 $
 # $Ver: $
 # $Author: $
