@@ -300,7 +300,7 @@ the test and remove the node from its active node list.
 
 ROBOT_LIBRARY_VERSION = 'RENAT 0.1.17'
 
-import os,socket
+import os,socket,json
 import glob,fnmatch
 import re
 import yaml
@@ -1619,7 +1619,7 @@ def log_timestamp(console=False,format=u'%Y/%m/%d %H:%M:%S'):
 
 def load_json(filepath):
     BuiltIn().log("WARN: use `JSON from File` instead")
-    return json_from_file()
+    return json_from_file(filepath)
 
 def json_from_file(filepath):
     """ Loads json from file
