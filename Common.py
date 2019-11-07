@@ -1616,6 +1616,23 @@ def log_timestamp(console=False,format=u'%Y/%m/%d %H:%M:%S'):
     stamp = datetime.datetime.now().strftime(format)
     BuiltIn().log(stamp,console=console)
     
+
+def load_json(filepath):
+    BuiltIn().log("WARN: use `JSON from File` instead")
+    return json_from_file()
+
+def json_from_file(filepath):
+    """ Loads json from file
+    """
+    j = json.load(open(filepath,'r'))
+    return j    
+
+
+def json_from_str(s):
+    """ Loads json from string
+    """
+    j = json.loads(s)
+    return j
     
 
 
