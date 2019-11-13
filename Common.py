@@ -89,7 +89,7 @@ Examples:
 |         type: juniper
 |         description: r2
 |         ip: 10.128.64.12
-    
+
 
 === 2. template.yaml: contains device template information ===
 
@@ -103,9 +103,9 @@ following format:
 |     profile:        authentication profile name
 |     prompt:         a regular expression for the PROMPT of the CLI device> (optional)
 |     login_prompt:   a login PROMPT for CLI device (optional)
-|     password_prompt:a PROMPT for asking password of CLI device (optional)   
+|     password_prompt:a PROMPT for asking password of CLI device (optional)
 |     append:         a phrase to append automatically for every CLI command that executes> on this device (optional>
-|     init:           an array of command that will be executed automatically after a sucessful login of CLI device> (optional) 
+|     init:           an array of command that will be executed automatically after a sucessful login of CLI device> (optional)
 |      target:         another type (mandatory in case of access is ``jump``
 
 *Note*: Becareful about the prompt field. Usually RENAT will wait until it could
@@ -164,9 +164,9 @@ The file contains authentication information that system uses when access to a
 device. Each authencation type has follwing format:
 
 | plain-text
-|    <profile> 
+|    <profile>
 |        user:       <user name>
-|        password:   <password> 
+|        password:   <password>
 or
 | public-key:
 |    <profile>:
@@ -188,7 +188,7 @@ Example:
 |         arbor:
 |             user: admin
 |             pass: xxxxxx
-| 
+|
 |     public-key: # for Public Key authentication
 |         default:
 |             user: robot
@@ -223,7 +223,7 @@ Usually the ``local.yaml`` has following parts:
 - WEB node information: started by ``webapp`` keyword
 - Tester device information: started by ``tester`` keyword
 - Default information: automatically created and started by ``default`` keyword
-- And other neccessary information for the test by yaml format 
+- And other neccessary information for the test by yaml format
 
 
 
@@ -266,7 +266,7 @@ Example:
 |         device: vmx12
 |         port: ge-0/0/2
 |
-| # Default information 
+| # Default information
 | default:
 |     ignore-dead-node: yes
 |     terminal:
@@ -275,7 +275,7 @@ Example:
 |     result_folder: result
 
 
- 
+
 = Variables =
 The module automatically create ``GLOBAL`` & ``LOCAL`` variable for other
 libraries. It also creates global list variables `GLOBAL``,``LOCAL`` and
@@ -341,7 +341,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-### global setting 
+### global setting
 GLOBAL  = {}
 LOCAL   = {}
 NODE    = []
@@ -355,7 +355,7 @@ logging.getLogger('Display').setLevel(logging.ERROR)
 
 def log(msg,level=1):
     """ Logs ``msg`` to the current log file (not console)
-   
+
     The ``msg`` will logged only if the level is bigger than the global level
     ``${DEBUG}`` which could be defined at runtime.
     If ``${DEBUG}`` is not defined, it will be considered as the default
@@ -373,11 +373,11 @@ def log(msg,level=1):
     """
     _level = None
     try:
-        _level = BuiltIn().get_variable_value('${DEBUG}') 
+        _level = BuiltIn().get_variable_value('${DEBUG}')
     except:
-        pass 
+        pass
     if _level is None: _level=1
-    if int(_level) >= int(level): 
+    if int(_level) >= int(level):
         BuiltIn().log(msg)
 
 def log_to_console(msg,level=1):
@@ -388,18 +388,18 @@ def log_to_console(msg,level=1):
     """
     _level = None
     try:
-        _level = BuiltIn().get_variable_value('${DEBUG}') 
+        _level = BuiltIn().get_variable_value('${DEBUG}')
     except:
-        pass 
+        pass
     if _level is None: _level=1
-    if int(_level) >= int(level): 
+    if int(_level) >= int(level):
         BuiltIn().log_to_console(msg)
 
 
 def err(msg):
     """ Prints error ``msg`` to console
     """
-    BuiltIn().log_to_console(msg) 
+    BuiltIn().log_to_console(msg)
 
 
 ###
@@ -407,8 +407,8 @@ try:
     _result_folder = os.path.basename(BuiltIn().get_variable_value('${OUTPUT DIR}'))
 except:
     log("ERROR: Error happened while trying to get global RF variables")
-    
-    
+
+
 _folder = os.path.dirname(__file__)
 if _folder == '': _folder = '.'
 
@@ -454,11 +454,11 @@ for entry in ['auth.yaml', 'device.yaml','template.yaml']:
         file_content = f.read()
         retry = 0
         if len(file_content) == 0 and retry < 3:
-            time.sleep(5) 
+            time.sleep(5)
             BuiltIn().log_to_console("WARN: could not access file %s. Will retry" % entry)
             file_content = f.read()
             retry += 1
-        if retry == 3: 
+        if retry == 3:
             BuiltIn().log_to_console("ERROR: could not get global config correctly")
         GLOBAL.update(yaml.load(os.path.expandvars(file_content)))
 
@@ -473,11 +473,11 @@ for entry in os.getcwd().split('/'):
     access_path = access_path + '/' + entry
     check_path  = access_path + '/config/local.yaml'
     if os.path.exists(check_path):
-        local_config_path = check_path   
+        local_config_path = check_path
 
 if local_config_path == '':
     BuiltIn().log_to_console("WARN: Could not find the local config file")
-else:    
+else:
     with open(local_config_path) as f:
         LOCAL.update(yaml.load(f))
     BuiltIn().log_to_console("Current local.yaml: " + local_config_path)
@@ -498,7 +498,7 @@ newline = GLOBAL['default']['newline']
 
 def renat_version():
     """ Returns RENAT version string
-    """ 
+    """
     BuiltIn().log("RENAT version is : `%s`" % ROBOT_LIBRARY_VERSION)
     return ROBOT_LIBRARY_VERSION
 
@@ -515,7 +515,7 @@ def get_item_name():
 def get_config_path():
     """ Returns absolute path of RENAT config folder path
     """
-    return _folder + "/config" 
+    return _folder + "/config"
 
 def get_item_config_path():
     """ Returns absolute path of current item config folder
@@ -527,7 +527,7 @@ def get_tmp_path():
     """ Returns temporary path
     """
     return os.getcwd() + '/tmp/'
-    
+
 
 def get_result_path():
     """ Returns absolute path of the current result folder
@@ -551,11 +551,11 @@ def set_result_folder(folder):
     ``folder`` is a folder name that under current test case folder
 
     The system will create a new folder if it does not exist and set its mode to
-    `0775` 
+    `0775`
 
     *Note:* Result folder should be set at the begining of the test. Changing
     result folder only has effect on up comming connection
-    """ 
+    """
 
     global _result_folder
     old_folder = _result_folder
@@ -566,11 +566,11 @@ def set_result_folder(folder):
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
         os.chmod(folder_path,int('0775',8))
-        
+
     except Exception as e:
         BuiltIn().log("ERROR:" + str(e.args))
-   
-    # set ROBOT variable 
+
+    # set ROBOT variable
     # BuiltIn().set_variable('${OUTPUT DIR}', folder_path)
     # BuiltIn().set_variable('${OUTPUT DIR}', folder_path)
     # BuiltIn().set_variable('${LOG_FODER}', folder)
@@ -598,7 +598,7 @@ def node_with_attr(attr_name,value):
 
 def node_with_tag(*tag_list):
     """ Returns list of ``node`` or ``webapp`` from ``local.yaml`` that has *ALL* tags defined by ``tag_list``
-    
+
     Tag was defined like this in local.yaml
 |    vmx11:
 |        device: vmx11
@@ -606,13 +606,13 @@ def node_with_tag(*tag_list):
 |        tag:
 |            - tag1
 |            - tag2
-    
+
     Examples:
-    | ${test3}=  | Common.`Node With Tag`  |  tag1 |  tag3 |  
+    | ${test3}=  | Common.`Node With Tag`  |  tag1 |  tag3 |
     """
 
     result  = []
-   
+
     if sys.version_info[0] > 2:
         s0 = set(tag_list)
         if 'node' in LOCAL and LOCAL['node']:
@@ -630,7 +630,7 @@ def node_with_tag(*tag_list):
                         s1 = set(LOCAL['webapp'][item]['tag'])
                     else:
                         s1 = set()
-    else: 
+    else:
         s0 = Set(tag_list)
         if 'node' in LOCAL and LOCAL['node']:
             for item in LOCAL['node']:
@@ -643,12 +643,12 @@ def node_with_tag(*tag_list):
                     s1 = Set(LOCAL['webapp'][item]['tag'])
                     if s0.issubset(s1): result.append(item)
 
-    BuiltIn().log("Found %d nodes have the tags(%s)" % (len(result),str(tag_list)))       
+    BuiltIn().log("Found %d nodes have the tags(%s)" % (len(result),str(tag_list)))
     return result
 
 def node_without_tag(*tag_list):
     """ Returns list of ``node`` from ``local.yaml`` that  *does not has ANY* tags defined by ``tag_list``
-    
+
     Tag was defined like this in local.yaml
 |    vmx11:
 |        device: vmx11
@@ -656,9 +656,9 @@ def node_without_tag(*tag_list):
 |        tag:
 |            - tag1
 |            - tag2
-    
+
     Examples:
-    | ${test3}=  | Common.`Node Without Tag`  |  tag1 |  tag3 |  
+    | ${test3}=  | Common.`Node Without Tag`  |  tag1 |  tag3 |
     """
 
     result  = []
@@ -673,7 +673,7 @@ def node_without_tag(*tag_list):
                     s1 = set()
                 if len(s0 & s1) == 0: result.append(node)
             else:
-                BuiltIn().log("    Node `%s` has no `tag` key, check your `local.yaml`" % node) 
+                BuiltIn().log("    Node `%s` has no `tag` key, check your `local.yaml`" % node)
     else:
         s0 = Set(tag_list)
         if not LOCAL['node']: return result
@@ -682,8 +682,8 @@ def node_without_tag(*tag_list):
                 s1 = Set(LOCAL['node'][node]['tag'])
                 if len(s0 & s1) == 0: result.append(node)
             else:
-                BuiltIn().log("    Node `%s` has no `tag` key, check your `local.yaml`" % node) 
-    BuiltIn().log("Found %d nodes do not include any tags(%s)" % (len(result),str(tag_list)))       
+                BuiltIn().log("    Node `%s` has no `tag` key, check your `local.yaml`" % node)
+    BuiltIn().log("Found %d nodes do not include any tags(%s)" % (len(result),str(tag_list)))
     return result
 
 
@@ -702,22 +702,22 @@ def mib_for_node(node):
     ``config/snmp-template.yaml`` for the ``type`` of the node
 
     Example:
-    | ${mib}=    | Common.`MIB For Node` | vmx11 | 
+    | ${mib}=    | Common.`MIB For Node` | vmx11 |
     """
     mib_file = None
-    if 'mib' in LOCAL['node'][node]: 
+    if 'mib' in LOCAL['node'][node]:
         mib_file  = LOCAL['node'][node]['mib']
     if mib_file is None:
         device      = LOCAL['node'][node]['device']
         type        = GLOBAL['device'][device]['type']
         mib_file    = GLOBAL['snmp-template'][type]['mib']
-    
+
     return mib_file
 
 
 def loop_for_node_tag(var,tags,*keywords):
     """ Repeatly executes RF ``keyword`` for nodes that has tag ``tags``
-    
+
     multi tags are separated by `:`
     keywords has same meaning with ``keywords`` used by `Run Keywords` of
     RobotFramework ( keyword and its arguments are separated by ``AND`` with the
@@ -774,25 +774,25 @@ def csv_select(src_file,row=u':',col=u':',dst_file=None,flatten=False,header=Non
     """ Select part of the CSV file and write it to other file
 
     ``row`` and ``col`` are used to specify necessary rows and columns.
-    They are using the same format with slice for Python list. 
+    They are using the same format with slice for Python list.
         - :  and : means all rows and columns
         - :2 and : means first 2 rows and all columns
         - :  and 1,2 means all rows and 2nd and 3rd columns
         - 0:3 and 1 means 3 rows from the 1st one(0,1,2) and second column
         - 0:5:2 and 1 means 3 rows(0,3,5) and second column
-    *Notes:* 
-        - Rows and columns are indexed from zero 
+    *Notes:*
+        - Rows and columns are indexed from zero
         - When ':' is used, the string has format: <start>:<stop> or <start>:<stop>:<step>
           For convenience, ':' means all the data, ':x' means first 'x' data
 
     Examples:
     | `CSV Select`  |    result/data05.csv |  0,1,2 |  0,1 | result/result3.csv |
     | `CSV Select`  |    result/data05.csv |  :     |  0,1 | result/result4.csv |
-    | `CSV Select`  |    result/data05.csv |  :2    |  :   | result/result5.csv | 
-    | `CSV Select`  |    result/data05.csv |  0:3   |  :   | result/result6.csv | 
+    | `CSV Select`  |    result/data05.csv |  :2    |  :   | result/result5.csv |
+    | `CSV Select`  |    result/data05.csv |  0:3   |  :   | result/result6.csv |
     | `CSV Select`  |    result/data05.csv |  0:5:2 |  :   | result/result7.csv |
     | `CSV Select`  |    result/data05.csv |  0:5:2 |  :   |
-    
+
     """
     src_pd = pandas.read_csv(src_file,header=header)
     s = src_pd.shape
@@ -824,7 +824,7 @@ def csv_to_list(filepath,col=u"0",header=None):
 def csv_concat(src_pattern, dst_name,input_header=None,result_header=True):
     """ Concatinates CSV files vertically
     If the CSV files has header, set ``has_header`` to ``${TRUE}``
-   
+
     Examples:
     | Commmon.`CSV Concat` | config/data0[3,4].csv |  result/result2.csv | |
     | Commmon.`CSV Concat` | config/data0[3,4].csv |  result/result2.csv | has_header=${TRUE} |
@@ -835,11 +835,11 @@ def csv_concat(src_pattern, dst_name,input_header=None,result_header=True):
     if num < 1:
         BuiltIn().log("Could not find any file to concatinate")
         return False
-    file = file_list.pop(0) 
+    file = file_list.pop(0)
     pd   = pandas.read_csv(file,header=input_header)
     for file in file_list:
         pd_next = pandas.read_csv(file,header=input_header)
-        pd = pandas.concat([pd, pd_next])  
+        pd = pandas.concat([pd, pd_next])
 
     pd.to_csv(dst_name,index=None,header=result_header)
     BuiltIn().log("Concatinated %d files to %s" % (num,dst_name))
@@ -848,7 +848,7 @@ def csv_concat(src_pattern, dst_name,input_header=None,result_header=True):
 
 def csv_merge(src_pattern,dst_name,input_header=None,key='0',select_column=':',result_header=True):
     """ Merges all CSV files ``horizontally`` by ``key`` key from ``src_pattern``
- 
+
     ``input_header`` defines whether the input files has header row or not. If
     ``input_header`` is ``${NULL}``, the keyword assume that input files have no
     header and automatically define columns name. When ``input_header`` is not
@@ -882,8 +882,8 @@ def csv_merge(src_pattern,dst_name,input_header=None,key='0',select_column=':',r
         columns = '%s,%s' % (key,select_column)
     else:
         columns = select_column
-    
-    if num < 1: 
+
+    if num < 1:
         BuiltIn().log("File number is less than %d" % (num))
         return False
     elif num < 2:
@@ -897,7 +897,7 @@ def csv_merge(src_pattern,dst_name,input_header=None,key='0',select_column=':',r
             result = f1[columns.split(',')]
         result.to_csv(dst_name,index=None,header=result_header)
         BuiltIn().log("File number is less than %d, merged anyway" % (num))
-        return True 
+        return True
     else:
         f1_name = file_list.pop(0)
         f2_name = file_list.pop(0)
@@ -928,17 +928,17 @@ def csv_merge(src_pattern,dst_name,input_header=None,key='0',select_column=':',r
             else:
                 f = pandas.read_csv(item,header=int(input_header))
                 result = f[columns.split(',')]
-            
-            if input_header is None:    
+
+            if input_header is None:
                 m = pandas.merge(m,result,on=int(key))
             else:
                 m = pandas.merge(m,result,on=key)
-      
-        # write to file without index 
+
+        # write to file without index
         m.to_csv(dst_name,index=None,header=result_header)
         BuiltIn().log("Merged %d files to %s" % (num,dst_name))
-   
-    return True 
+
+    return True
 
 
 def merge_files(path_name,file_name):
@@ -958,7 +958,7 @@ def merge_files(path_name,file_name):
 
 def create_sequence(start,end,interval,option='float'):
     """ Creates a list with number from ``start`` to ``end`` with ``interval``
-    
+
     Example:
     | @{list}= | `Create Sequence` | 10 | 15 | 0.5 |
     will create a list of ``[11.0, 11.5, 12.0, 12.5, 13.0, 13.5, 14.0, 14.5]``
@@ -1006,7 +1006,7 @@ def md5(str):
 
 def file_md5(path):
     """ Returns MD5 hash of a file
-    
+
     ``path`` is an absolute path
     """
     hash_md5 = hashlib.md5()
@@ -1030,8 +1030,8 @@ def pause(msg="",time_out='3h',error_on_timeout=True,default_input=''):
     the message and keeps running without pausing.
 
     Examples:
-    | Common.`Pause` | Waiting... | 10s | error_on_timeout=${TRUE} | default input | 
-    | Common.`Pause` | Waiting... | 10s | 
+    | Common.`Pause` | Waiting... | 10s | error_on_timeout=${TRUE} | default input |
+    | Common.`Pause` | Waiting... | 10s |
     """
 
     BuiltIn().log("Pause and wait `%s` for user input" % time_out)
@@ -1040,7 +1040,7 @@ def pause(msg="",time_out='3h',error_on_timeout=True,default_input=''):
     wait = DateTime.convert_time(time_out)
 
     renat_batch = BuiltIn().get_variable_value('${RENAT_BATCH}')
-    if renat_batch is None: 
+    if renat_batch is None:
         i, o, e = select.select( [sys.stdin], [], [], wait)
         if i:
             input = sys.stdin.readline().strip()
@@ -1069,8 +1069,8 @@ def diff_file(path1,path2,method=u'uniq',newline=True):
     if newline:
         f1[-1] = f1[-1]+'\n'
         f2[-1] = f2[-1]+'\n'
-   
-    diff = [] 
+
+    diff = []
     if method == 'context':
         diff = difflib.context_diff(f1,f2,fromfile=path1,tofile=path2)
     if method == 'uniq':
@@ -1092,7 +1092,7 @@ def ping_until_ok(node,wait_str='5s',extra='-c 3'):
 
     wait = DateTime.convert_time(wait_str)
     time.sleep(wait)
-    
+
     BuiltIn().log("Pinged to host `%s(%s)` with result = %d" % (node,ip,result))
 
     return result
@@ -1127,18 +1127,18 @@ def count_keyword_line(keyword,*pattern_list):
                 BuiltIn().log("Check keyword in file `%s`" % file)
                 for i,line in enumerate(f.readlines()):
                     pattern = re.compile(keyword.lower())
-                    if re.search(pattern,line.lower()): 
+                    if re.search(pattern,line.lower()):
                         counter += 1
                         BuiltIn().log("    Found matched keyword in line number: %d" % (i))
 
     BuiltIn().log("Found %d lines contain keyword `%s`" % (counter,keyword))
     return counter
-    
+
 
 
 def keyword_line_should_not_be_bigger_than(num,keyword,*pattern_list):
     """ Checks whether the number of line containing the keyword be less than a number
-    """ 
+    """
     counter = count_keyword_line(keyword, *pattern_list)
 
     if counter <= int(num):
@@ -1146,7 +1146,7 @@ def keyword_line_should_not_be_bigger_than(num,keyword,*pattern_list):
         return True
     else:
         raise Exception("Found %d lines that matched `%s`, bigger than %s" % (counter,keyword,num))
-        return False   
+        return False
 
 
 def count_match_regexp(regexp,*pattern_list):
@@ -1164,7 +1164,7 @@ def count_match_regexp(regexp,*pattern_list):
                 for i,line in enumerate(f.readlines()):
                     res = re.match(regexp, line)
                     if res is None: continue
-                    counter += 1 
+                    counter += 1
                     BuiltIn().log("    Found match in line number: %d" % (i))
 
     BuiltIn().log("Found %d matching of `%s`" % (counter,regexp))
@@ -1173,7 +1173,7 @@ def count_match_regexp(regexp,*pattern_list):
 
 def count_keyword(keyword,*pattern_list):
     """ Count the keyword in files. Keyword is not case-sensitive
-    """ 
+    """
 
     counter = 0
     for pattern in pattern_list:
@@ -1187,10 +1187,10 @@ def count_keyword(keyword,*pattern_list):
     BuiltIn().log("Found %d keyword `%s`" % (counter,keyword))
     return counter
 
-    
+
 def keyword_should_not_be_bigger_than(num,keyword,*pattern_list):
     """ Checks whether the number of keyword be less than a number
-    """ 
+    """
     counter = count_keyword(keyword, *pattern_list)
 
     if counter <= int(num):
@@ -1198,18 +1198,18 @@ def keyword_should_not_be_bigger_than(num,keyword,*pattern_list):
         return True
     else:
         raise Exception("Number of `%s` is %d, bigger than %s" % (keyword,counter,num))
-        return False   
+        return False
 
 
 def error_should_not_be_bigger_than(num,*pattern_list):
     """ Checks whether the number of ``error`` be less than a number
-    """ 
+    """
     return keyword_should_not_be_bigger_than(num,'error',*pattern_list)
 
 
 def error_line_should_not_be_bigger_than(num,*pattern_list):
     """ Checks whether the number of lines that contains ``error`` be less than a number
-    """ 
+    """
     return keyword_line_should_not_be_bigger_than(num,'error',*pattern_list)
 
 
@@ -1218,7 +1218,7 @@ def get_file_without_error(file_path):
     exist
     """
     result = ""
-    if not os.path.exists(file_path): 
+    if not os.path.exists(file_path):
         BuiltIn().log("File `%s` does not exist but keep going" % file_path)
     else:
         with codecs.open(file_path,'r','utf-8') as f:
@@ -1252,10 +1252,10 @@ def follow_syslog_and_trap(pattern,logname=u"syslog-trap.log",delay=u'2s'):
     if BuiltIn().get_variable_value('${RENAT_BATCH}') is not None:
         BuiltIn().log("Pausing is ignored in batch mode")
         return
-        
+
     match_pattern = re.compile(pattern)
-    
-    filepath = "%s/%s_%s" % ( BuiltIn().get_variable_value("${WORKING_FOLDER}"), 
+
+    filepath = "%s/%s_%s" % ( BuiltIn().get_variable_value("${WORKING_FOLDER}"),
                                 BuiltIn().get_variable_value("${MYID}"),
                                 logname)
     logfile = open(filepath,'rt',1)
@@ -1269,7 +1269,7 @@ def follow_syslog_and_trap(pattern,logname=u"syslog-trap.log",delay=u'2s'):
         lines = logfile.readlines()
         for line in lines:
             BuiltIn().log_to_console(line)
-            if match_pattern.search(line): 
+            if match_pattern.search(line):
                 matched = True
                 break
         time.sleep(DateTime.convert_time(delay))
@@ -1298,7 +1298,7 @@ def random_name(base,a='0',b='99'):
     """ Returns a random name by a `base` and a random number between [a,b]
 
     Example:
-    | ${FOLDER}= |   `Random Name` | capture_%05d | 0 | 99 | 
+    | ${FOLDER}= |   `Random Name` | capture_%05d | 0 | 99 |
     """
 
     number = random.randint(int(a),int(b))
@@ -1323,16 +1323,16 @@ def convert_html_to_pdf(html_file,pdf_file):
 
 
 def cleanup_result(ignore=u'^(log.html|output.xml|report.html)$'):
-    """ Cleans up the result folder 
+    """ Cleans up the result folder
 
     Deletes all files in current active folder that does not match the
     ``ignore`` expression and are older than the time the test has started.
 
     *Note*: The keyword only removes files but not folders
     """
-  
-    BuiltIn().log("Delete files in result folder `%s`" % _result_folder) 
-    candidates=[] 
+
+    BuiltIn().log("Delete files in result folder `%s`" % _result_folder)
+    candidates=[]
     for root, dirs, files in os.walk(_result_folder):
         for basename in files:
             if not re.search(ignore,basename) and not '/.svn' in root:
@@ -1369,7 +1369,7 @@ def load_plugin():
         BuiltIn().import_resource('./plugin/' + plugin_name)
         BuiltIn().log("Loaded plugin `%s`" % plugin_name)
 
-   
+
 def explicit_run():
     """ skip the test case if global_variable RUN_ME is not defined
 
@@ -1377,15 +1377,15 @@ def explicit_run():
     | 00. Cabling |
     | Common.`Explicit Run` |
     | Log To Console        |          cabling... |
-    
+
     ``run.sh`` will bypass ``00. Cabling`` by default. In other to run this test
     case `${FORCE}` needs declared globally ``run.sh -X -v FORCE``
-    
+
     """
     var = BuiltIn().get_variable_value('${FORCE}')
     if var != '':
         BuiltIn().pass_execution('Bypassed this step')
- 
+
 
 def get_myid():
     """ Returns ID uniq for this test case
@@ -1415,14 +1415,14 @@ def log_csv(csv_file,index=False,border=0):
     `index`, `border` are table attributes
     """
     df = pandas.read_csv(csv_file)
-    BuiltIn().log(df.to_html(index=index,border=border),html=True)    
+    BuiltIn().log(df.to_html(index=index,border=border),html=True)
 
 
 def wait(wait_time,size=u'10'):
     """ Waits for `wait-time` and display the proress bar
 
     `wait_time` used RF `DateTime` format.
-    
+
     Examples:
     | Common.`Wait` | wait_time=30s | size=10 |
     """
@@ -1434,7 +1434,7 @@ def wait(wait_time,size=u'10'):
     epoch1 = int(time1.strftime('%s'))
     epoch2 = int(time2.strftime('%s'))
     display = '%3.2fsecs [%%-%ds] %%02d%%%%' % (wait_sec,bar_size)
-    del_size = len(display % ('',0)) 
+    del_size = len(display % ('',0))
     BuiltIn().log_to_console(display % ('',0),'STDOUT',True)
     count = 0
     now = epoch1
@@ -1446,7 +1446,7 @@ def wait(wait_time,size=u'10'):
         if step > 30:
             vchannel_instance = BuiltIn().get_library_instance('VChannel')
             vchannel_instance._update_all()
-    
+
         time.sleep(max(min(step,epoch2-now),0))
         count += 1
     # BuiltIn().log_to_console('\010'*del_size + display % ('='*bar_size,100),'STDOUT',True)
@@ -1496,7 +1496,7 @@ def capture_display(file_path):
 
 def csv_create(pathname, *header):
     """ Create a CSV file with headers defined by a list `header`
-    
+
     The CSV file is opend with `UTF-8` encoding mode
     """
     if sys.version_info[0] > 2:
@@ -1523,7 +1523,7 @@ def csv_add(pathname, *items):
             f.write("\r\n")
             f.write(','.join(items))
     BuiltIn().log('Added more data to CSV file `%s`' % pathname)
-    
+
 
 def send(sock,data,recv_buffer_size=1024,encode='utf-8'):
     """ Sends bytes of `data` by socket `sock` and reicve the response
@@ -1536,12 +1536,12 @@ def send(sock,data,recv_buffer_size=1024,encode='utf-8'):
         sock.send(data_buffer)
         if recv_buffer_size != 0:
             recv_buffer = sock.recv(recv_buffer_size)
-            return recv_buffer.decode(encode) 
+            return recv_buffer.decode(encode)
     else:
         sock.send(data)
         if recv_buffer_size != 0:
             recv_buffer = sock.recv(recv_buffer_size)
-            return recv_buffer 
+            return recv_buffer
 
 
 def convert_xml(style,src,dst):
@@ -1561,17 +1561,17 @@ def convert_xml(style,src,dst):
             f.write(output.decode('utf-8').strip("\n"))
         else:
             f.write(output.strip("\n"))
-    BuiltIn().log('Converted from `%s` to `%s` use stylesheet `%s`' % (src,dst,style)) 
-    
+    BuiltIn().log('Converted from `%s` to `%s` use stylesheet `%s`' % (src,dst,style))
+
 
 def get_multi_lines(data,index):
     """ Returns multiple lines from text data using `index`
-    
+
     `index` uses python rule.
     """
     tmp = data.splitlines()
     result = eval('\'\\n\'.join(tmp[%s])' % index)
-    return result 
+    return result
 
 
 def current_username():
@@ -1615,7 +1615,7 @@ def log_timestamp(console=False,format=u'%Y/%m/%d %H:%M:%S'):
     """
     stamp = datetime.datetime.now().strftime(format)
     BuiltIn().log(stamp,console=console)
-    
+
 
 def load_json(filepath):
     BuiltIn().log("WARN: use `JSON from File` instead")
@@ -1625,7 +1625,7 @@ def json_from_file(filepath):
     """ Loads json from file
     """
     j = json.load(open(filepath,'r'))
-    return j    
+    return j
 
 
 def json_from_str(s):
@@ -1633,7 +1633,7 @@ def json_from_str(s):
     """
     j = json.loads(s)
     return j
-    
+
 
 def get_ip_list(prefix):
     """ Returns IP list from a prefix
@@ -1644,7 +1644,23 @@ def get_ip_list(prefix):
     """
     return list(map(lambda x: str(x),ipaddress.ip_network(prefix).hosts()))
 
+def get_ip_network(prefix):
+    """ Return IP network from a prefix
 
+    Examples:
+    | ${NW}= | Get IP Network | 10.0.0.1/30 |
+    | ${NW}= | Get IP Network | 2001:218::1/64 |
+    """
+    return str(ipaddress.ip_network(prefix,False))
+
+def get_ip_address_increment(prefix,increment):
+    """ Return IP address with increment add to prefix
+
+    Examples:
+    | ${ADDRESS}= | Get IP Address Increment | 10.0.0.1 | 0.0.1.0 |
+    | ${ADDRESS}= | Get IP Address Increment | 2001:218::1 | 0:0:0:1:0:0:0:0 |
+    """
+    return str(ipaddress.ip_address(prefix) + int(ipaddress.ip_address(increment)))
 
 # set RF global variables and load libraries
 # in doc create mode, there is not RF context, so we need to bypass the errors
@@ -1674,8 +1690,8 @@ try:
     BuiltIn().set_log_level(GLOBAL['default']['log-level'])
 except Exception as e:
     # incase need to debug uncomment following
-    # raise 
+    # raise
     msg = "WARN: Error happened  while setting global configuration"
     # log(msg)
     BuiltIn().log(msg)
-    
+
