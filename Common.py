@@ -300,7 +300,7 @@ the test and remove the node from its active node list.
 
 ROBOT_LIBRARY_VERSION = 'RENAT 0.1.17'
 
-import os,socket,json
+import os,socket,json,ipaddress
 import glob,fnmatch
 import re
 import yaml
@@ -1634,6 +1634,16 @@ def json_from_str(s):
     j = json.loads(s)
     return j
     
+
+def get_ip_list(prefix):
+    """ Returns IP list from a prefix
+
+    Examples:
+    | @{LIST}= | Get IP List | 10.0.0.0/30 |
+    | @{LIST}= | Get IP List | 2001:218::0/126 |
+    """
+    return list(map(lambda x: str(x),ipaddress.ip_network(prefix).hosts()))
+
 
 
 # set RF global variables and load libraries
