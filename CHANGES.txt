@@ -23,6 +23,8 @@ RENAT(Robotframework Extension for Network Automation Testing)
 == What's new ==
 
 === 0.1.17 ===
+- add more keyword to support IP address calculation
+- drop support for Python 2.7 from this point
 
 === 0.1.16 ===
 - change item run.sh from -b to -p
