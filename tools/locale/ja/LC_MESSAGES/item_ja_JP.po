@@ -1,6 +1,6 @@
 # Japanese translations for PACKAGE package
 # PACKAGE パッケージに対する英訳.
-# Copyright (C) 2018 2018 NTT Communications
+# Copyright 2017-2019 NTT Communications
 # This file is distributed under the same license as the PACKAGE package.
 # Automatically generated, 2018.
 #
