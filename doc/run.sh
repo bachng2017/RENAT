@@ -4,12 +4,6 @@ PUBLISH_DOC=/var/www/html/renat-doc/
 export PYTHONPATH=$PYTHONPATH:$RENAT_PATH
 PYTHON_CMD=$(head -n 1 `which robot` | sed 's/#!//')
 
-# clean and create html folder
-# if [ -d ./html ]; then
-#    rm -rf ./html
-# fi
-# mkdir html
-
 $PYTHON_CMD -m robot.libdoc $RENAT_PATH/Common.py html/Common.html
 $PYTHON_CMD -m robot.libdoc $RENAT_PATH/Logger.py html/Logger.html
 $PYTHON_CMD -m robot.libdoc $RENAT_PATH/Router.py html/Router.html
