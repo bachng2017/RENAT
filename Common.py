@@ -1639,26 +1639,26 @@ def get_ip_list(prefix):
     """ Returns IP list from a prefix
 
     Examples:
-    | @{LIST}= | Get IP List | 10.0.0.0/30 |
-    | @{LIST}= | Get IP List | 2001:218::0/126 |
+    | @{LIST}= | `Get IP List` | 10.0.0.0/30 |
+    | @{LIST}= | `Get IP List` | 2001:218::0/126 |
     """
     return list(map(lambda x: str(x),ipaddress.ip_network(prefix).hosts()))
 
 def get_ip_network(prefix):
-    """ Return IP network from a prefix
+    """ Returns IP network from a prefix
 
     Examples:
-    | ${NW}= | Get IP Network | 10.0.0.1/30 |
-    | ${NW}= | Get IP Network | 2001:218::1/64 |
+    | ${NW}= | `Get IP Network` | 10.0.0.1/30 |
+    | ${NW}= | `Get IP Network` | 2001:218::1/64 |
     """
     return str(ipaddress.ip_network(prefix,False))
 
 def get_ip_address_increment(prefix,increment):
-    """ Return IP address with increment add to prefix
+    """ Returns IP address with increment add to prefix
 
     Examples:
-    | ${ADDRESS}= | Get IP Address Increment | 10.0.0.1 | 0.0.1.0 |
-    | ${ADDRESS}= | Get IP Address Increment | 2001:218::1 | 0:0:0:1:0:0:0:0 |
+    | ${ADDRESS}= | `Get IP Address Increment` | 10.0.0.1 | 0.0.1.0 |
+    | ${ADDRESS}= | `Get IP Address Increment` | 2001:218::1 | 0:0:0:1:0:0:0:0 |
     """
     return str(ipaddress.ip_address(prefix) + int(ipaddress.ip_address(increment)))
 
