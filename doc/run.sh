@@ -43,7 +43,7 @@ cp $RENAT_PATH/CHANGES.txt $PUBLISH_DOC
 # html to pdf
 for i in $(cat list.txt); do 
     echo $i
-    /usr/local/bin/wkhtmltopdf -q html/$i.html pdf/$i.pdf
+    /usr/bin/wkhtmltopdf --margin-bottom 5 --margin-top 5 -q html/$i.html pdf/$i.pdf
 done
 
 # merge to all-in-one pdf
