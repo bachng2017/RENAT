@@ -36,8 +36,8 @@ class Hypervisor(object):
 | hypervisor:
 |    esxi-server:
 |        device: esxi-3-15
- 
- 
+
+
     *Notes:* Currently support VMWare(Esxi) only
     """
 
@@ -45,12 +45,12 @@ class Hypervisor(object):
     ROBOT_LIBRARY_VERSION = Common.version()
 
 
-    def __init__(self): 
+    def __init__(self):
         self._current_name = None
         self._current_id = None
         self._channels = {}
         self._max_id = 0
-        self._ssh_prompt = '\[.*@.*\] ' 
+        self._ssh_prompt = '\[.*@.*\] '
         self._ssh_lib = SSHLibrary.SSHLibrary()
 
         # ignore SSL verify
@@ -63,7 +63,7 @@ class Hypervisor(object):
                 if item.startswith('_'): continue
                 mod_name = os.path.basename(item).replace('.py','')
                 mod  = import_module('hypervisor_mod.' + mod_name)
-            
+
                 cmd_list    = inspect.getmembers(mod, inspect.isfunction)
                 for cmd,data in cmd_list:
                     if not cmd.startswith('_') and cmd not in keyword_list:
@@ -75,8 +75,8 @@ class Hypervisor(object):
                         setattr(self,cmd,MethodType(gen_xrun(cmd),self))
         except RobotNotRunningError as e:
             Common.err("WARN: RENAT is not running")
-     
-   
+
+
     def connect(self,hyper,name):
         """ Connects to a Hypervisor
         """
@@ -86,7 +86,7 @@ class Hypervisor(object):
         _type           = Common.GLOBAL['device'][_hyper]['type']
         _access_tmpl    = Common.GLOBAL['access-template'][_type]
         _access         = _access_tmpl['access']
-        _auth_type      = _access_tmpl['auth'] 
+        _auth_type      = _access_tmpl['auth']
         _profile        = _access_tmpl['profile']
         _auth           = Common.GLOBAL['auth'][_auth_type][_profile]
         _driver         = None
@@ -96,8 +96,8 @@ class Hypervisor(object):
             if _access == 'vmware':
                 # register information
                 id = self._max_id + 1
-            
-                conn = SmartConnect(host=_ip,user=_auth['user'],pwd=_auth['pass'],sslContext=self._ssl_context) 
+
+                conn = SmartConnect(host=_ip,user=_auth['user'],pwd=_auth['pass'],sslContext=self._ssl_context)
 
                 ssh_id = self._ssh_lib.open_connection(_ip,alias=name+'_ssh',term_type='vt100')
                 output = self._ssh_lib.login(_auth['user'],_auth['pass'])
@@ -105,9 +105,9 @@ class Hypervisor(object):
                 self._ssh_lib.read_until_regexp(self._ssh_prompt)
                 result_folder = Common.get_result_path()
                 log_file = name + '_ssh.log'
-                _logger = codecs.open(result_folder + "/" + log_file,'w','utf-8') 
+                _logger = codecs.open(result_folder + "/" + log_file,'w','utf-8')
                 _logger.write(output)
-                # atexit.register(Disconnect,conn) 
+                # atexit.register(Disconnect,conn)
                 #
                 channel_info['id'] = id
                 channel_info['ip'] = _ip
@@ -118,10 +118,10 @@ class Hypervisor(object):
                 channel_info['ssh_logger'] = _logger
                 channel_info['capture_counter'] = 0
                 channel_info['capture_format'] = 'vmware_%010d'
-            
+
             self._max_id = id
             self._current_id = id
-            self._current_name = name    
+            self._current_name = name
 
             self._channels[name]   = channel_info
         except Exception as err:
@@ -142,11 +142,11 @@ class Hypervisor(object):
         if name in self._channels:
             channel = self._channels[name]
             self._current_id = channel['id']
-            BuiltIn().log('Switched current hypervisor to `%s(%s)`' % (name,channel['ip'])) 
+            BuiltIn().log('Switched current hypervisor to `%s(%s)`' % (name,channel['ip']))
         else:
             msg = "ERROR: Could not find `%s` in current hypervisors" % name
             BuiltIn().log(msg)
-            raise Exception(msg)            
+            raise Exception(msg)
 
 
     def connect_all(self,prefix=''):
@@ -156,7 +156,7 @@ class Hypervisor(object):
         if not 'hypervisor' in Common.LOCAL or not Common.LOCAL['hypervisor']:
             BuiltIn().log('WARNING: No hypervisors included')
             return True
-        else: 
+        else:
             for term in Common.LOCAL['hypervisor']:
                 alias = prefix + term
                 self.connect(term,alias)
@@ -191,7 +191,7 @@ class Hypervisor(object):
 
     def close_all(self):
         """ Closes all current opened hypervisor connection
-        """ 
+        """
         while len(self._channels) > 0:
             self.close()
 
@@ -225,4 +225,4 @@ class Hypervisor(object):
         BuiltIn().log("    using `%s` mod for command `%s`" %  (mod_name,cmd))
         result = getattr(mod,mod_cmd)(self,*args,**kwargs)
 
-        return result        
+        return result

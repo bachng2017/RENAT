@@ -31,14 +31,14 @@ class RebotRebaseImg(SuiteVisitor):
     """
     def __init__(self):
         self.base = None
- 
+
     def start_suite(self,suite):
         if 'Log Folder' in suite.metadata:
             log_folder=suite.metadata['Log Folder']
-            self.base = log_folder.replace('[','').replace(']','').split('|')[0] 
+            self.base = log_folder.replace('[','').replace(']','').split('|')[0]
 
     def end_message(self,msg):
-        if msg.html and re.match(r'.*<img src=.*>.*',msg.message): 
+        if msg.html and re.match(r'.*<img src=.*>.*',msg.message):
             new_msg = re.sub(r'="([^"]*?.png)"','="%s/\\1"' % self.base, msg.message)
             # print(msg)
             # print(new_msg)

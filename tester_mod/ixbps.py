@@ -49,22 +49,22 @@ def close(self):
     """ Closes the connection to the BP box
     """
     cli = self._clients[self._cur_name]
-    ix  = cli['connection'] 
+    ix  = cli['connection']
     result = ix.delete(self._base_url + '/auth/session',verify=False)
     if result.status_code != requests.codes.ok:
         BuiltIn().log(result)
-        Exception('ERROR: could not logout') 
+        Exception('ERROR: could not logout')
     BuiltIn().log("Closed the connection")
 
 
 def load_config(self,config_name='',force=True):
     """ Loads test configuration
     config_name is defined in ``local.yaml`` or specific by user in the main
-    scenario. 
+    scenario.
     """
     BuiltIn().log("Load test configuration")
     cli = self._clients[self._cur_name]
-    ix  = cli['connection'] 
+    ix  = cli['connection']
     if config_name == '':
         config_name = Common.LOCAL['tester'][self._cur_name]['config']
 
@@ -77,7 +77,7 @@ def load_config(self,config_name='',force=True):
 
     if result.status_code != requests.codes.ok:
         BuiltIn().log(result.text)
-        raise Exception('ERROR: could not logout') 
+        raise Exception('ERROR: could not logout')
     self._config_path = config_path
     BuiltIn().log("Loaded configuration file `%s`" % config_path)
 
@@ -86,12 +86,12 @@ def cleanup_tests(self):
     """ Cleans up running test and release their ports
     """
     cli = self._clients[self._cur_name]
-    ix  = cli['connection'] 
+    ix  = cli['connection']
     service = self._base_url + '/bps/tests/operations/getformattedrunningtestinfo'
     result = ix.post(service,verify=False)
     if result.status_code != requests.codes.ok:
         BuiltIn().log(result.text)
-        raise Exception('ERROR: could not start the test') 
+        raise Exception('ERROR: could not start the test')
     jinfo = json.loads(json.loads(result.text)['result'])['info']
     for item in jinfo:
         test_id = item['testid']
@@ -102,11 +102,11 @@ def cleanup_tests(self):
         if result.status_code != requests.codes.ok:
             BuiltIn().log(result)
             BuiltIn().log(result.text)
-            raise Exception('ERROR: could not stop a running test') 
-        BuiltIn().log('    Stopped the test `%s`' % test_id) 
+            raise Exception('ERROR: could not stop a running test')
+        BuiltIn().log('    Stopped the test `%s`' % test_id)
         ports = item['ports']
 
-        time.sleep(10) 
+        time.sleep(10)
 
         service = self._base_url + '/bps/ports/operations/unreserve'
         for term in ports:
@@ -115,13 +115,13 @@ def cleanup_tests(self):
             if result.status_code != requests.codes.ok:
                 BuiltIn().log(result)
                 BuiltIn().log(result.text)
-                raise Exception('ERROR: could not release a port') 
+                raise Exception('ERROR: could not release a port')
             BuiltIn().log('    Released port `%s:%s`' % (term['slot'],term['port']))
 
 
 def start_test(self,test_name=None,force=True):
     """ Starts a test by its name
-    
+
     The system automatically reserve the ports defined in ``local.yaml``. The
     reserved ports are released when the test is stopped
 
@@ -132,7 +132,7 @@ def start_test(self,test_name=None,force=True):
     be released.
     """
     cli = self._clients[self._cur_name]
-    ix  = cli['connection'] 
+    ix  = cli['connection']
     ports = []
 
     ### try to find the testmodel name
@@ -152,22 +152,22 @@ def start_test(self,test_name=None,force=True):
         BuiltIn().log('Reserve necessary ports')
         ports = Common.LOCAL['tester'][self._cur_name]['real-port']
         service = self._base_url + '/bps/ports/operations/reserve'
-        for item in ports: 
+        for item in ports:
             payload     = {'slot':item['card'],'portList':[item['port']],'group':1,'force':force}
             result = ix.post(service,json=payload,verify=False)
             if result.status_code != requests.codes.ok:
                 BuiltIn().log(result.text)
-                raise Exception('ERROR: could not reserve ports `%s`' %json.dumps(payload)) 
+                raise Exception('ERROR: could not reserve ports `%s`' %json.dumps(payload))
             BuiltIn().log('    Reserved port `%s:%s`' % (item['card'],item['port']))
 
-        # start the test 
+        # start the test
         BuiltIn().log('Start the test')
         service = self._base_url + '/bps/tests/operations/start'
         data = {'modelname':name,'group':1}
         result = ix.post(service,json=data,verify=False)
         if result.status_code != requests.codes.ok:
             BuiltIn().log(result.text)
-            raise Exception('ERROR: could not start the test') 
+            raise Exception('ERROR: could not start the test')
 
         self._test_id = result.json()['testid']
         BuiltIn().log("Started a BP test `%s(%s)` with %d ports" % (name,self._test_id,len(ports)))
@@ -190,7 +190,7 @@ def wait_until_finish(self,interval='30s',timeout=u'30m',verbose=False):
         BuiltIn().log("WARN: No running test")
     else:
         cli = self._clients[self._cur_name]
-        ix  = cli['connection'] 
+        ix  = cli['connection']
         count = 0
         wait_time = DateTime.convert_time(timeout)
         progress = 0
@@ -200,7 +200,7 @@ def wait_until_finish(self,interval='30s',timeout=u'30m',verbose=False):
             result = ix.post(service,json=data,verify=False)
             if result.status_code != requests.codes.ok:
                 BuiltIn().log(result.text)
-                raise Exception('ERROR: could not get status of the test') 
+                raise Exception('ERROR: could not get status of the test')
             # BuiltIn().log(result.json())
             progress = int(result.json().get('progress'))
             time.sleep(step)
@@ -218,42 +218,42 @@ def stop_test(self,wait=u'5s'):
     """ Stops a running test
     """
     cli = self._clients[self._cur_name]
-    ix  = cli['connection'] 
+    ix  = cli['connection']
     if self._test_id:
         service = self._base_url + '/bps/tests/operations/stop'
-        data = {'testid':self._test_id} 
+        data = {'testid':self._test_id}
         result = ix.post(service,json=data,verify=False)
         if result.status_code != requests.codes.ok:
             BuiltIn().log(result.text)
             raise Exception('ERROR: could not stop test `%s`' % self._test_id)
     else:
-        BuiltIn().log('No runnning test')    
+        BuiltIn().log('No runnning test')
     time.sleep(DateTime.convert_time(wait))
 
     if 'real-port' in Common.LOCAL['tester'][self._cur_name]:
         ports = Common.LOCAL['tester'][self._cur_name]['real-port']
         service = self._base_url + '/bps/ports/operations/unreserve'
-        for item in ports: 
+        for item in ports:
             payload     = {'slot':item['card'],'portList':[item['port']]}
             result = ix.post(service,json=payload,verify=False)
             if result.status_code != requests.codes.ok:
                 BuiltIn().log(result.text)
-                raise Exception('ERROR: could not release ports `%s`' %json.dumps(payload)) 
+                raise Exception('ERROR: could not release ports `%s`' %json.dumps(payload))
             BuiltIn().log('    Unreserved port `%s:%s`' % (item['card'],item['port']))
 
-    BuiltIn().log("Stopped `%s` test and released ports" % self._test_id) 
-   
+    BuiltIn().log("Stopped `%s` test and released ports" % self._test_id)
+
 
 def get_test_report(self,report_name='result',format='csv'):
     """ Gets and saves the test report to local disk
-    
+
     The report will be in PDF format. If ``export_csv`` is ``True`` then test
     results are also exported by CSV format.
     """
     cli = self._clients[self._cur_name]
-    ix  = cli['connection'] 
+    ix  = cli['connection']
     result_path = Common.get_result_path()
-    report_path = result_path + '/' + report_name + '.' + format 
+    report_path = result_path + '/' + report_name + '.' + format
     service = self._base_url + '/bps/export/report/%s/%s'
 
     result = ix.get(service % (self._test_id,format),verify=False,stream=True)
@@ -264,26 +264,26 @@ def get_test_report(self,report_name='result',format='csv'):
         with open(report_path,'wb') as file:
             result.raw.decode_content = True
             shutil.copyfileobj(result.raw,file)
-    
+
     BuiltIn().log("Got test reports by name `%s` with format `%s`" % (report_name,format))
 
 
 def get_card_config(self,slot_num):
     """ Get card configuration for `slot_num`
-    
+
     Parameter:
     - `slot_num` is `all` or an integer start from 1
 
     Result is a json formatted string contains the informaition for specific
-    slot or `all` slots. 
+    slot or `all` slots.
     """
     cli = self._clients[self._cur_name]
-    ix  = cli['connection'] 
+    ix  = cli['connection']
     service = self._base_url + '/bps/ports/chassisconfig'
     result = ix.get(service)
     if result.status_code != requests.codes.ok:
         BuiltIn().log(result.text)
-        raise Exception('ERROR: could not release ports `%s`' %json.dumps(payload)) 
+        raise Exception('ERROR: could not release ports `%s`' %json.dumps(payload))
 
     jresult = json.loads(result.text)
     if slot_num in ['all','All','ALL']:
@@ -300,7 +300,7 @@ def get_card_mode(self,slot_num):
     result = card_info['mode']
     BuiltIn().log('Got mode information of card `%s`' % str(slot_num))
     return result
-    
+
 
 def set_card_config(self,slot,action=u'mode',param=u'ixload'):
     """ Changes the configuration of BPS card
@@ -311,10 +311,10 @@ def set_card_config(self,slot,action=u'mode',param=u'ixload'):
         - param: depending on `action`
 
         Values of `param`:
-        - if `action` is ``mode`` then `param` should be ``ixload``, ``bp`` or ``bpl23`` (BreakingPoint L2/3)     
+        - if `action` is ``mode`` then `param` should be ``ixload``, ``bp`` or ``bpl23`` (BreakingPoint L2/3)
         - if `action` is ``perfacc`` then `param` should be ``${TRUE}`` or ``${FALSE}``
     """
-    set_param = '0' 
+    set_param = '0'
     payload = {}
     if action == 'mode':
         if param in ['ixload','IxLoad']:                set_param = 0
@@ -327,14 +327,14 @@ def set_card_config(self,slot,action=u'mode',param=u'ixload'):
 
 
     cli = self._clients[self._cur_name]
-    ix  = cli['connection'] 
+    ix  = cli['connection']
     service = self._base_url + '/bps/ports/operations/changeCardConfig'
     result = ix.post(service,json=payload,verify=False)
     if result.status_code != requests.codes.ok:
         BuiltIn().log(result.text)
-        raise Exception('ERROR: could not release ports `%s`' %json.dumps(payload)) 
+        raise Exception('ERROR: could not release ports `%s`' %json.dumps(payload))
     BuiltIn().log('Changed slot `%d` configuration' % int(slot))
 
-    
 
-    
+
+

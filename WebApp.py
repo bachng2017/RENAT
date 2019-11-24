@@ -84,7 +84,7 @@ def _with_reconnect(keyword, self, *args, **kwargs):
             BuiltIn().log("ERR: An unexpected error occured", console=True)
             BuiltIn().log("Save last available screen", console=True)
             self.capture_screenshot(extra="_err") # save the last available screen
-            raise 
+            raise
 
 
 def safe_reconnect(self):
@@ -92,8 +92,8 @@ def safe_reconnect(self):
         self.reconnect()
     except:
         self.capture_screenshot(extra="last") # save the last available screen
-        raise 
-        
+        raise
+
 def with_reconnect(f):
     return decorate(f, _with_reconnect)
 
@@ -111,9 +111,9 @@ class WebApp(object):
 | <test node name>:
 |     device:     <device name>
 |     proxy:
-|         http:       <proxy for http>    
-|         https:      <proxy for http>    
-|         ssl:        <proxy for http>    
+|         http:       <proxy for http>
+|         https:      <proxy for http>
+|         ssl:        <proxy for http>
     Where ``<device name>`` is defined in master ``device.yaml``, ``proxy``
     section could be optional.
 
@@ -187,7 +187,7 @@ class WebApp(object):
         BuiltIn().log('Got verbose mode: %s' % self._verbose)
         return self._verbose
 
-    
+
     def set_ajax_timeout(self,wait_time='2s'):
         """ Set the ajax wait time
         """
@@ -208,8 +208,8 @@ class WebApp(object):
         for more details about the format string.
 
         Examples:
-        | Samurai.`Set Capture Format`  | ${case}_%010d |  # ${case} is a predefined variable | 
-        
+        | Samurai.`Set Capture Format`  | ${case}_%010d |  # ${case} is a predefined variable |
+
         """
         name = self._current_name
         self._browsers[name]['capture_format'] = format
@@ -218,7 +218,7 @@ class WebApp(object):
 
     def set_capture_counter(self,value = 0):
         """ Sets the counter of the screen capture to ``value``
-        """    
+        """
         name = self._current_name
         self._browsers[name]['capture_counter'] = value
         BuiltIn().log("Changed the screenshot capture counter to `%d`" % value)
@@ -226,7 +226,7 @@ class WebApp(object):
 
     def reset_capture_counter(self):
         """ Resets the counter of the screen capture
-        """    
+        """
         self.set_capture_counter(0)
 
 
@@ -237,7 +237,7 @@ class WebApp(object):
         specified. In this case, the filename is defined by a pre-set format. `Set Capture
         Format` could be used to change the current format.
 
-        An extra information will be add to the filename if ``extra`` is defined 
+        An extra information will be add to the filename if ``extra`` is defined
 
         Returns the captured filename.
 
@@ -248,7 +248,7 @@ class WebApp(object):
         | Arbor.`Capture Screenshot`    |   extra=_xxx  | # arbor_0000000001_`xxx`.png |
         | Samurai.`Capture Screenshot`  |   filename=1111.png | # 1111.png |
         """
-        # self.switch(self._current_name) 
+        # self.switch(self._current_name)
         name = self._current_name
         if not filename:
             current_counter = self._browsers[name]['capture_counter']
@@ -282,7 +282,7 @@ document.documentElement.clientHeight); """
         self._selenium.set_window_size(old_width, total_height)
         time.sleep(2)
         self._selenium.set_screenshot_directory(Common.get_result_path())
-        self._selenium.capture_page_screenshot(capture_name)  
+        self._selenium.capture_page_screenshot(capture_name)
         # restore old window size
         self._selenium.set_window_size(old_width, old_height)
         # self._selenium.maximize_browser_window()
@@ -304,7 +304,7 @@ document.documentElement.clientHeight); """
         """
         fp = self._browsers[self._current_name]['ff_profile_dir']
         ignore_dead_node = Common.get_config_value('ignore-dead-node')
-        try: 
+        try:
             old_name = self._current_name
 
             self._selenium.close_browser()
@@ -325,7 +325,7 @@ document.documentElement.clientHeight); """
                 warn_msg = "WARN: Error occured when connect to `%s` but was ignored" % (old_name)
                 BuiltIn().log_to_console(warn_msg)
                 BuiltIn().log(warn_msg)
-                BuiltIn().log(err) 
+                BuiltIn().log(err)
 
 
     def open_ff_with_profile(self,app,name):
@@ -344,7 +344,7 @@ document.documentElement.clientHeight); """
         ip = device_info['ip']
         type = device_info['type']
         template = Common.GLOBAL['access-template'][type]
-        profile = template['profile'] 
+        profile = template['profile']
         auth = {}
         BuiltIn().log('    Using profile `%s`' % profile)
         auth['username']    = Common.GLOBAL['auth']['plain-text'][profile]['user']
@@ -414,7 +414,7 @@ document.documentElement.clientHeight); """
             if 'https' in app_info['proxy']:    proxy.ssl_proxy   = app_info['proxy']['https']
             if 'ftp' in app_info['proxy']:      proxy.ftp_proxy   = app_info['proxy']['ftp']
             proxy.add_to_capabilities(ff_cap)
-        
+
         # create webdriver
         alias = '_%s_%s' % (profile,name)
         self._selenium.create_webdriver('Firefox',
@@ -444,11 +444,11 @@ document.documentElement.clientHeight); """
                     # shutil.rmtree(fp.path,ignore_errors=True)
         except Exception as err:
             if not ignore_dead_node:
-                err_msg = "ERROR: Error occured when connecting to `%s`" % (name) 
+                err_msg = "ERROR: Error occured when connecting to `%s`" % (name)
                 BuiltIn().log(err_msg)
                 raise
             else:
-                warn_msg = "WARN: Error occured when connect to `%s` but was ignored" % (name) 
+                warn_msg = "WARN: Error occured when connect to `%s` but was ignored" % (name)
                 BuiltIn().log(warn_msg)
                 BuiltIn().log_to_console(warn_msg)
 
@@ -483,7 +483,7 @@ document.documentElement.clientHeight); """
         """ Closes all current opened applications
         """
         num = len(self._browsers)
-        while len(self._browsers) > 0: 
+        while len(self._browsers) > 0:
             self.close()
         BuiltIn().log("Closed all %d the browsers for %s application" % (num,self.__class__.__name__))
 
@@ -542,7 +542,7 @@ document.documentElement.clientHeight); """
                 element_id = element.id
             else:
                 element_id = -1
-           
+
         if count >= timeout_sec:
             BuiltIn().log('Timeout happened but element is still not changed')
             if error_on_timeout:
@@ -550,7 +550,7 @@ document.documentElement.clientHeight); """
 
         BuiltIn().log('Waited for element status changed')
 
-    
+
     def wait_and_click(self,xpath):
         """ Waits and clicks an element by its xpath
 

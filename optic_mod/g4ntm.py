@@ -165,14 +165,14 @@ def _make_conn_info(self,dev1,port1,dev2,port2,dir='bi'):
 def add(self,dev1,intf1,dev2,intf2,direction='bi',force=False):
     """
     """
-   
+
     BuiltIn().log("Adds %s connection %s:%s %s:%s" % (direction,dev1,intf1,dev2,intf2))
 
     switch  = ''
     conn_id = ''
     port1   = ''
     port2   = ''
-    result  = False 
+    result  = False
 
     conn_info = _make_conn_info(self,dev1,intf1,dev2,intf2,direction)
 
@@ -209,7 +209,7 @@ def add(self,dev1,intf1,dev2,intf2,direction='bi',force=False):
 def delete(self,dev1,intf1,dev2,intf2,direction='bi',force=False):
     """ Deletes the connection between ``dev1:intf1 - dev2:intf2``
     """
-        
+
     switch  = ''
     conn_id = ''
     port1   = ''
@@ -237,7 +237,7 @@ def delete(self,dev1,intf1,dev2,intf2,direction='bi',force=False):
     else:
         direction = 'INPUT'
 
-    if force: 
+    if force:
         rest_result = session.put('http://%s:%s/rest/v1/unlock/%s/?direction=%s' % (ip,conn_port,port1,direction))
         rest_result = session.put('http://%s:%s/rest/v1/unlock/%s/?direction=%s' % (ip,conn_port,port2,direction))
     rest_result = session.delete('http://%s:%s/rest/v1/connect/%s/?direction=%s' % (ip,conn_port,port1,direction))
@@ -248,4 +248,4 @@ def delete(self,dev1,intf1,dev2,intf2,direction='bi',force=False):
     else:
         err = "ERROR: error while deleting connection. Detail is " + str(rest_result.json())
         raise Exception(err)
-        
+
