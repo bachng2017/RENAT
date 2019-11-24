@@ -92,7 +92,11 @@ def _with_reconnect(keyword,self,*args,**kwargs):
         try:
             return keyword(self,*args,**kwargs)
         except (RuntimeError,EOFError,OSError,KeyError,SSHException) as err:
-            BuiltIn().log('Error while trying keyword `%s`' % keyword.__name__)
+            BuiltIn().log('WARN: Error while trying keyword `%s`' % keyword.__name__)
+            BuiltIn().log("WARN: Detail error is:")
+            BuiltIn().log(err)
+            BuiltIn().log(traceback.format_exc())
+
             count = count + 1
             if count < max_count:
                 BuiltIn().log('    Try reconnection %d(th) after %d seconds ' % (count,interval))
@@ -100,11 +104,11 @@ def _with_reconnect(keyword,self,*args,**kwargs):
                 time.sleep(interval)
                 self.reconnect(self._current_name)
             else:
-                err_msg =   "ERROR: error while processing command. Tunning " \
+                err_msg =   "ERR: error while processing command. Tunning " \
                             "``terminal-timeout`` in RENAT config file or check your command"
                 BuiltIn().log(err_msg)
-                BuiltIn().log("ErrorType: %s" % type(err))
-                BuiltIn().log("Detail error is:")
+                BuiltIn().log("ERR: ErrorType: %s" % type(err))
+                BuiltIn().log("ERR: Detail error is:")
                 BuiltIn().log(err)
                 BuiltIn().log(traceback.format_exc())
                 raise 
@@ -271,7 +275,7 @@ class VChannel(object):
         The only difference is that the mode of the log file is set to ```a+``` by default
         """
         self._reconnect(name)
-        if Common.get_config_value('async-channel','vchannel',False):
+        if self._async_channel and Common.get_config_value('async-channel','vchannel',False):
             self._async_channel._reconnect(name)
         
 
@@ -397,7 +401,7 @@ class VChannel(object):
                 
                 # allocate new channel id
                 id = self._max_id + 1
-                channel_info['access-type'] = 'telnet'
+                # channel_info['access-type'] = 'telnet'
                 channel_info['id']          = id 
                 channel_info['type']        = _type
                 channel_info['prompt']      = _prompt 
@@ -433,13 +437,16 @@ class VChannel(object):
                 id = self._max_id + 1
                 channel_info['id']          = id 
                 channel_info['type']        = _type
-                channel_info['access-type'] = 'ssh'
+                # channel_info['access-type'] = 'ssh'
                 channel_info['prompt']      = _prompt
                 channel_info['connection']  = _ssh
                 channel_info['local-id']    = local_id
 
             ### JUMP session
             if _access == 'jump':
+                # because console is only allow 1 session, for async mode off
+                self._async_channel = None 
+
                 output = ""
                 _access_base = _access_tmpl['access-base']
 
@@ -497,14 +504,8 @@ class VChannel(object):
                         else:
                             BuiltIn().log("WARN: Access jump server withouth authentication")
                             
-                    # allocate new channel id
-                    id = self._max_id + 1
-                    channel_info['id']          = id 
-                    channel_info['type']        = _type
-                    channel_info['access-type'] = 'telnet'
-                    channel_info['prompt']      = _prompt 
+                    # channel_info['access-type'] = 'telnet'
                     channel_info['connection']  = _telnet
-                    channel_info['local-id']    = local_id
 
                 # jump on ssh
                 if _access_base == 'ssh':
@@ -530,16 +531,23 @@ class VChannel(object):
                         pass_phrase = _auth.get('pass')
                         output = _ssh.login_with_public_key(_auth['user'],_auth['key'],pass_phrase)
 
-                    # allocate new channel id
-                    id = self._max_id + 1
-                    channel_info['id']          = id 
-                    channel_info['type']        = _type
-                    channel_info['access-type'] = 'jump'
-                    channel_info['prompt']      = _prompt
+                    # channel_info['access-type'] = 'ssh'
                     channel_info['connection']  = _ssh
+
+                # allocate new channel id for target device, common for jump access type
+                id = self._max_id + 1
+                channel_info['id']  = id 
+                channel_info['type'] = _type
+                channel_info['prompt']  = _prompt
+                channel_info['local-id'] = local_id
+
+                # at this point, the system has logged into the console
+                # successfully
+                BuiltIn().log("Successully logged into the console")
 
                 # execute JUMP cmd
                 if 'jump-cmd' in _device_info:
+                    BultIn().log("Execute %d jump commands" % len(_device_info['jump-cmd']))
                     for item in _device_info['jump-cmd']:
                         channel_info['connection'].write(str(item)+'\r')
                         time.sleep(2)
@@ -596,12 +604,13 @@ class VChannel(object):
                     channel_info['connection'].write(_auth['pass'])
                     time.sleep(3)
                  
-                BuiltIn().log("Wait for the 1st prompt")
+                BuiltIn().log("Waiting for the 1st prompt ...")
                 channel_info['connection'].write("\r")
                 time.sleep(3)
                 channel_info['connection'].write("\r")
                 time.sleep(1)
                 channel_info['connection'].read_until_regexp(_prompt)
+                Built().log("Got the 1st prompt as expected")
 
             # common for all access type
             # open/create a log file for this connection in result_folder
@@ -673,7 +682,6 @@ class VChannel(object):
                 warn_msg = "WARN: Error occured when connect to `%s(%s)` but was ignored" % (self._aprefix + name,_ip)
                 BuiltIn().log(warn_msg,console=True)
                 del Common.LOCAL['node'][name]
-
         return id
 
     
@@ -762,7 +770,7 @@ class VChannel(object):
         """ Switch the current channel and also its async channel
         """
         self._switch(name)
-        if Common.get_config_value('async-channel','vchannel',False):
+        if self._async_channel and Common.get_config_value('async-channel','vchannel',False):
             self._async_channel._switch(name)
 
 
@@ -1164,7 +1172,7 @@ class VChannel(object):
         `msg` is the last message is written to each device's log 
         """
         self._close(msg,with_time,mark) 
-        if Common.get_config_value('async-channel','vchannel',False):
+        if self._async_channel and Common.get_config_value('async-channel','vchannel',False):
             self._async_channel._close(msg,with_time,mark)
 
 
