@@ -112,7 +112,7 @@ class Hypervisor(object):
                 channel_info['id'] = id
                 channel_info['ip'] = _ip
                 channel_info['type'] = _type
-                channel_info['access-type'] = 'vmware-esxi'
+                # channel_info['access-type'] = 'vmware-esxi'
                 channel_info['connection'] = conn
                 channel_info['ssh'] = self._ssh_lib
                 channel_info['ssh_logger'] = _logger
