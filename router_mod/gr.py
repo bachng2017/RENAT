@@ -29,7 +29,7 @@ def get_version(self):
     """ return router version information
     """
     result = self._vchannel.cmd('show version')
-    return result    
+    return result
 
 def get_chassis_serial(self):
     """ Returns the serial number of the chassis
@@ -39,6 +39,6 @@ def get_chassis_serial(self):
     line = output.split('\n')[0]    # first line
     m = re.match(r".*\[.*, (.*)\]",line)
     if m:   result = m.group(1)
-    else:   result = '' 
+    else:   result = ''
     BuiltIn().log("Got the serial number: %s" % (result))
     return result

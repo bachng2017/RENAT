@@ -27,7 +27,7 @@ class Extra():
     """ Handles extra work
     """
     ROBOT_LIBRARY_SCOPE = 'GLOBAL'
-    
+
     def __init__(self):
         try:
             # load extra libraries
@@ -36,7 +36,7 @@ class Extra():
                     lib_name = lib + '.py'
                     BuiltIn().import_library(os.environ['RENAT_PATH'] + '/'+ lib_name)
                     BuiltIn().log_to_console("Loaded extra library `%s`" % lib)
-        
+
         except Exception as e:
             Common.err("ERROR: error while loading extra libraries")
             Common.err(e)
@@ -45,9 +45,9 @@ class Extra():
         if Common.GLOBAL['extra-lib']:
             for lib in Common.GLOBAL['extra-lib']:
                 BuiltIn().run_keyword(lib+'.Connect All')
-    
+
     def close_all(self):
         if Common.GLOBAL['extra-lib']:
             for lib in Common.GLOBAL['extra-lib']:
                 BuiltIn().run_keyword(lib+'.Close All')
-    
+

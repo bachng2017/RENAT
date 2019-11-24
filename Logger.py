@@ -36,8 +36,8 @@ class Logger(object):
     ROBOT_LIBRARY_VERSION = Common.version()
 
     _vchannel = None
-   
-    ### 
+
+    ###
     def __init__(self):
         try:
             self._vchannel = BuiltIn().get_library_instance('VChannel')
@@ -55,11 +55,11 @@ class Logger(object):
         Example:
         | Logger.`Switch` | vmx11 |
         """
-        self._vchannel.switch(name) 
+        self._vchannel.switch(name)
 
     def log(self,msg,with_time=False,mark="***"):
-        """ Inserts a message ``msg`` to the current `VChannel` log file. 
-        A default mark of ``***`` will be added at the beginning ant the end of 
+        """ Inserts a message ``msg`` to the current `VChannel` log file.
+        A default mark of ``***`` will be added at the beginning ant the end of
         this message.
 
         Example:
@@ -78,9 +78,9 @@ class Logger(object):
         channel['logger'].write(Common.newline + Common.newline + note + Common.newline + Common.newline)
         channel['logger'].flush()
 
-    
+
     def log_all(self,msg,with_time=False,mark="***"):
-        """ Inserts a message ``msg`` to current *all* [./VChannel.html|VChannel] log files. 
+        """ Inserts a message ``msg`` to current *all* [./VChannel.html|VChannel] log files.
 
         A default ``mark`` of ``***`` and newline will be added at the beggining and the end of this
         message.
@@ -90,14 +90,14 @@ class Logger(object):
         |  Logger.`Log All` | START TRAFFIC FROM HERE  |   ${TRUE} | ===== |
 
         The log file will look likes this:
-| user@vmx12> 
+| user@vmx12>
 |
 | ***** 06:01PM on August 13, 2017: START TRAFFIC FROM HERE *****
 |
 | === 06:01PM on August 13, 2017: START TRAFFIC FROM HERE ===
 |
 | configure
-        
+
         """
 
         old_name = self._vchannel.current_name

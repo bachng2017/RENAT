@@ -55,7 +55,7 @@ class Tool(object):
         BuiltIn().log("Merges pcap files")
         cmd_line = '/usr/sbin/mergecap ' + ' '.join(args) + ' -w ' + result_file
         result =  subprocess.check_output(cmd_line,stderr=subprocess.STDOUT,shell=True)
-         
+
         BuiltIn().log("Merged `%d` files to `%s`" % (len(args),result_file))
         BuiltIn().log(result)
         return result
@@ -84,10 +84,10 @@ class Tool(object):
 
 
     def tcpdump_to_file(self,filename='capture.pcap',params='', timeout='10s'):
-        """ Uses tcpdump (for packet capture) and wait 
-    
+        """ Uses tcpdump (for packet capture) and wait
+
         The keyword ignores detail output of the command.
-        By default, the keyword only captures 10s 
+        By default, the keyword only captures 10s
         """
         BuiltIn().log('Run tcpdump command')
         result_file = '%s/%s' % (Common.get_result_path(),filename)
@@ -107,4 +107,4 @@ class Tool(object):
         output = subprocess.check_output('sudo /bin/chown %s:%s %s' % (username,usergroup,result_file),shell=True)
 
         BuiltIn().log('Executed tcpdump command `%s`' % cmd)
-       
+
