@@ -94,7 +94,7 @@ def number_of_bgp_neighbor(self,state="Established"):
 #             if user not in result:
 #                 result.append(user)
 #         count += 1
-# 
+#
 #     BuiltIn().log("Got the login user information")
 #     return result
 

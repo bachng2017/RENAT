@@ -43,13 +43,13 @@ class Fic(WebApp):
     ROBOT_LIBRARY_SCOPE = 'TEST SUITE'
     ROBOT_LIBRARY_VERSION = Common.version()
 
-    GET_SCREEN_TEXT_1 = 1    
-    GET_SCREEN_TEXT_2 = 2   
+    GET_SCREEN_TEXT_1 = 1
+    GET_SCREEN_TEXT_2 = 2
 
     def __init__(self):
         super(Fic,self).__init__()
         self._type = 'fic'
-        self.tenant_id = ''        
+        self.tenant_id = ''
 
 
     def get_canvas_image(self,filename=None):
@@ -65,7 +65,7 @@ class Fic(WebApp):
         img_bin_stream = io.BytesIO(canvas_png)
         img_numpy = np.asarray(Image.open(img_bin_stream))
         return img_numpy
-    
+
     def shake(self):
         """ Simulates a shake of the screen
 
@@ -111,12 +111,12 @@ class Fic(WebApp):
         self._selenium.page_should_not_contain('Internal Server Error')
         self._selenium.page_should_not_contain('Temporarily Unavailable')
 
-        try: 
+        try:
             self._selenium.page_should_not_contain('Session Timeout')
         except:
             BuiltIn().log("WRN: Found Session Timeout")
             self._selenium.reload_page()
-        
+
 
         self._selenium.wait_until_element_is_visible('username')
         self._selenium.input_text('//input[@id="username"]', auth['username'])
@@ -141,16 +141,16 @@ class Fic(WebApp):
         self._selenium.select_frame("cusval-content-main")
         # after selecting frame, capture screenshot only return this frame
         self.tenant_id = self._browsers[name]['login_url'].strip().split('=')[1]
-    
-        local_storage = self._browsers[name]['local-storage'] 
+
+        local_storage = self._browsers[name]['local-storage']
         if local_storage:
             self.restore_localstorage(os.getcwd() + '/' + local_storage)
 
         # shake the screen once to update localstorage
         self.shake()
-        BuiltIn().log("Connected to the application `%s` by name `%s`" % (app,name))        
+        BuiltIn().log("Connected to the application `%s` by name `%s`" % (app,name))
 
-    
+
     def move_to(self,x=u'0',y=u'0',delay=u'1s',element=u'//canvas',mark_screen=False):
         """ Moves the pointer to screen coodinate of the element
 
@@ -318,7 +318,7 @@ class Fic(WebApp):
         """ Common failure keyword
         """
         self.capture_screenshot(extra="_failure")
-        self.close()    
+        self.close()
         BuiltIn().log("A failure has been occured, quit the browser")
 
 
@@ -331,12 +331,12 @@ class Fic(WebApp):
         self._selenium.click_element('//body')
 
         # self.capture_screenshot(extra="_last")
-        
+
         self.wait_and_click('//a[@class="dropdown-toggle user-name" and normalize-space(.)="fic-sys-ns"]')
         self._selenium.select_frame("cusval-content-main")
         self.wait_until_loaded()
         self._selenium.unselect_frame()
-        self.wait_and_click('//a[@id="sss-logout"]') 
+        self.wait_and_click('//a[@id="sss-logout"]')
 
         time.sleep(5)
         self.capture_screenshot(extra="_last")
@@ -354,17 +354,17 @@ class Fic(WebApp):
         timer = 0
         progress_div = '//div[@id="ficComApiProgress"]'
         div_count = self._selenium.get_element_count(progress_div)
-        on_progress = (div_count > 0) 
+        on_progress = (div_count > 0)
         while on_progress and timer < time_max:
             div_count = self._selenium.get_element_count(progress_div)
-            on_progress = (div_count > 0) 
+            on_progress = (div_count > 0)
             BuiltIn().log("    Wait for more `%d` seconds" % t)
             time.sleep(t)
             timer += t
         if timer >= time_max:
             BuiltIn().log("WRN: timeout occurr while wating for loading finishes")
         # time.sleep(t)
-        
+
         BuiltIn().log("Waited for '%d' seconds until loading finsihed" % timer)
 
 
@@ -397,7 +397,7 @@ class Fic(WebApp):
         script = '''
             var w = JSON.parse(arguments[0]);
             for (var i=0; i < localStorage.length; i++) {
-                key = localStorage.key(0); 
+                key = localStorage.key(0);
                 localStorage.setItem(key,w[key]);
             }
         '''
@@ -422,18 +422,18 @@ class Fic(WebApp):
         count = 0
         max_count = int(max_try)
         while not found_node and count < max_count:
-            # get canvas size 
+            # get canvas size
             self.capture_screenshot(extra='_choose_node')
             img = self.get_canvas_image('canvas_choose_node.png')
             gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
             # _,binary = cv2.threshold(gray,63, 255, cv2.THRESH_BINARY)
             binary = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY_INV,11,2)
-            kernel = np.ones((4,8), np.uint8) 
-            binary = cv2.dilate(binary, kernel, iterations=2)  
-            binary = cv2.erode(binary, kernel, iterations=2)  
-    
+            kernel = np.ones((4,8), np.uint8)
+            binary = cv2.dilate(binary, kernel, iterations=2)
+            binary = cv2.erode(binary, kernel, iterations=2)
+
             found_node = False
-            # ctrs,hier = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) 
+            # ctrs,hier = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             ctrs, hier = cv2.findContours(binary, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
             sorted_ctrs = sorted(ctrs, key=lambda ctr: cv2.boundingRect(ctr)[0])
             BuiltIn().log("Found %d candidates" % len(sorted_ctrs))
@@ -452,11 +452,11 @@ class Fic(WebApp):
                 count += 1
                 self.reset_positions()
                 self.refresh_canvas()
-            
+
         if not found_node:
             raise Exception("Could not found the node after %d trials" % count)
         else:
-            BuiltIn().log("Chose the node")    
+            BuiltIn().log("Chose the node")
 
 
     @session_check
@@ -466,7 +466,7 @@ class Fic(WebApp):
         xpath = '//button[normalize-space(.)="%s"]' % menu
         self._selenium.click_element(xpath)
         time.sleep(DateTime.convert_time(delay))
-        BuiltIn().log('Clicked on FIC menu button `%s`' % menu) 
+        BuiltIn().log('Clicked on FIC menu button `%s`' % menu)
 
 
     @session_check

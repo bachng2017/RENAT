@@ -111,17 +111,17 @@ def _with_reconnect(keyword,self,*args,**kwargs):
                 BuiltIn().log("ERR: Detail error is:")
                 BuiltIn().log(err)
                 BuiltIn().log(traceback.format_exc())
-                raise 
+                raise
 
-    
+
 def with_reconnect(f):
     return decorate(f, _with_reconnect)
 
 
-### 
+###
 class VChannel(object):
     """ A basic library that provides Terminal connection to routers/hosts
-   
+
     ``VChannel`` is a core RENAT library that maintains input/output to nodes
     with an attached virtual terminal. It encapsulates the SSH/Telnet
     connections behind and provides common usage of access and execute commands
@@ -129,8 +129,8 @@ class VChannel(object):
     terminal.
 
     == Table of Contents ==
-    
-    - `Device, Node and Channel`    
+
+    - `Device, Node and Channel`
     - `Connections`
     - `Shortcuts`
     - `Keywords`
@@ -138,12 +138,12 @@ class VChannel(object):
     = Device, Node and Channel =
 
     RENAT has 3 types of connection target. ``Device``, ``Node`` and
-    ``Channel``. 
+    ``Channel``.
     == Device ==
     Each device stands for a real physical box that has its own IP address and
     is defined in the master file ``device.yaml``. Users do not directly use
-    ``device`` in keywords.  
-  
+    ``device`` in keywords.
+
     == Node ==
     Node is a logical instance of a ``device``. It could stand for a logical
     instance of a router or just a virtual terminal to the router. Nodes were
@@ -162,10 +162,10 @@ class VChannel(object):
 
 
     = Connections =
- 
+
     The library provides a channel to a target node. Each channel is attached
-    with a virtual terminal. Input and output to the node are made through 
-    this virtual terminal. This will help to provide the output looks like the 
+    with a virtual terminal. Input and output to the node are made through
+    this virtual terminal. This will help to provide the output looks like the
     output when operator is using the real terminal.
 
     When keywords `Read`, `Write`, `Cmd` are used, if the connection
@@ -179,8 +179,8 @@ class VChannel(object):
     will raise an exception. But if the ``ignore_dead_node`` is defined as
     ``yes`` in the current active ``local.yaml``, the system will ignore the dead
     node, remove it from the global variable ``LOCAL['node']`` and ``NODE`` and keep
-    running the test.  
- 
+    running the test.
+
     """
 
     ROBOT_LIBRARY_SCOPE = 'TEST SUITE'
@@ -200,7 +200,7 @@ class VChannel(object):
         if self._aprefix != "":
             self._async_channel = None
         else:
-            try: 
+            try:
                 self._async_channel = BuiltIn().get_library_instance('AChannel')
             except:
                 pass
@@ -249,7 +249,7 @@ class VChannel(object):
             try:
                 channel = self._channels[name]
                 if channel['screen_mode']: continue
-                output = channel['connection'].read() 
+                output = channel['connection'].read()
                 self.log(output,channel)
             except Exception as err:
                 BuiltIn().log(  "WARN: error happend while update channel `%s` but is ignored" % name)
@@ -267,17 +267,17 @@ class VChannel(object):
         """
         channel = self.get_current_channel()
         channel['separator'] = sep
- 
-    
+
+
     def reconnect(self,name):
-        """ Reconnects to the ``name`` node using existed information 
+        """ Reconnects to the ``name`` node using existed information
 
         The only difference is that the mode of the log file is set to ```a+``` by default
         """
         self._reconnect(name)
         if self._async_channel and Common.get_config_value('async-channel','vchannel',False):
             self._async_channel._reconnect(name)
-        
+
 
     def _reconnect(self,name):
         BuiltIn().log("Reconnect to `%s`" % name)
@@ -287,18 +287,18 @@ class VChannel(object):
         _node       = backup_channel['node']
         _name       = backup_channel['name']
         _log_file   = backup_channel['log-file']
-        _w          = backup_channel['w'] 
-        _h          = backup_channel['h'] 
-        _mode       = backup_channel['mode'] 
+        _w          = backup_channel['w']
+        _h          = backup_channel['h']
+        _mode       = backup_channel['mode']
         _timeout    = backup_channel['timeout']
 
         # reconect to the node. Appending the log
-        if name in self._channels: 
+        if name in self._channels:
             self._channels.pop(name)
             BuiltIn().log("    Removed `%s` from current channels" % name)
         self._connect(_node, name, _log_file, _timeout, _w, _h, 'a+')
         BuiltIn().log("Reconnected successfully to `%s`" % (name))
-        
+
 
     def connect(self,node,name,log_file,\
                 timeout=Common.GLOBAL['default']['terminal-timeout'], \
@@ -316,9 +316,9 @@ class VChannel(object):
                 h=Common.LOCAL['default']['terminal']['height'],mode='w'):
         """ Connects to the node and create a VChannel instance
 
-        Login information is automatically extracted from yaml configuration. 
-        By defaullt a virtual terminal (vty100) with size 80x64 is attachted 
-        to this channel. 
+        Login information is automatically extracted from yaml configuration.
+        By defaullt a virtual terminal (vty100) with size 80x64 is attachted
+        to this channel.
 
         If a login was successful, VChannel will create a log file name
         ``log_file`` for the connection in the current result folder of the test
@@ -334,7 +334,7 @@ class VChannel(object):
 
         See ``Common`` for more detail about the yaml config files.
         """
-        if name in self._channels: 
+        if name in self._channels:
             raise Exception("Channel `%s` already existed. Use different name instead" % name)
 
         id = 0
@@ -345,8 +345,8 @@ class VChannel(object):
         _device         = Common.LOCAL['node'][node]['device']
         _device_info    = Common.GLOBAL['device'][_device]
         _ip             = _device_info['ip']
-        _type           = _device_info['type']    
-        _access_tmpl    = Common.GLOBAL['access-template'][_type] 
+        _type           = _device_info['type']
+        _access_tmpl    = Common.GLOBAL['access-template'][_type]
         _access         = _access_tmpl['access']
         _auth_type      = _access_tmpl['auth']
         _profile        = _access_tmpl['profile']
@@ -354,8 +354,8 @@ class VChannel(object):
         _proxy_cmd      = _access_tmpl.get('proxy-cmd')
         _port           = _access_tmpl.get('port') or _device_info.get('port')
         _auth           = Common.GLOBAL['auth'][_auth_type][_profile]
-        _init           = _access_tmpl.get('init')      # init command 
-        _finish         = _access_tmpl.get('finish')    # finish  command 
+        _init           = _access_tmpl.get('init')      # init command
+        _finish         = _access_tmpl.get('finish')    # finish  command
         _login_prompt   = _access_tmpl.get('login-prompt') or Common.get_config_value('default-login-prompt','vchannel')
         _pass_prompt    = _access_tmpl.get('password-prompt') or Common.get_config_value('default-password-prompt','vchannel')
         _secret_prompt  = _access_tmpl.get('enable-prompt') or _access_tmpl.get('secret-prompt') or 'Password:'
@@ -379,7 +379,7 @@ class VChannel(object):
                 _telnet = Telnet(timeout='3m')
                 output = ""
                 s = "%sx%s" % (w,h)
-                local_id = _telnet.open_connection(_ip, port=_port, 
+                local_id = _telnet.open_connection(_ip, port=_port,
                                                     #    terminal_emulation=True,
                                                         alias=name,terminal_type='vt100', window_size=s,
                                                         prompt=_prompt,prompt_is_regexp=True,
@@ -398,16 +398,16 @@ class VChannel(object):
                     output += Common.newline
                     output += _telnet.read()
                     BuiltIn().log(output)
-                
+
                 # allocate new channel id
                 id = self._max_id + 1
                 # channel_info['access-type'] = 'telnet'
-                channel_info['id']          = id 
+                channel_info['id']          = id
                 channel_info['type']        = _type
-                channel_info['prompt']      = _prompt 
+                channel_info['prompt']      = _prompt
                 channel_info['connection']  = _telnet
                 channel_info['local-id']    = local_id
-    
+
             ### SSH
             if _access == 'ssh':
                 _port   = _port or 22
@@ -432,10 +432,10 @@ class VChannel(object):
                 if _auth_type == 'public-key':
                     pass_phrase = _auth.get('pass')
                     output      = _ssh.login_with_public_key(_auth['user'],_auth['key'],pass_phrase)
-    
+
                 # allocate new channel id
                 id = self._max_id + 1
-                channel_info['id']          = id 
+                channel_info['id']          = id
                 channel_info['type']        = _type
                 # channel_info['access-type'] = 'ssh'
                 channel_info['prompt']      = _prompt
@@ -445,7 +445,7 @@ class VChannel(object):
             ### JUMP session
             if _access == 'jump':
                 # because console is only allow 1 session, for async mode off
-                self._async_channel = None 
+                self._async_channel = None
 
                 output = ""
                 _access_base = _access_tmpl['access-base']
@@ -455,7 +455,7 @@ class VChannel(object):
                     _telnet = Telnet(timeout='3m')
                     s = "%sx%s" % (w,h)
                     local_id = _telnet.open_connection(_ip,
-                                    port=_port, 
+                                    port=_port,
                                     alias=name,terminal_type='vt100', window_size=s,
                                     prompt=_prompt,prompt_is_regexp=True,
                                     default_log_level="INFO",
@@ -469,7 +469,7 @@ class VChannel(object):
                     # i will suppress go ahead
                     # i do suppress go ahead
                     # i do echo
-                    # i don't 
+                    # i don't
                     cmd_ser3 = '\xff\xfd\x00\xff\xfb\x03\xff\xfd\x03\xff\xfd\x01\xff\xfe\xe8'
                     cmd_ser4 = '\xff\xfe\x2c' # i don't Com Port Control Option
 
@@ -482,8 +482,8 @@ class VChannel(object):
                         _telnet.write_bare("\r")
                         time.sleep(1)
                         output = _telnet.read()
-                       
-                        if len(output) == 0: 
+
+                        if len(output) == 0:
                             _telnet.write_bare(cmd_ser1)
                             time.sleep(1)
                             _telnet.write_bare(cmd_ser2)
@@ -503,7 +503,7 @@ class VChannel(object):
                             _telnet.write(_auth['pass'])
                         else:
                             BuiltIn().log("WARN: Access jump server withouth authentication")
-                            
+
                     # channel_info['access-type'] = 'telnet'
                     channel_info['connection']  = _telnet
 
@@ -525,7 +525,7 @@ class VChannel(object):
                         else:
                             _cmd = None
                             output = _ssh.login(_auth['user'],_auth['pass'])
-    
+
                     # SSH with publick-key
                     if _auth_type == 'public-key':
                         pass_phrase = _auth.get('pass')
@@ -536,7 +536,7 @@ class VChannel(object):
 
                 # allocate new channel id for target device, common for jump access type
                 id = self._max_id + 1
-                channel_info['id']  = id 
+                channel_info['id']  = id
                 channel_info['type'] = _type
                 channel_info['prompt']  = _prompt
                 channel_info['local-id'] = local_id
@@ -558,7 +558,7 @@ class VChannel(object):
                 BuiltIn().log("Jump to other device")
 
                 _target_name        = _access_tmpl['target']
-                _target_tmpl        = Common.GLOBAL['access-template'][_target_name] 
+                _target_tmpl        = Common.GLOBAL['access-template'][_target_name]
                 _target_auth_type   = _target_tmpl['auth']
                 _target_profile     = _target_tmpl['profile']
                 _target_auth        = Common.GLOBAL['auth'][_target_auth_type][_target_profile]
@@ -566,12 +566,12 @@ class VChannel(object):
                 _prompt = _target_tmpl['prompt']
                 _login_prompt = Common.get_config_value('default-login-prompt','vchannel')
                 _pass_prompt = Common.get_config_value('default-password-prompt','vchannel')
- 
-                if 'login-prompt' in _target_tmpl:     
+
+                if 'login-prompt' in _target_tmpl:
                     _login_prompt = _target_tmpl['login-prompt']
-                if 'password-prompt' in _target_tmpl:   
+                if 'password-prompt' in _target_tmpl:
                     _pass_prompt  = _target_tmpl['password-prompt']
-                if 'init' in _target_tmpl:               
+                if 'init' in _target_tmpl:
                     _init = _target_tmpl['init']
                 if 'finish' in _target_tmpl:
                     _finish  = _target_tmpl['finish']
@@ -589,7 +589,7 @@ class VChannel(object):
                 if re.search('Press RETURN to get started',output):
                     channel_info['connection'].write("\r")
                     time.sleep(3)
-                    
+
                 if _login_prompt and re.search(_login_prompt,output):
                     BuiltIn().log("Login to target device with username `%s`" % _auth['user'])
                     channel_info['connection'].write(_auth['user'])
@@ -598,12 +598,12 @@ class VChannel(object):
                     BuiltIn().log("------------")
                     BuiltIn().log("--%s--" % output)
                     BuiltIn().log("------------")
-                
+
                 if _pass_prompt and re.search(_pass_prompt,output):
                     BuiltIn().log("Login to target device with password `%s`" % _auth['pass'])
                     channel_info['connection'].write(_auth['pass'])
                     time.sleep(3)
-                 
+
                 BuiltIn().log("Waiting for the 1st prompt ...")
                 channel_info['connection'].write("\r")
                 time.sleep(3)
@@ -615,10 +615,10 @@ class VChannel(object):
             # common for all access type
             # open/create a log file for this connection in result_folder
             result_folder = Common.get_result_folder()
-            
+
             _log_file  = self._aprefix + log_file
             channel_info['logger']  = codecs.open(result_folder + '/' + _log_file,mode,'utf-8')
-    
+
             # common channel info
             channel_info['node']        = node
             channel_info['name']        = name
@@ -641,15 +641,15 @@ class VChannel(object):
                 channel_info['screen'].set_charset('B', '(')
             except:
                 channel_info['screen'].define_charset('B', '(')
-      
+
             self._current_id            = id
             self._max_id                = id
             self._current_name          = name
-        
+
             # remember this info by name(alias)
-            self._channels[name]   = channel_info 
+            self._channels[name]   = channel_info
             self._backup_channels[name] = channel_info
-    
+
             # by default switch to the connected device
             self._switch(name)
 
@@ -667,26 +667,26 @@ class VChannel(object):
 
             ### execute 1st command after login
             flag = Common.get_config_value('ignore-init-finish','vchannel',False)
-            if not flag and _init is not None: 
-                for item in _init: 
+            if not flag and _init is not None:
+                for item in _init:
                     BuiltIn().log("Executing init command: %s" % (item))
                     self._cmd(item)
 
             BuiltIn().log("Opened connection to `%s(%s)`" % (self._aprefix+name,_ip))
         except Exception as err:
-            if not ignore_dead_node: 
+            if not ignore_dead_node:
                 err_msg = "ERROR: Error occured when connecting to `%s(%s)`" % (self._aprefix + name,_ip)
                 BuiltIn().log(err_msg,console=True)
-                raise 
+                raise
             else:
                 warn_msg = "WARN: Error occured when connect to `%s(%s)` but was ignored" % (self._aprefix + name,_ip)
                 BuiltIn().log(warn_msg,console=True)
                 del Common.LOCAL['node'][name]
         return id
 
-    
+
     def connect_all(self):
-        """ Connects to *all* nodes that are defined in active ``local.yaml``. 
+        """ Connects to *all* nodes that are defined in active ``local.yaml``.
 
         A prefix ``prefix`` was appended to the alias name of the connection. A
         new log file by ``<alias>.log`` was automatiocally created.
@@ -694,9 +694,9 @@ class VChannel(object):
         See `Common` for more detail about active ``local.yaml``
         """
 
-        if 'node' in Common.LOCAL and not Common.LOCAL['node']: 
+        if 'node' in Common.LOCAL and not Common.LOCAL['node']:
             num = 0
-        else:  
+        else:
             nodes = Common.LOCAL['node']
             num = len(nodes)
             for node_name in nodes:
@@ -710,23 +710,23 @@ class VChannel(object):
 
     ###
     def start_screen_mode(self):
-        """ Starts the ``screen mode``. 
+        """ Starts the ``screen mode``.
 
-        In the ``screen mode``, the output is just the same with the real terminal. It 
-        means that any real-time application likes ``top`` will be captured as-is. 
+        In the ``screen mode``, the output is just the same with the real terminal. It
+        means that any real-time application likes ``top`` will be captured as-is.
         Consecutive `read` from this VChannel instance may produce redundancy ouput.
         """
         channel = self._channels[self._current_name]
         channel['screen_mode'] = True
         BuiltIn().log("Started screen mode for channel `%s`" % self._current_name)
 
-  
+
     def stop_screen_mode(self):
         """ Stops the ``screen mode`` and returns to ``normal mode``
-        
+
         In ``screen mode``, `Write` does not return any thing and no output is logged.
         In ``normal mode``, escape sequences are not processed by the virtual terminal.
-        
+
         """
         channel = self.get_current_channel()
         self.read()
@@ -747,7 +747,7 @@ class VChannel(object):
         """
         channel = self.get_current_channel()
         screen = channel['screen']
-        return Common.newline.join(row.rstrip() for row in screen.display).rstrip(Common.newline)   
+        return Common.newline.join(row.rstrip() for row in screen.display).rstrip(Common.newline)
 
 
     def _last_line(self):
@@ -774,9 +774,9 @@ class VChannel(object):
             self._async_channel._switch(name)
 
 
-    @with_reconnect 
+    @with_reconnect
     def _switch(self,name):
-        """ Switches the current active channel to ``name``. 
+        """ Switches the current active channel to ``name``.
         There only one active channel at any time
 
         Returns the current `channel_id`, `local_channel_id` and the output of
@@ -785,15 +785,15 @@ class VChannel(object):
         *Notes:* There is no assurance that the output of previous `Write`
         command will be in the retur output because keywords like
         Logger.`Log All` will update every channels.
-    
+
         Examples:
-        | VChannel.`Switch` | vmx12 | 
+        | VChannel.`Switch` | vmx12 |
         """
         output = ""
         BuiltIn().log('Switching current vchannel to `%s`' % name)
         old_name = self._current_name
 
-        if name in self._channels: 
+        if name in self._channels:
             self._current_name = name
             channel = self._channels[name]
             self._current_id = channel['id']
@@ -810,11 +810,11 @@ class VChannel(object):
 
 
     def change_log(self,log_file,mode='w'):
-        """ Stops current log file and create a new log file. 
+        """ Stops current log file and create a new log file.
 
         Default `mode` is `w` which overwrite the existed logs. Change to `a` or
         `a+` to append the current existed log files.
-   
+
         Every log from that point will be saved to the new log file.
 
         Return old log filename
@@ -825,9 +825,9 @@ class VChannel(object):
         # flush buffer before change the log file
         channel['logger'].flush()
         channel['logger'].close()
-    
-        result_path = Common.get_result_path() 
-        channel['logger'] = codecs.open(result_path+'/'+log_file,mode,'utf-8') 
+
+        result_path = Common.get_result_path()
+        channel['logger'] = codecs.open(result_path+'/'+log_file,mode,'utf-8')
         channel['log-file'] = log_file
 
         BuiltIn().log("Changed current log file to %s" % log_file)
@@ -836,14 +836,14 @@ class VChannel(object):
 
     @with_reconnect
     def write(self,str_cmd=u"",str_wait=u'0s',start_screen_mode=False):
-        """ Sends ``str_cmd`` to the target node and return after ``str_wait`` time. 
+        """ Sends ``str_cmd`` to the target node and return after ``str_wait`` time.
 
         If ``start_screen_mode`` is ``True``, the channel will be shifted to ``Screen
         Mode``. Default value of ``screen_mode`` is False.
 
         In ``normal mode``, a ``new line`` char will be added automatically to
         the ``str_cmd`` and the command return the output it could get at that time from
-        the terminal and also logs that to the log file. 
+        the terminal and also logs that to the log file.
 
         In ``screen Mode``, if it is necessary you need to add the ``new line``
         char by your own and the ouput is not be logged or returned from the keyword.
@@ -861,7 +861,7 @@ class VChannel(object):
         When `str_wait` is not `0s`, the keyword ``read`` and ``return the
         output`` after waiting `str_wait`. Otherwise, the keyword return
         without any output.
-   
+
         *Notes:*  This is a non-blocking command.
 
         Examples:
@@ -872,7 +872,7 @@ class VChannel(object):
         wait = DateTime.convert_time(str_wait)
         channel = self.get_current_channel()
         display_cmd = str(str_cmd).replace(Common.newline,'<Enter>')
-        
+
         BuiltIn().log("Write '%s', screen_mode=`%s`" % (str_cmd,channel['screen_mode']))
         if start_screen_mode:
             self.start_screen_mode()
@@ -939,7 +939,7 @@ class VChannel(object):
 
         BuiltIn().log("Changed current prompt to `%s`" % (str_prompt))
         return  old_prompt
-        
+
 
 #        # experimentally implement VChannel without using prompt
 #        result = ''
@@ -951,13 +951,13 @@ class VChannel(object):
 #            result = result + output
 #            old_output = output
 #            output  = channel['connection'].read()
-#            if output == old_output: 
+#            if output == old_output:
 #                count = count + 1
 #                time.sleep(1)
 #            else:
 #                count = 0
 #        self.log(result)
-#    
+#
 #        return result
 
     def cmd_more(self,cmd=u'',wait_prompt=u'.*---\(more.*\)---',press_key=u' ',prompt=None):
@@ -971,18 +971,18 @@ class VChannel(object):
         # in case something left in the buffer
         output  = channel['connection'].read()
         self.log(output,channel)
-        
+
         channel['connection'].write(cmd)
         self.log(cmd + Common.newline,channel)
 
         default_prompt  = channel['prompt']
-        if prompt is None :    
+        if prompt is None :
             last_prompt = default_prompt
             cur_prompt = '.*(%s|%s)' % (default_prompt,wait_prompt)
         else:
             last_prompt = '.*%s' % prompt
             cur_prompt = '.*(%s|%s)' % (prompt,wait_prompt)
-        output = '' 
+        output = ''
         BuiltIn().log('prompt = %s' % cur_prompt)
         while True:
             output = channel['connection'].read_until_regexp(cur_prompt)
@@ -991,11 +991,11 @@ class VChannel(object):
             BuiltIn().log('Continue...')
             self.write(' ')
             time.sleep(1)
-        
+
         BuiltIn().log("Executed command: `%s` and wait until prompt")
 
 
-    def _set_conn_timeout(self,conn,timeout): 
+    def _set_conn_timeout(self,conn,timeout):
         """ Set current connection timeout
         """
         if timeout is None: return
@@ -1009,8 +1009,8 @@ class VChannel(object):
             remove_prompt=False,
             delay=u'0s',
             match_err='\r\n(unknown command.|syntax error, expecting <command>.)\r\n'):
-        """Executes a ``command`` and wait until for the prompt. 
-  
+        """Executes a ``command`` and wait until for the prompt.
+
         This is a blocking keyword. Execution of the test case will be postponed until the prompt appears.
 
         If ``prompt`` is a null string (default), its value is defined in the
@@ -1026,7 +1026,7 @@ class VChannel(object):
         this case, specify a bigger than zero (eg: 0.5 or sommething) will increase
         the performance. When ``delay`` is bigger than zero, the keyword execute
         the command once,  read the output and wait for ``delay`` before repeat
-        the read. This will be repeated until there is no more output. 
+        the read. This will be repeated until there is no more output.
 
         The keyword returns error when the output matches the ``match_err`` and
         the default config value `cmd-auto-check` is ``True``
@@ -1038,7 +1038,7 @@ class VChannel(object):
         Output will be automatically logged to the channel current log file.
 
  [./Common.html|Common] for details about the config files.
-        
+
         Sample:
         | Router.`Cmd`   | version |
         | Router.`Cmd`   | reload   | prompt=\\[yes/no\\]:${SPACE} | # reload a Cisco router |
@@ -1046,7 +1046,7 @@ class VChannel(object):
         | Router.`Cmd`   | show configuration | display set |  delay=0.5s |
         """
         return self._cmd(cmd,prompt,timeout,error_on_timeout,remove_prompt,delay,match_err)
-        
+
 
     @with_reconnect
     def _cmd(self, cmd='', prompt=None,
@@ -1059,13 +1059,13 @@ class VChannel(object):
         BuiltIn().log("Execute command: `%s`" % (cmd))
         output = ''
         channel = self.get_current_channel()
-        if channel['screen_mode']: 
+        if channel['screen_mode']:
             raise Exception("``Cmd`` keyword is prohibitted in ``screen  mode``")
         # in case something left in the buffer
         output  = channel['connection'].read()
         self.log(output,channel)
-       
-        # send the command 
+
+        # send the command
         channel['connection'].write(cmd)
         self.log(cmd + Common.newline,channel)
 
@@ -1080,13 +1080,13 @@ class VChannel(object):
             if delay_time == 0:
                 output = channel['connection'].read_until_regexp(cur_prompt)
             else:
-                BuiltIn().log("using delay=`%s` option" % delay) 
+                BuiltIn().log("using delay=`%s` option" % delay)
                 output = ''
                 try:
                     tmp = channel['connection'].read(delay=delay_time)
                     output += tmp
                     while tmp != '':
-                        tmp = channel['connection'].read(delay=delay_time) 
+                        tmp = channel['connection'].read(delay=delay_time)
                         output += tmp
                 except TypeError as err:
                     time.sleep(delay_time)
@@ -1097,7 +1097,7 @@ class VChannel(object):
                         output += tmp
                         time.sleep(delay_time)
                 except:
-                    raise    
+                    raise
             self.log(output,channel)
         except:
             if error_on_timeout: raise
@@ -1120,7 +1120,7 @@ class VChannel(object):
 
         BuiltIn().log("Executed command `%s`" % (cmd))
         return output
-    
+
 
     def cmd_yesno(self,cmd,ans='yes',question='? [yes,no] ',timeout='5s'):
         """ Executes a ``cmd``, waits for ``question`` and answers that by
@@ -1140,8 +1140,8 @@ class VChannel(object):
     @with_reconnect
     def read(self,silence=False):
         """ Returns the current output of the virtual terminal and automatically
-        logs to file. 
- 
+        logs to file.
+
         In ``normal mode`` this will return the *unread* output only, not all the content of the screen.
         """
         if not silence: BuiltIn().log("Read from channel buffer:")
@@ -1153,7 +1153,7 @@ class VChannel(object):
         try:
             # dump all the screen including its history
             output = self._dump_screen() + Common.newline
-            channel['screen'].reset() 
+            channel['screen'].reset()
         except UnicodeDecodeError as err:
             output = err.args[1].decode('utf-8','replace')
         self.log(output,channel)
@@ -1167,11 +1167,11 @@ class VChannel(object):
         return self._current_name
 
     def close(self,msg='',with_time=False,mark="***"):
-        """ Closes current connection and returns the active channel name 
+        """ Closes current connection and returns the active channel name
 
-        `msg` is the last message is written to each device's log 
+        `msg` is the last message is written to each device's log
         """
-        self._close(msg,with_time,mark) 
+        self._close(msg,with_time,mark)
         if self._async_channel and Common.get_config_value('async-channel','vchannel',False):
             self._async_channel._close(msg,with_time,mark)
 
@@ -1191,25 +1191,25 @@ class VChannel(object):
         ### execute command before close the connection
         BuiltIn().log("Closing the connection for channel `%s`" % old_name)
         flag = Common.get_config_value('ignore-init-finish','vchannel',False)
-        if not flag and finish_cmd is not None: 
+        if not flag and finish_cmd is not None:
             for item in finish_cmd:
                 BuiltIn().log("Execute finish command: %s" % (item))
                 channel['connection'].write_bare(item + '\r')
                 time.sleep(0.5)
-        
+
         # timeout = Common.get_config_value('wait-time-before-close','vchannel','10s')
         # BuiltIn().log("Wait `%s` seconds before closing the connection `%s`" % (timeout,old_name))
-        try: 
+        try:
             channel['connection'].write_bare('' + '\r')
             # time.sleep(x1)
-            output = channels[self._current_name]['connection'].close_connection() 
+            output = channels[self._current_name]['connection'].close_connection()
             if output is not None: self.log(output,channel)
         except Exception as err:
             BuiltIn().log('WARN: ignore errors while closing channel')
             BuiltIn().log(err)
             # BuiltIn().log(traceback.format_exc())
-        
-        # farewell message    
+
+        # farewell message
         finish_msg = Common.newline*2 + "%s %s %s %s" % (mark,datetime.datetime.now().strftime("%I:%M:%S%p on %B %d, %Y:"),msg,mark)
         self.log(finish_msg,channel)
         channel['logger'].flush()
@@ -1223,7 +1223,7 @@ class VChannel(object):
             self._max_id           = 0
         else:
             first_key = list(channels.keys())[0]  # make dict key compatible with Python3
-            self._current_name     = channels[first_key]['name'] 
+            self._current_name     = channels[first_key]['name']
             self._current_id       = channels[first_key]['id']
 
         # we need some time to release the socket
@@ -1234,7 +1234,7 @@ class VChannel(object):
 
 
     def close_all(self,msg='',with_time=False,mark="***"):
-        """ Closes all current sessions and flush out all log files. 
+        """ Closes all current sessions and flush out all log files.
 
         `msg` is the last message the is written to each device's log.
 
@@ -1243,7 +1243,7 @@ class VChannel(object):
         timeout = DateTime.convert_time(Common.get_config_value('wait-time-before-close','vchannel','2s'))
         time.sleep(timeout)
         BuiltIn().log("Waited `%s` seconds before closing the connection" % timeout)
-        while len(self._channels) > 0: 
+        while len(self._channels) > 0:
             self.close(msg,with_time,mark)
 
         self._current_id = 0
@@ -1251,7 +1251,7 @@ class VChannel(object):
         self._current_name = None
         self._channels = {}
 
- 
+
     def flush_all(self):
         """ Flushes all remain data into the logger
         """
@@ -1262,10 +1262,10 @@ class VChannel(object):
             self.read()
             if 'logger' in channel:
                 channel['logger'].flush()
-  
+
         self.switch(current_name)
 
-   
+
     def get_ip(self):
         """ Returns the IP address of current node
         Examples:
@@ -1277,14 +1277,14 @@ class VChannel(object):
         ip      = Common.GLOBAL['device'][dev]['ip']
 
         BuiltIn().log("Got IP address of current node: %s" % (ip))
-        return  ip  
+        return  ip
 
 
     def exec_file(self,file_name, vars='',comment='# ',step=False,mode='cmd',delay=u'0s', str_error='syntax,rror'):
         """ Executes commands listed in ``file_name``
         Lines started with ``comment`` character is considered as comments
 
-        Parameters: 
+        Parameters:
         - `file_name` is a file located inside the ``config`` folder of the
         test case
         - `mode`: could be ``cmd`` or ``write`` which define that if the cmd is
@@ -1339,7 +1339,7 @@ class VChannel(object):
             if line.startswith(comment): continue
             str_cmd = line.rstrip()
             if str_cmd == '': continue # ignore null line
-            if mode.lower() == 'cmd': 
+            if mode.lower() == 'cmd':
                 output = self._cmd(str_cmd,delay=delay)
             else:
                 output = self.write(str_cmd)
@@ -1401,7 +1401,7 @@ class VChannel(object):
             logic = ''
             m_keyword = keyword
         BuiltIn().log('    Using matching logic `%s`' % logic)
-        
+
         while num <= int(max_num):
             BuiltIn().log("    %d: command is `%s`" % (num,command))
             output = self._cmd(command)
@@ -1465,7 +1465,7 @@ class VChannel(object):
 
         return result
 
-    
+
     def multi_write_with_tag(self,cmd,*tag_list):
         """ Broadcasts `cmd` to all channels
         """
@@ -1473,7 +1473,7 @@ class VChannel(object):
         channel_num = len(channels)
         _name = self._current_name
         for item in channels:
-            self.switch(item) 
+            self.switch(item)
             self.write(cmd)
         self.switch(_name)
         BuiltIn().log('Write command `%s` to %d channels' % (cmd,channel_num))
@@ -1481,9 +1481,9 @@ class VChannel(object):
 
     def multi_exec_file(self,prefix,*node_list):
         """ Paralelly execute command files for nodes
-      
+
         For each node, the execution will be executed in different thread
-        separately. The keyword will be done after *ALL* executions are finished. 
+        separately. The keyword will be done after *ALL* executions are finished.
         Parameters:
         - `prefix`:  prefix of command file under local `config`
           folder. The full command filename is <prefix><node_name>.conf
@@ -1501,14 +1501,14 @@ class VChannel(object):
         # start and wait until all thread finish
         for thread in thread_list: thread.start()
         for thread in thread_list: thread.join()
-        BuiltIn().log("Executed command files on %d nodes" % len(node_list)) 
+        BuiltIn().log("Executed command files on %d nodes" % len(node_list))
 
 
     def multi_exec_file_with_tag(self,prefix,*tag_list):
         """ Executes command files for nodes specified by tags in background
-      
+
         For each node, the execution will be executed in different thread
-        separately. The keyword will be done after *ALL* executions are finished. 
+        separately. The keyword will be done after *ALL* executions are finished.
 
         Parameters:
         - `prefix`:  prefix of command file under local `config`
@@ -1521,7 +1521,7 @@ class VChannel(object):
         node_list = Common.node_with_tag(*tag_list)
         self.multi_exec_file(prefix,*node_list)
 
-    
+
     def multi_cmd(self,cmd,*node_list):
         """ Executes a command for nodes in background
         """
@@ -1534,7 +1534,7 @@ class VChannel(object):
         # start and wait until all thread finish
         for thread in thread_list: thread.start()
         for thread in thread_list: thread.join()
-        BuiltIn().log("Executed a command on %d nodes" % len(node_list)) 
+        BuiltIn().log("Executed a command on %d nodes" % len(node_list))
 
 
     def multi_cmd_with_tag(self,cmd,*tag_list):

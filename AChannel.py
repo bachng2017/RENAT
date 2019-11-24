@@ -36,7 +36,7 @@ def _thread_cmd(self,cmd):
 def _thread_repeat_cmd(stop,self,cmd,interval,with_time):
     try:
         channel = self._channels[self._current_name]
-        if with_time: 
+        if with_time:
             mark = datetime.datetime.now().strftime("%I:%M:%S%p on %B %d, %Y: ")
         else:
             mark = ""
@@ -56,11 +56,11 @@ class AChannel(VChannel.VChannel):
     """ AChannel derives from VChannel and is used for parallel actions \
     besides the main scenario.
 
-    Likes VChannel, AChannel handles a virtual terminal for each node. 
+    Likes VChannel, AChannel handles a virtual terminal for each node.
 
     While `VChannel.Cmd` is a bloking keyword, `AChannel.Cmd` is a
     non-blocking keyword. When using `Cmd`, users need to control when the
-    command finishes its work. 
+    command finishes its work.
     """
     def __init__(self):
         super(AChannel,self).__init__(u"_")
@@ -88,16 +88,16 @@ class AChannel(VChannel.VChannel):
 
     def wait_cmd(self,exec_id,timeout=u'0s'):
         """ Waits until a background command finishes or timeout
-        """ 
+        """
         time_s = DateTime.convert_time(timeout)
         thread = self._cmd_threads[exec_id]['thread']
         thread.join(time_s)
-        BuiltIn().log("Waited until cmd thread finished")        
-   
- 
+        BuiltIn().log("Waited until cmd thread finished")
+
+
     def stop_repeat_cmd(self,exec_id,timeout=u'0s'):
         """ Stops a runnin Repeat Command by its `exec_id`
-        
+
         - `exec_id`: an ID return when using Cmd
         """
         time_s = DateTime.convert_time(timeout)
@@ -106,7 +106,7 @@ class AChannel(VChannel.VChannel):
         if stop:
             stop.set()
         thread.join(time_s)
-        BuiltIn().log("Stopped a repeated command")        
+        BuiltIn().log("Stopped a repeated command")
 
 
     def repeat_cmd(self,cmd='',interval='1',with_time=True):
@@ -125,4 +125,4 @@ class AChannel(VChannel.VChannel):
         self._cmd_threads[thread_id]['stop'] = stop
         BuiltIn().log("Started command `%s` in other thread" % cmd)
         return thread_id
-   
+

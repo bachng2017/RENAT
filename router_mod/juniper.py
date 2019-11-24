@@ -44,29 +44,29 @@ from openpyxl import Workbook
 from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.styles import Alignment
 from ipaddress import ip_address
-import pandas as pd 
+import pandas as pd
 import numpy as np
 import random
 
 
 def get_version(self):
     """ Returns router version information
-    """ 
+    """
 
     result = self._vchannel.cmd('show version | no-more')
     return result
 
-def get_current_datetime(self,time_format='%H:%M:%S',delta_time='0s',dir='+',**kwargs):    
+def get_current_datetime(self,time_format='%H:%M:%S',delta_time='0s',dir='+',**kwargs):
     """ Returns the current date time with vendor format
     ``delta_time`` will be added or subtracted to current time, default is ``0s``
 
     ``time_format`` decides the time part of the output.
     Example result are :
-    | May 24 04:14:25 
+    | May 24 04:14:25
     | May  4 04:14:25
     *Note:* The date part is padded by space, and the result is allways 15 characters
     """
- 
+
     delta = DateTime.convert_time(delta_time)
     if dir == '-':
         current_time = datetime.now() - timedelta(seconds=delta)
@@ -75,7 +75,7 @@ def get_current_datetime(self,time_format='%H:%M:%S',delta_time='0s',dir='+',**k
     padded_day = datetime.strftime(current_time,"%d").rjust(2)
     format = "%%b %s %s" % (padded_day,time_format)
     result  = datetime.strftime(current_time,format)
-    
+
     BuiltIn().log("Got current datetime and convert to Juniper format")
     return result
 
@@ -113,7 +113,7 @@ def number_of_bgp_neighbor(self,state="Established",cmd='show bgp neighbor | mat
 def enable_interface(self,intf):
     """ Enables an interface ``intf``
     """
- 
+
     self._vchannel.cmd("configure")
     self._vchannel.cmd("delete interface " + intf + " disable")
     self._vchannel.cmd("commit")
@@ -125,7 +125,7 @@ def enable_interface(self,intf):
 def disable_interface(self,intf):
     """ Disables an interface ``intf``
     """
-    
+
     self._vchannel.cmd("configure")
     self._vchannel.cmd("set interface " + intf + " disable")
     self._vchannel.cmd("commit")
@@ -151,7 +151,7 @@ def flap_interface(self,intf,time_str='10s'):
     self._vchannel.cmd("exit")
 
     BuiltIn().log("Flapped interface `%s`" % (intf))
-    
+
 
 def get_cli_mode(self):
     """ Returns current mode of the CLI.
@@ -180,11 +180,11 @@ def push_config(self,mode='set',config_file='', \
     Mode ``override``, ``merge`` and ``replace`` use ordinary JunOS configuration file with appropriate mode.
     ``config_file`` is a configuration file inside the ``config`` folder of the
     current test case.
-    
+
     Config file could includes jinja2 template. The template will be evalued
     with `LOCAL`, `GLOBAL` and varibles defined by `vars`. The `vars` has the
     format: var1=value1,var2=value2 ...
-    
+
     If the loading has no error that match the ``error_match``, the
     configuration will be commited.
 
@@ -228,15 +228,15 @@ def push_config(self,mode='set',config_file='', \
         if len(info) == 2:
             render_var.update({info[0].strip():info[1].strip()})
     compiled_config = loader.render(render_var)
-    with codecs.open(file_path_replace,'w','utf-8') as f: 
+    with codecs.open(file_path_replace,'w','utf-8') as f:
         f.write(compiled_config)
     BuiltIn().log('Compiled and wrote configuration to `%s`' % file_path_replace)
     file_path_replace = file_path_replace.replace('(','\(').replace(')','\)')
 
     # load the configuration
-    _user = self._vchannel.get_current_channel()['auth']['user'] 
-    _pass = self._vchannel.get_current_channel()['auth']['pass'] 
-    _ip   = self._vchannel.get_current_channel()['ip'] 
+    _user = self._vchannel.get_current_channel()['auth']['user']
+    _pass = self._vchannel.get_current_channel()['auth']['pass']
+    _ip   = self._vchannel.get_current_channel()['ip']
     cmd = "sshpass -p %s scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null %s %s@%s:/var/tmp/%s" % (_pass,file_path_replace,_user,_ip,config_file)
     rc,output = OperatingSystem().run_and_return_rc_and_output(cmd)
 
@@ -257,7 +257,7 @@ def push_config(self,mode='set',config_file='', \
         output = self.cmd("load " + mode + " /var/tmp/" + config_file)
 
         # check ouput
-        if re.search(err_match, output, re.MULTILINE):    
+        if re.search(err_match, output, re.MULTILINE):
             self.cmd("rollback 0")
             self.cmd("exit")
             msg = "ERROR: An error happened while loading the config. Output: `%s`" % output
@@ -268,10 +268,10 @@ def push_config(self,mode='set',config_file='', \
 
     if confirm_time == 0:
         output = self.cmd('commit synchronize')
-    else: 
+    else:
         output = self.cmd("commit confirmed %s" % (confirm_time))
 
-    # check output 
+    # check output
     if re.search(err_match, output, re.MULTILINE):
         self.cmd("rollback 0")
         self.cmd("exit")
@@ -285,22 +285,22 @@ def push_config(self,mode='set',config_file='', \
 
     BuiltIn().log("commit result is: " + output)
     BuiltIn().log("Loaded config with ``%s`` mode and confirm time %s" % (mode,confirm_time))
-    
+
 
 
 def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(error:|unknown command:)'):
-    """ Loads configuration to a router. 
+    """ Loads configuration to a router.
     Usable ``mode`` is ``set``, ``override``, ``merge`` and ``replace``
 
     ``set`` mode uses configuration that contains ``set`` command.
     Mode ``override``, ``merge`` and ``replace`` use ordinary JunOS configuration file with appropriate mode.
     ``config_file`` is a configuration file inside the ``config`` folder of the
     current test case.
-    
+
     Config file could includes jinja2 template. The template will be evalued
     with `LOCAL`, `GLOBAL` and varibles defined by `vars`. The `vars` has the
     format: var1=value1,var2=value2 ...
-    
+
     If the loading has no error that match the ``error_match``, the
     configuration will be commited.
 
@@ -318,7 +318,7 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(
     server      = Common.GLOBAL['default']['robot-server']
     password    = Common.GLOBAL['default']['robot-password']
     # the original config is in ./config folder
- 
+
     folder              = os.getcwd() + '/config/'
     file_path           = os.getcwd() + '/config/' + config_file
     file_path_replace   = os.getcwd() + '/tmp/' + config_file + '_tmp'
@@ -332,7 +332,7 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(
             render_var.update({info[0].strip():info[1].strip()})
     compiled_config = loader.render(render_var)
 
-    with codecs.open(file_path_replace,'w','utf-8') as f: 
+    with codecs.open(file_path_replace,'w','utf-8') as f:
         f.write(compiled_config)
     file_path_replace = file_path_replace.replace('(','\(').replace(')','\)')
     cmd = 'file copy robot@%s:\'//%s\' /var/tmp/%s' % (server,file_path_replace,config_file)
@@ -350,7 +350,7 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(
     else:
         self.cmd("configure")
         output = self.cmd("load %s /var/tmp/%s" % (mode,config_file))
-        if re.search(err_match, output, re.MULTILINE):    
+        if re.search(err_match, output, re.MULTILINE):
             self.cmd("rollback 0")
             self.cmd("exit")
             msg = "ERROR: An error happened while loading the config:\n%s" % output
@@ -359,10 +359,10 @@ def load_config(self,mode='set',config_file='',confirm='0s',vars='',err_match='(
 
     if confirm_time == 0:
         output = self.cmd('commit synchronize')
-    else: 
+    else:
         output = self.cmd("commit confirmed %s" % (confirm_time))
 
-    # check output 
+    # check output
     if re.search(err_match, output, re.MULTILINE):
         self.cmd("rollback 0")
         self.cmd("exit")
@@ -394,32 +394,32 @@ def copy_file(self,src_path,filename=None,pre_config=None,pos_config=None):
     # prepare filepath
     if filename is None:
         _filename = os.path.basename(src_path)
-    else:    
+    else:
         _filename = filename
     dst_path  = '%s/%s' % (Common.get_result_path(),_filename)
     dst_path = dst_path.replace('(','\(').replace(')','\)')
 
     #
-    _user = self._vchannel.get_current_channel()['auth']['user'] 
-    _pass = self._vchannel.get_current_channel()['auth']['pass'] 
-    _ip   = self._vchannel.get_current_channel()['ip'] 
+    _user = self._vchannel.get_current_channel()['auth']['user']
+    _pass = self._vchannel.get_current_channel()['auth']['pass']
+    _ip   = self._vchannel.get_current_channel()['ip']
     cmd = 'sshpass -p %s scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null %s@%s:%s %s' % (_pass,_user,_ip,src_path,dst_path)
     rc,output = OperatingSystem().run_and_return_rc_and_output(cmd)
 
     BuiltIn().log(output)
-   
+
     # cleanup additional configuration
     if 'ssh' not in current_services:
         self.cmd('configure',prompt='# ')
         self.cmd('delete system services ssh')
         if pos_config is not None:
-            for item in pos_config.split(';'): self.cmd(item,prompt='# ') 
+            for item in pos_config.split(';'): self.cmd(item,prompt='# ')
         self.cmd('commit synchronize and-quit')
-  
+
     if  rc != 0:
         BuiltIn().log(output)
         raise(Exception("ERROR: error while copy a file with error:\n%s" % output))
-  
+
     BuiltIn().log('Copied file from `%s` to `%s`' % (src_path,filename))
 
 
@@ -435,11 +435,11 @@ def get_file(self,src_file,dst_file=None):
 
     The keyword copy the specific file *FROM* the router to the RENAT server
     """
- 
+
     cli_mode = self.get_cli_mode()
     if cli_mode == "config": self._vchannel.cmd('exit')
     self._vchannel.stop_screen_mode()
-   
+
     server      = Common.GLOBAL['default']['robot-server']
     password    = Common.GLOBAL['default']['robot-password']
 
@@ -448,7 +448,7 @@ def get_file(self,src_file,dst_file=None):
         filename = os.path.basename(src_file)
         tmp_path    = os.getcwd() + '/tmp/%s' % filename
         dest_path   = os.getcwd() + '/' + Common.get_result_folder() + filename
-    else:    
+    else:
         tmp_path    = os.getcwd() + '/tmp/' + dst_file
         dest_path   = os.getcwd() + '/' + Common.get_result_folder() + '/' + dst_file
 
@@ -469,12 +469,12 @@ def get_file(self,src_file,dst_file=None):
     if "error" in output:
         BuiltIn().log("ERROR:")
         BuiltIn().log(output)
-        raise Exception("ERROR:" + output) 
+        raise Exception("ERROR:" + output)
 
     # copy config from temp folder to result folder
     shutil.copy(tmp_path,dest_path)
-    Common.change_mod(dest_path,'0775',False) 
-    
+    Common.change_mod(dest_path,'0775',False)
+
     BuiltIn().log("Get the file `%s` from node `%s`" % (src_file,self._vchannel.current_name))
 
 
@@ -499,8 +499,8 @@ def get_config(self,dst_name=None):
 def link_status(self,if_name):
     """ Returns link physical status as string (aka: "up down", "up up")
     """
-   
-    result = "" 
+
+    result = ""
     output = self._vchannel.cmd("show interface %s terse | grep \"%s \"" % (if_name,if_name))
     tmp = re.split('\s+',output.split("\n")[0].strip())
     if len(tmp) == 3:
@@ -517,16 +517,16 @@ def get_route_number(self,table='inet.0'):
 
     ``table`` could be ``inet.0`` or ``inet.6``
     """
-    
+
     result = ""
     output = self._vchannel.cmd("show route summary table %s" % table)
     for line in output.split("\n"):
         match = re.match(r"%s: .* \((.+) active," % table, line)
         if match:
             result = int(match.group(1))
-    BuiltIn().log("Got %d routes from `%s`" % (result,table)) 
-    
-    return result 
+    BuiltIn().log("Got %d routes from `%s`" % (result,table))
+
+    return result
 
 
 def get_intf_addr(self,intf_name,family='inet'):
@@ -535,7 +535,7 @@ def get_intf_addr(self,intf_name,family='inet'):
     ``family`` should be ``inet`` or ``inet6``
     If the address is not set, ``('','')`` will be returned.
     """
-    
+
     output  = self._vchannel.cmd("show interface %s terse | match %s" % (intf_name,family))
     line = output.split('\n')[0]    # first line
     try:
@@ -561,8 +561,8 @@ def get_chassis_serial(self):
 
 
 def create_best_path_select_data(self,route_content,output_excel='best.xlsx'):
-    """ Creates the matrix of best path selection 
-    
+    """ Creates the matrix of best path selection
+
     Provides the test described in  `smb://10.128.3.91/SharePoint01/31_VerificationRoom/31_13_検証環境セット/BGP-Best-Path-SelectionのAll-in-One設定_20161118改良/`
     The test uses predefined Ixia config and follows predefined steps
     """
@@ -575,8 +575,8 @@ def create_best_path_select_data(self,route_content,output_excel='best.xlsx'):
 
     # adding column name
     ws.append( ['INTF','Prefix','ProtoPref','LocalPref','AS_PATH','Origin','MED','Protocol','I/E','IGP','Age','RouterID','CLLength','Peer','Win/Loose','Reason'])
-   
-    # sparsing route information 
+
+    # sparsing route information
     route_info_list=re.findall(r"(\S+/.{1,3}) (?:.*?entr.*?announced.*?)\r\n(( {8}[ *](\S+) *Pref.*?\r\n( {16}.*?\r\n)+)+)\r\n",route_content,re.DOTALL)
 
     line = 1 # excel start at number 1
@@ -593,18 +593,18 @@ def create_best_path_select_data(self,route_content,output_excel='best.xlsx'):
                 win = 'loose'
             proto   = proto_info[1]
             pp      = proto_info[2]
-    
+
             match_intf = re.search(r" via (\S+),", proto_info[3],re.MULTILINE)
             if match_intf:
                 intf_index  = int(match_intf.group(1).split('.')[1])
                 via_intf = chr(ord('A')+intf_index-1)
             else:
                 via_intf = '-'
-    
+
             match_localpref = re.search(r"Localpref: (\S+)", proto_info[3],re.MULTILINE)
             if match_localpref: local_pref = match_localpref.group(1)
             else:               local_pref = '-'
-    
+
             match_as_path = re.search(r"AS path: (.*?)\r\n", proto_info[3],re.MULTILINE)
             if match_as_path:
                 as_list = match_as_path.group(1).split()
@@ -616,13 +616,13 @@ def create_best_path_select_data(self,route_content,output_excel='best.xlsx'):
             else:
                 as_path = '-'
                 origin = '-'
-    
+
             match_med = re.search(r"Metric: (\S+) ", proto_info[3],re.MULTILINE)
             if match_med:
                 med = match_med.group(1)
             else:
                 med = '-'
-    
+
             match_type = re.search(r"Local AS:  (\S+) Peer AS: (\S+)",proto_info[3],re.MULTILINE)
             if match_type:
                 if match_type.group(1) == match_type.group(2):
@@ -631,32 +631,32 @@ def create_best_path_select_data(self,route_content,output_excel='best.xlsx'):
                     type = 'EBGP'
             else:
                 type = '-'
-    
-    
+
+
             match_igp = re.search(r"Metric2: (\S+)",proto_info[3],re.MULTILINE)
             if match_igp:
                 igp = match_igp.group(1)
             else:
                 igp = '-'
-    
+
             match_router_id = re.search(r"Router ID: (\S+)",proto_info[3],re.MULTILINE)
             if match_router_id:
                 router_id = match_router_id.group(1)
             else:
                 router_id = '-'
-    
+
             match_cll = re.search(r"Cluster list:  (.*)\r\n",proto_info[3],re.MULTILINE)
             if match_cll:
                 cll = len(match_cll.group(1).split())
             else:
                 cll = '0'
-    
+
             match_peer = re.search(r"Source: (\S+)",proto_info[3],re.MULTILINE)
             if match_peer:
                 peer = match_peer.group(1)
             else:
                 peer = '-'
-    
+
 #            match_age = re.search(r"Age: (\S+)",proto_info[3],re.MULTILINE)
 #            if match_age:
 #                age = reduce(lambda x, y: x*60+y, [int(i) for i in match_age.group(1).split(':')])
@@ -671,22 +671,22 @@ def create_best_path_select_data(self,route_content,output_excel='best.xlsx'):
                 age = age + sum(int(x) * 60 ** i for i,x in enumerate(reversed(m.group(3).split(":"))))
             else:
                 age = '-'
-    
+
             match_reason = re.search(r"Inactive reason: (.+)\r\n",proto_info[3],re.MULTILINE)
             if match_reason:
                 reason = match_reason.group(1)
             else:
                 reason = '-'
-    
-    
+
+
             BuiltIn().log("    Added row: \
             (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" %
             (via_intf,route,pp,local_pref,as_path,origin,med,proto,type,igp,age,router_id,cll,peer,win,reason))
-    
+
             row = [via_intf,route,pp,local_pref,as_path,origin,med,proto,type,igp,age,router_id,cll,peer,win,reason]
             ws.append(row)
             line = line + 1
-   
+
     # coloring style
     # HeaderFill  = PatternFill(start_color='ffff00',end_color='ffff00',fill_type='solid')
     RedFont     = Font(color=colors.RED)
@@ -695,7 +695,7 @@ def create_best_path_select_data(self,route_content,output_excel='best.xlsx'):
     #    cell.fill = HeaderFill
     #for cell in ws['O']:
     #    if cell.value=='win': cell.font = RedFont
-    
+
     for cell in reversed(ws['P']):
         row = int(cell.row)
         if cell.value == 'Update source':
@@ -734,7 +734,7 @@ def create_best_path_select_data(self,route_content,output_excel='best.xlsx'):
         if cell.value == 'Route Preference':
             ws['C%d' % row].font = BlueFont
             ws['C%d' % (row - 1)].font = RedFont
-    
+
     # adjust column width
     ws.column_dimensions['B'].width = 12
     ws.column_dimensions['C'].width = 12
@@ -745,7 +745,7 @@ def create_best_path_select_data(self,route_content,output_excel='best.xlsx'):
     ws.column_dimensions['M'].width = 12
     ws.column_dimensions['O'].width = 12
     ws.column_dimensions['P'].width = 32
-    
+
     tab = Table(displayName="Table1",ref="A1:P%d" % line)
     style = TableStyleInfo(name="TableStyleMedium9",showFirstColumn=False,showLastColumn=False,showRowStripes=False,showColumnStripes=False)
     tab.tableStyleInfo = style
@@ -756,7 +756,7 @@ def create_best_path_select_data(self,route_content,output_excel='best.xlsx'):
     for row in rows:
         for cell in row:
             cell.alignment = Alignment(horizontal="right")
-    
+
     ws.append([])
     ws.append(['※1 Protocol Preference の値はルータの import policy で変更'])
     ws.append(['※2 ここでは Always Compare MED 有りの試験のみ実施。'])
@@ -764,11 +764,11 @@ def create_best_path_select_data(self,route_content,output_excel='best.xlsx'):
     ws.append(['※4 全経路配信後、IF-B から配信しているこの経路(1.9.0.0) だけ一回フラップさせるた。'])
 
     save_path = os.getcwd() + '/' + Common.get_result_folder() + '/' + output_excel
-    wb.save(save_path) 
+    wb.save(save_path)
     BuiltIn().log("Created the best path select matrix")
 
 def _check_interface_output(output, link):
-    '''Used to check the output from commands which target a specific interface name, 
+    '''Used to check the output from commands which target a specific interface name,
     validating the output before handing it off for further processing.
 
     Checks for empty return, or common errors such as interface not found
@@ -779,7 +779,7 @@ def _check_interface_output(output, link):
       return True
 
 def _check_if_output_empty(output):
-    '''Used to check the output from commands to make sure the return is not blank/Empty, 
+    '''Used to check the output from commands to make sure the return is not blank/Empty,
     validating the output before handing it off for further processing.
 
     Checks for empty return represented by the prompt and a new line.
@@ -807,7 +807,7 @@ def _check_if_output_empty(output):
                 return False
             else:
                 return True
-        
+
 def _check_link_status_description(output,description):
     if description in output:
         return True
@@ -832,13 +832,13 @@ def _verify_route_engine_status(output):
     """ Attempts to verify that RE0 has the mastership.
 
     Failure indicates either RE0 is missing or another RE has the master role.
-    """ 
+    """
     masterstatus = re.search(r'Current state.*(Master)',output)
     if masterstatus != None:
         return True
     else:
         return False
-    
+
 
 def get_interface_information(self,state='all'):
     '''Captures the information about interfaces in a defined state. (Up or down)
@@ -872,7 +872,7 @@ def check_chassis_environment(self):
     device = self._vchannel.current_name
 
     output = self._vchannel.cmd('show chassis environment')
-    
+
     if _check_if_output_empty(output) != True:
         raise Exception('%s - Output returned empty - Please check configuration on device' % device)
     if 'Check' in output:
@@ -970,7 +970,7 @@ def check_chassis_power(self):
     device = self._vchannel.current_name
 
     output = self._vchannel.cmd('show chassis power')
-    
+
     if _check_if_output_empty(output) != True:
         raise Exception('%s - Output returned empty - Please check configuration on device' % device)
     if 'Check' in output:
@@ -983,7 +983,7 @@ def clear_bgp_routes(self,table='inet.0'):
 
     | Clear BGP Routes | table=inet.0 |
     '''
-    self._vchannel.cmd('clear bgp table %s' % table)    
+    self._vchannel.cmd('clear bgp table %s' % table)
 
 def check_lfm_status(self,link='default',status='Down',state='Down'):
     ''' Checks the Link Fault Management Status of the specified interfaces.
@@ -1026,14 +1026,14 @@ def check_lfm_status(self,link='default',status='Down',state='Down'):
             errors.append('%s - Returned Output Was Empty - Please check supplied variables.' % device)
             #Check if any errors where raised as part of the process and raise them.
             if len(errors) > 0:
-                raise Exception(errors) 
+                raise Exception(errors)
     elif link=='default':
         output = self._vchannel.cmd('show oam ethernet link-fault-management brief')
         if _check_if_output_empty(output) != True:
             errors.append('%s - Returned Output Was Empty - Please check supplied variables.' % device)
             #Check if any errors where raised as part of the process and raise them.
             if len(errors) > 0:
-                raise Exception(errors) 
+                raise Exception(errors)
 
     #Perform actions on gathered info based on arguments
     if link=='default':
@@ -1057,7 +1057,7 @@ def check_link_error_status(self,link='default'):
         errors.append('%s No Link Specified, Please Check Test Script' % link)
     if len(errors) > 0:
         raise Exception(errors)
-    
+
     output = self._vchannel.cmd('show interfaces %s extensive | display json' % link)
 
     if _check_if_output_empty(output) != True:
@@ -1065,7 +1065,7 @@ def check_link_error_status(self,link='default'):
     #Check if any errors where raised as part of the process and raise them.
     if len(errors) > 0:
         raise Exception(errors)
-    
+
     trimmed_output = re.findall(r'^(.*)(?<=).{master}|{backup}|.*>$', output,re.M | re.DOTALL)
     #print(trimmed_output[0])
     if len(trimmed_output) < 1:
@@ -1114,7 +1114,7 @@ def check_mtu(self,link,link_type,expected_mtu):
     output = self._vchannel.cmd('show interfaces %s' % link)
     if _check_if_output_empty(output) != True:
         errors.append('%s - Returned Output Was Empty - Please check supplied variables.' % device)
-		
+
     #Check if any errors where raised as part of the process and raise them.
     if len(errors) > 0:
         raise Exception(errors)
@@ -1186,11 +1186,11 @@ def get_chassis_full(self):
     #Create errors for appending into
     errors = []
     device = self._vchannel.current_name
-    
+
     output = self._vchannel.cmd("show chassis hardware")
     if _check_if_output_empty(output) != True:
         errors.append('%s - Returned Output Was Empty - Please check supplied variables.' % device)
-    
+
     #Check if any errors where raised as part of the process and raise them.
     if len(errors) > 0:
         raise Exception(errors)
@@ -1220,20 +1220,20 @@ def get_route_summary(self,table='inet.0'):
     output = self._vchannel.cmd("show route summary table %s" % table)
     if _check_if_output_empty(output) != True:
         errors.append('%s - Returned Output Was Empty - Please check supplied variables.' % device)
-    
+
     #Check if any errors where raised as part of the process and raise them.
     if len(errors) > 0:
         raise Exception(errors)
-    
+
     for line in output.split("\n"):
         match = re.match(r"%s: .* \((.+) active," % table, line)
         if match:
             result = int(match.group(1))
-    BuiltIn().log("Got %d routes from `%s`" % (result,table)) 
-    return result 
+    BuiltIn().log("Got %d routes from `%s`" % (result,table))
+    return result
 
 def get_route_summary_txt(self,table='inet.0',file_out='default'):
-    ''' 
+    '''
     Returns number of active route in the ``table`` and saves as a file
 
     ``table`` could be ``inet.0`` or ``inet.6``
@@ -1257,12 +1257,12 @@ def get_route_summary_txt(self,table='inet.0',file_out='default'):
         match = re.match(r"%s: .* \((.+) active," % table, line)
         if match:
             result = int(match.group(1))
-            BuiltIn().log("Got %d routes from `%s`" % (result,table),console=True) 
+            BuiltIn().log("Got %d routes from `%s`" % (result,table),console=True)
         if 'default' not in file_out:
             f = open('%s.txt' % file_out,'w+')
             f.write(str(result))
             f.close
-    return result 
+    return result
 
 def verify_commit_mode(self):
     ''' Verifies the commit mode of the router is set to synchronize
@@ -1290,13 +1290,13 @@ def engine_switch_test(self,checkstatus=''):
     """ Verifies the number of route engines present within the device.
 
     If more than 1 is present attempts to connect to the back up route-engine to verify functionality
-    Test will fail if >1 RE present and backup RE is not reachable. 
-    
+    Test will fail if >1 RE present and backup RE is not reachable.
+
     check_status=True causes the test to ensure RE0 is master.
 
     | Verify Route Engine |
     | Verify Route Engine | check_status=True |
-    """ 
+    """
     #Create errors for appending into
     errors = []
     device = self._vchannel.current_name
@@ -1319,13 +1319,13 @@ def verify_route_engine(self,checkstatus=''):
     """ Verifies the number of route engines present within the device.
 
     If more than 1 is present attempts to connect to the back up route-engine to verify functionality
-    Test will fail if >1 RE present and backup RE is not reachable. 
-    
+    Test will fail if >1 RE present and backup RE is not reachable.
+
     check_status=True causes the test to ensure RE0 is master.
 
-    | Verify Route Engine | 
+    | Verify Route Engine |
     | Verify Route Engine | check_status=True |
-    """ 
+    """
 
     #Create errors for appending into
     errors = []
@@ -1370,8 +1370,8 @@ def verify_version(self,expectedversion='default'):
     If no argument is specified simply logs the current version to the console
 
     If argument is specified ensures that the version on the device matches the expected version
-    
-    """ 
+
+    """
     #Create errors for appending into
     errors = []
     device = self._vchannel.current_name
@@ -1407,7 +1407,7 @@ def check_isis_adjacency(self,link='default',level='0',state='default'):
     #Create errors for appending into
     errors = []
     device = self._vchannel.current_name
-    
+
     #Default command for tests without any options, Prevents unessecary failures whilst highlighting the error.
     if link == 'default':
        BuiltIn().log('No Link Specified, Executing Show All Command')
@@ -1418,7 +1418,7 @@ def check_isis_adjacency(self,link='default',level='0',state='default'):
             errors.append("You're a redneck heartbreak, Who's really bad at lying")
        else:
            return
-    #If a link argument has been specified.           
+    #If a link argument has been specified.
     elif link != 'default':
        output = self._vchannel.cmd('show isis adjacency | grep %s' % link)
        #Validate the return output
@@ -1431,7 +1431,7 @@ def check_isis_adjacency(self,link='default',level='0',state='default'):
                 return True
                 #BuiltIn().log(' truestuff', console=True)
             else:
-                if '!' in output:                    
+                if '!' in output:
                     errors.append('%s - %s Adjacency Missing IP Address - Check ISIS configuration on device' % (self._vchannel.current_name,link))
                 if 'Down' in output:
                     errors.append('%s - %s Adjacency Down - Check Device' % (self._vchannel.current_name,link))
@@ -1467,7 +1467,7 @@ def check_isis_interface(self,link='default', level='0',state='enabled'):
         #Make sure link level has been specified.
         if level == '0':
             raise Exception('%s -  No Level Specified. Please Check Test Script')
-        #If link level has been specified. 
+        #If link level has been specified.
         if level != '0':
             configured_level = re.findall(r'\s\s(\d)\s\s', output)
             if level == '1':
@@ -1482,12 +1482,12 @@ def check_isis_interface(self,link='default', level='0',state='enabled'):
                     return True
                 else:
                     errors.append('%s - Configured state %s does not match expected %s' % (device,configured_l2_dr,state))
-            else: 
+            else:
                 errors.append('%s - Configured Level %s is not a valid level, Please use 1 or 2' % (device,configured_level))
-    
+
     #Check if any errors where raised as part of the process and raise them.
     if len(errors) > 0:
-        raise Exception(errors)    
+        raise Exception(errors)
 
 def check_isis_level_configuration(self,level='0',state='enabled'):
     '''Checks the ISIS Level Configuration Level for the specified level.
@@ -1500,11 +1500,11 @@ def check_isis_level_configuration(self,level='0',state='enabled'):
     #Create errors for appending into
     errors = []
     device = self._vchannel.current_name
-    
+
     #Default command for tests without any options, Prevents unessecary failures whilst highlighting the error.
     if level == '0':
         raise Exception('%s -  No Level Specified. Please Check Test Script' % device)
-    #If a link argument has been specified.           
+    #If a link argument has been specified.
     if level != '0':
         output = self._vchannel.cmd('show configuration protocols isis level %s' % level)
         if 'Invalid numeric value' in output or 'is not within range' in output:
@@ -1519,12 +1519,12 @@ def check_isis_level_configuration(self,level='0',state='enabled'):
                 return True
             else:
                 errors.append('%s - State Does not match Desired, Got - Enabled, Expected: Disabled' % device)
-        else:        
+        else:
             errors.append('%s - Invalid State Supplied - %s' %(device, state))
-                        
+
     #Check if any errors where raised as part of the process and raise them.
     if len(errors) > 0:
-        raise Exception(errors) 
+        raise Exception(errors)
 
 def verify_isis_protocol(self,protocol='ipv4',state='enabled'):
     '''Checks the specified procotol matches the desired state for ISIS.
@@ -1538,12 +1538,12 @@ def verify_isis_protocol(self,protocol='ipv4',state='enabled'):
     #Create errors for appending into
     errors = []
     device = self._vchannel.current_name
-    
+
     if protocol.lower() == 'ipv4':
         output = self._vchannel.cmd('show isis overview | grep %s' % protocol)
         if _check_if_output_empty(output) != True:
             raise Exception('%s - Returned Output Was Empty - Please check supplied variables' % device)
-        current_status = re.findall(r'IPv4 is (\w+)', output)   
+        current_status = re.findall(r'IPv4 is (\w+)', output)
         BuiltIn().log(output, console=True)
         BuiltIn().log(current_status[0], console=True)
         if state.lower() == current_status[0].lower():
@@ -1554,7 +1554,7 @@ def verify_isis_protocol(self,protocol='ipv4',state='enabled'):
         output = self._vchannel.cmd('show isis overview | grep %s' % protocol)
         if _check_if_output_empty(output) != True:
             raise Exception('%s - Returned Output Was Empty - Please check supplied variables' % device)
-        current_status = re.findall(r'IPv6 is (\w+)', output)   
+        current_status = re.findall(r'IPv6 is (\w+)', output)
         BuiltIn().log(output, console=True)
         BuiltIn().log(current_status[0], console=True)
         if state.lower() == current_status[0].lower():
@@ -1562,8 +1562,8 @@ def verify_isis_protocol(self,protocol='ipv4',state='enabled'):
         else:
             errors.append('%s - State Does not match Desired, Got - %s, Expected: %s' %(device,current_status,state))
     else:
-        raise Exception('Invalid protocol specified - %s . Please use ipv4 or ipv6')    
-                       
+        raise Exception('Invalid protocol specified - %s . Please use ipv4 or ipv6')
+
     #Check if any errors where raised as part of the process and raise them.
     if len(errors) > 0:
         raise Exception(errors)
@@ -1586,12 +1586,12 @@ def verify_isis_wide_metrics(self,level='0',state='enabled'):
         errors.append('%s - Level %s specified is not a valid ISIS level - Please Check Test Script' % (device,level))
     if state.casefold() not in ['enabled, disabled']:
         errors.append('%s -  %s not a valid state. Please use enabled or disabled.' % (device,state))
-    
+
     #Raise errors if initial input sanity tests fail
     if len(errors) > 0:
         raise Exception(errors)
-    
-    #If a link argument has been specified.           
+
+    #If a link argument has been specified.
     if level != '0':
         if level == '1':
             output = self._vchannel.cmd('show isis overview | find "level 1" | grep wide')
@@ -1601,16 +1601,16 @@ def verify_isis_wide_metrics(self,level='0',state='enabled'):
             if current_state[0].casefold() == state.casefold():
                 return True
             else:
-                raise Exception('%s - State Does not match Desired, Got - %s, Expected: %s' %(device,current_state,state))          
+                raise Exception('%s - State Does not match Desired, Got - %s, Expected: %s' %(device,current_state,state))
         elif level == '2':
             output = self._vchannel.cmd('show isis overview | find "level 2" | grep wide')
             if _check_if_output_empty(output) != True:
-                raise Exception('%s - Returned Output Was Empty - Please check supplied variables' % device)  
+                raise Exception('%s - Returned Output Was Empty - Please check supplied variables' % device)
             current_state = re.findall(r'are (\w+)',output)
             if current_state[0].casefold() == state.casefold():
                 return True
             else:
-                raise Exception('%s - State Does not match Desired, Got - %s, Expected: %s' %(device,current_state,state))                    
+                raise Exception('%s - State Does not match Desired, Got - %s, Expected: %s' %(device,current_state,state))
 
 
 def verify_isis_link_costs(self,link='default', level='0',metric='enabled'):
@@ -1618,7 +1618,7 @@ def verify_isis_link_costs(self,link='default', level='0',metric='enabled'):
 
     Validates input for a link name, valid level and numerical metric.
 
-    All arguments required 
+    All arguments required
 
     | Verify ISIS Link Costs | link=ae8.0  | level=2 | metric=10 |
     '''
@@ -1630,17 +1630,17 @@ def verify_isis_link_costs(self,link='default', level='0',metric='enabled'):
     elif link != 'default':
         output = self._vchannel.cmd('show isis interface %s' % link)
         if _check_if_output_empty(output) != True:
-            errors.append('%s - Returned Output Was Empty - Please check supplied variables.' % device)  
+            errors.append('%s - Returned Output Was Empty - Please check supplied variables.' % device)
     if level == '0':
         errors.append('%s - No level specified - Please Check Test Script' % device)
     elif level not in ['1','2']:
         errors.append('%s - Level %s specified is not a valid ISIS level - Please Check Test Script' % (device,level))
 
     if metric== 'enabled':
-        errors.append('%s - No metric specified - Please Check Test Script' % device) 
+        errors.append('%s - No metric specified - Please Check Test Script' % device)
     elif metric.isdigit() == False:
-        errors.append('%s - Metric specified %s is not a number - Please Check Test Script' % (device,metric))           
-    
+        errors.append('%s - Metric specified %s is not a number - Please Check Test Script' % (device,metric))
+
     #Raise errors if initial input sanity tests fail
     if len(errors) > 0:
         raise Exception(errors)
@@ -1650,13 +1650,13 @@ def verify_isis_link_costs(self,link='default', level='0',metric='enabled'):
         if int(current_metric[0]) == int(metric):
             return True
         elif int(current_metric[0]) != int(metric):
-            errors.append('%s - Metric Does not match Desired, Got - %s, Expected: %s' %(device,current_metric[0],metric))                    
+            errors.append('%s - Metric Does not match Desired, Got - %s, Expected: %s' %(device,current_metric[0],metric))
     if level == '2':
         current_metric = re.findall(r'\d+\/(\d+)',output)
         if int(current_metric[0]) == int(metric):
             return True
         elif int(current_metric[0]) != int(metric):
-            errors.append('%s - Metric Does not match Desired, Got - %s, Expected: %s' %(device,current_metric[0],metric))                    
+            errors.append('%s - Metric Does not match Desired, Got - %s, Expected: %s' %(device,current_metric[0],metric))
 
     if len(errors) > 0:
         raise Exception(errors)
@@ -1675,7 +1675,7 @@ def verify_isis_adjacency_authentication(self,link='default',level='0',authentic
     elif link != 'default':
         output = self._vchannel.cmd('show isis authentication | grep %s' % link)
         if _check_if_output_empty(output) != True:
-            errors.append('%s - Returned Output Was Empty - Please check supplied variables.' % device)  
+            errors.append('%s - Returned Output Was Empty - Please check supplied variables.' % device)
     if level == '0':
         errors.append('%s - No level specified - Please Check Test Script' % device)
     elif level not in ['1','2']:
@@ -1683,7 +1683,7 @@ def verify_isis_adjacency_authentication(self,link='default',level='0',authentic
 
     #Raise errors if initial input sanity tests fail
     if len(errors) > 0:
-        raise Exception(errors) 
+        raise Exception(errors)
 
     #Capture link level
     isis_link_level = re.findall(r'\s\s(1|2)\s\s',output)
@@ -1697,7 +1697,7 @@ def verify_isis_adjacency_authentication(self,link='default',level='0',authentic
     if key_chain == 'iih':
         output = self._vchannel.cmd('show security keychain detail | find %s' % iih_auth_chain[0])
         if _check_if_output_empty(output) != True:
-            errors.append('%s - Returned Output Was Empty - Please check supplied variables.' % device)  
+            errors.append('%s - Returned Output Was Empty - Please check supplied variables.' % device)
         if isis_link_level[0] == level:
             keychain_algorithm = psn_auth_chain = re.findall(r'Algorithm\s(.*),\sState',output)
             BuiltIn().log(keychain_algorithm[0],console=True)
@@ -1710,7 +1710,7 @@ def verify_isis_adjacency_authentication(self,link='default',level='0',authentic
     if key_chain == 'csn':
         output = self._vchannel.cmd('show security keychain detail | find %s' % csn_auth_chain[0])
         if _check_if_output_empty(output) != True:
-            errors.append('%s - Returned Output Was Empty - Please check supplied variables.' % device)  
+            errors.append('%s - Returned Output Was Empty - Please check supplied variables.' % device)
         if isis_link_level[0] == level:
             keychain_algorithm = psn_auth_chain = re.findall(r'Algorithm\s(.*),\sState',output)
             BuiltIn().log(keychain_algorithm[0],console=True)
@@ -1723,7 +1723,7 @@ def verify_isis_adjacency_authentication(self,link='default',level='0',authentic
     if key_chain == 'psn':
         output = self._vchannel.cmd('show security keychain detail | find %s' % psn_auth_chain[0])
         if _check_if_output_empty(output) != True:
-            errors.append('%s - Returned Output Was Empty - Please check supplied variables.' % device)  
+            errors.append('%s - Returned Output Was Empty - Please check supplied variables.' % device)
         if isis_link_level[0] == level:
             keychain_algorithm = psn_auth_chain = re.findall(r'Algorithm\s(.*),\sState',output)
             BuiltIn().log(keychain_algorithm[0],console=True)
@@ -1754,24 +1754,24 @@ def verify_ldp_neighbour(self,link='default',neighbour='default',notenabled='def
         errors.append('%s No Neighbour Specified, Please Check Test Script' % device)
     if neighbour != 'default':
         try:
-            ip_address(neighbour) 
+            ip_address(neighbour)
         except:
-            errors.append('%s - %s not a valid IPv4 Address, Please use Enabled or Disabled' %(device,neighbour))   
+            errors.append('%s - %s not a valid IPv4 Address, Please use Enabled or Disabled' %(device,neighbour))
 
     #Raise errors if initial input sanity tests fail
     if len(errors) > 0:
-        raise Exception(errors) 
+        raise Exception(errors)
 
     if notenabled != 'default':
         output = self._vchannel.cmd('show ldp neighbor | grep %s' % link)
         if _check_if_output_empty(output) != True:
-            return True   
+            return True
         else:
-            errors.append('%s - Neighbour %s in connected to  %s, Please check configuration' %(device, neighbour, link))     
+            errors.append('%s - Neighbour %s in connected to  %s, Please check configuration' %(device, neighbour, link))
     else:
         output = self._vchannel.cmd('show ldp neighbor | grep %s' % link)
         if _check_if_output_empty(output) != True:
-            raise Exception('%s - Returned Output Was Empty - Please check supplied variables.' % device)  
+            raise Exception('%s - Returned Output Was Empty - Please check supplied variables.' % device)
         if neighbour not in output:
             errors.append('%s - Neighbour %s not connected to link %s, Please check configuration' %(device, neighbour, link))
 
@@ -1790,17 +1790,17 @@ def verify_ldp_hellos(self,neighbour='default',state='enabled'):
     device = self._vchannel.current_name
 
     try:
-        ip_address(neighbour) 
+        ip_address(neighbour)
     except:
         errors.append('%s - %s not a valid IPv4 Address, Please use Enabled or Disabled' %(device,neighbour))
     if state.casefold() not in ['enabled', 'disabled']:
         errors.append('%s - State %s not a valid protection state, Please use Enabled or Disabled' %(device,state))
     if len(errors) > 0:
-        raise Exception(errors) 
+        raise Exception(errors)
 
     output = self._vchannel.cmd(' show ldp session extensive %s | grep protection' % neighbour)
     if _check_if_output_empty(output) != True:
-        raise Exception('%s - Returned Output Was Empty - Please check supplied variables.' % device)  
+        raise Exception('%s - Returned Output Was Empty - Please check supplied variables.' % device)
 
     #neighbour_type = re.findall(r'Neighbor types: (.*)',output)        Might factor into later tests
     current_state = re.findall(r'Protection: (\w+)',output)
@@ -1828,12 +1828,12 @@ def verify_ldp_igp_tracking(self,instance='default'):
     if instance != 'default':
         output = self._vchannel.cmd('show configuration %s' % instance)
         if _check_if_output_empty(output) != True:
-            raise Exception('%s - No such routing instance %s - Please check supplied variables.' % (device,instance))  
+            raise Exception('%s - No such routing instance %s - Please check supplied variables.' % (device,instance))
 
     if instance == 'default':
         output = self._vchannel.cmd('show configuration protocols ldp | find track-igp-metric')
         if _check_if_output_empty(output) != True:
-            raise Exception('%s - Returned Output Was Empty - Please check supplied variables.' % device)  
+            raise Exception('%s - Returned Output Was Empty - Please check supplied variables.' % device)
         if 'track-igp-metric;' in output:
             return True
         else:
@@ -1841,7 +1841,7 @@ def verify_ldp_igp_tracking(self,instance='default'):
     else:
         output = self._vchannel.cmd('show configuration routing-instances %s protocols ldp | find track-igp-metric' % instance)
         if _check_if_output_empty(output) != True:
-            raise Exception('%s - Returned Output Was Empty - Please check supplied variables.' % device)  
+            raise Exception('%s - Returned Output Was Empty - Please check supplied variables.' % device)
         if 'track-igp-metric;' in output:
             return True
         else:
@@ -1870,10 +1870,10 @@ def verify_bgp_peer_address_family(self, instance='default',family='inet-vpn',pe
     if instance != 'default':
         output = self._vchannel.cmd('show configuration routing-instances %s' % instance)
         if _check_if_output_empty(output) != True:
-            errors.append('%s - %s Family not a valid BGP family - Please check supplied variables.' % (device,family))       
+            errors.append('%s - %s Family not a valid BGP family - Please check supplied variables.' % (device,family))
     #Raise errors if initial input sanity tests fail
     if len(errors) > 0:
-        raise Exception(errors) 
+        raise Exception(errors)
 
     family_string = 'family '+family
     BuiltIn().log(family_string,console=True)
@@ -1885,7 +1885,7 @@ def verify_bgp_peer_address_family(self, instance='default',family='inet-vpn',pe
         if family_string in output:
             return True
         else:
-            errors.append('%s - %s Family not present in group %s - Please check supplied variables.' % (device,family, peer_group))       
+            errors.append('%s - %s Family not present in group %s - Please check supplied variables.' % (device,family, peer_group))
     else:
         output = self._vchannel.cmd('show configuration routing-instances %s protocols bgp group %s' % (instance,peer_group))
         if _check_if_output_empty(output) != True:
@@ -1893,20 +1893,20 @@ def verify_bgp_peer_address_family(self, instance='default',family='inet-vpn',pe
         if family_string in output:
             return True
         else:
-            errors.append('%s - %s Family not present in %s group %s - Please check supplied variables.' % (device,family,instance,peer_group))       
-    
+            errors.append('%s - %s Family not present in %s group %s - Please check supplied variables.' % (device,family,instance,peer_group))
+
     #Raise errors if tests fail
     if len(errors) > 0:
         raise Exception(errors)
-    
-    
+
+
 def verify_bgp_local_address(self, address='default',link='default',group='default',instance='default'):
     '''Verifies that specified BGP peer group has desired local address.
 
     Does not require instance, Defaults to default instance if no instance specified.
 
-    | Verify BGP Local Address | group=V4_IBGP | address=127.0.0.1 | 
-    | Verify BGP Local Address | instance=customer instance | group=V4_IBGP  | address=127.0.0.1 | 
+    | Verify BGP Local Address | group=V4_IBGP | address=127.0.0.1 |
+    | Verify BGP Local Address | instance=customer instance | group=V4_IBGP  | address=127.0.0.1 |
 
     '''
     errors = []
@@ -1916,17 +1916,17 @@ def verify_bgp_local_address(self, address='default',link='default',group='defau
         errors.append('%s No Group Specified, Please Check Test Script' % device)
     if address != 'default':
         try:
-            ip_address(address) 
+            ip_address(address)
         except:
             errors.append('%s - %s not a valid IPv4 Address, Please use Enabled or Disabled' %(device,address))
     if instance != 'default':
         output = self._vchannel.cmd('show configuration routing-instances %s' % instance)
         if _check_if_output_empty(output) != True:
             errors.append('%s - %s is not a valid instance - Please check supplied variables.' % (device,instance))
-    
+
     #Raise errors if initial input sanity tests fail
     if len(errors) > 0:
-        raise Exception(errors) 
+        raise Exception(errors)
 
 
     if instance == 'default':
@@ -1960,7 +1960,7 @@ def verify_bgp_local_address(self, address='default',link='default',group='defau
         elif local_address[0] != address:
             BuiltIn().log('stuck like glue',console=True)
             errors.append('%s - %s does not match current group %s address %s - Please check supplied variables.' % (device,address,group,local_address))
-    
+
     #Raise errors if tests fail
     if len(errors) > 0:
         raise Exception(errors)
@@ -2038,7 +2038,7 @@ def verify_syslog(self):
         raise Exception('%s - No log messages present - Please check configuration on device' % device)
 
     BuiltIn().log('\n',console=True)
-    trigger_words =  ['core dump','error','failure','critical','exception']        
+    trigger_words =  ['core dump','error','failure','critical','exception']
     for trigger in trigger_words:
         output = self._vchannel.cmd('show log messages | no-more | except UI_CMDLINE_READ_LINE | grep "%s"' % trigger)
         if trigger in output:
@@ -2083,10 +2083,10 @@ def verify_ftp(self,source='default',destination='default'):
         errors.append('%s No source file specified, Please Check Test Script' % device)
     if destination == 'default':
         errors.append('%s No destination file specified, Please Check Test Script' % device)
-    
+
     #Raise errors if initial input sanity tests fail
     if len(errors) > 0:
-        raise Exception(errors) 
+        raise Exception(errors)
     output = self._vchannel.cmd('file copy %s %s' % (source,destination))
     if 'error:' in output:
         errors.append('%s Error in command , Please Check Test Script' % device)

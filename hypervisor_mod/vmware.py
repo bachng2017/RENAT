@@ -39,7 +39,7 @@ def _ssh_cmd(self,cmd):
     logger = channel['ssh_logger']
     ssh.write(cmd)
     logger.write(cmd)
-     
+
     result  = ssh.read_until_regexp(self._ssh_prompt)
     logger.write(result)
     logger.flush()
@@ -97,7 +97,7 @@ def get_vm_id(self,vm_name):
 
 def get_vm_power_state(self,vm_name):
     """ Get vm power status
-    
+
     Return ``on`` of ``off``
     """
     state = 'on'
@@ -114,13 +114,13 @@ def power_on(self,vm_name):
     target_vm = _get_vm(self,vm_name)
     cmd = 'vim-cmd vmsvc/power.on %s' % target_vm._moId
     output = _ssh_cmd(self,cmd)
-    BuiltIn().log('Power on the VM `%s`' % vm_name) 
+    BuiltIn().log('Power on the VM `%s`' % vm_name)
 
 def power_off(self,vm_name,graceful=True):
     """ Shutdowns a VM
 
     If `graceful` is True, a graceful shutdown is tried before a power off.
-    
+
     *Note*: if VMware tools is not install on the VM, graceful shutdown is not
     available
     """
@@ -128,12 +128,12 @@ def power_off(self,vm_name,graceful=True):
     if graceful:
         cmd = 'vim-cmd vmsvc/power.shutdown %s' % target_vm._moId
         output = _ssh_cmd(self,cmd)
-    
+
     if ('VMware Tools is not running' in output) or ('Invalid fault' in output):
         cmd = 'vim-cmd vmsvc/power.off %s' % target_vm._moId
         output = _ssh_cmd(self,cmd)
-   
-    BuiltIn().log('Shutdown the VM `%s`' % vm_name) 
+
+    BuiltIn().log('Shutdown the VM `%s`' % vm_name)
 
 
 def send_mks_key(self,key,wait='5s'):
@@ -143,14 +143,14 @@ def send_mks_key(self,key,wait='5s'):
 
 def send_mks_keys(self,keys,wait='5s'):
     """ Sends key strokes to current web console
-   
+
     Special Ctrl char could be used as ``${CTRL_A}`` to ``${CTRL_Z}``
 
     Examples:
     | `Send MKS Key`   |     ${CTRL_L} |
 
     *Notes*: For other usable key value, see Selenium document
-    """ 
+    """
     driver = BuiltIn().get_library_instance('SeleniumLibrary')
     canvas = driver.get_webelement('mainCanvas')
     if len(keys) == 1 and ord(keys) < ord('@'):
@@ -163,7 +163,7 @@ def send_mks_keys(self,keys,wait='5s'):
 
 def click_mks(self,xoffset,yoffset):
     """ Click on the MKS console at `xoffset`,`yoffset` coordinate
-    
+
     *Notes*: The coordinate (0,0) is at the left corner of the console screen
     """
     driver = BuiltIn().get_library_instance('SeleniumLibrary')
@@ -190,11 +190,11 @@ def send_mks_cmd(self,cmd,wait=u'5s'):
 
 def capture_mks_screenshot(self,filename=None,extra=u''):
     """ Captures the current web console to `filename`
-    
+
     If `filename` is ``None``, the captured filename will be decided by the
     current ``format`` with an auto-increment counter and a ``extra`` at the
     end.
-    
+
     Example:
     | `Hypervisor`.Capture MKS Screenshot | # will create a file console_0000000001.png |
     | `Hypervisor`.Capture MKS Screenshot | xxx.png | # will create a file xxx.png |
@@ -222,7 +222,7 @@ def set_capture_format(self,format):
     channel = self._channels[self._current_name]
     channel['capture_format'] = format
     BuiltIn().log('Set capture format str of `%s` to `%s`' % (self._current_name,format))
-    
+
 
 def reset_capture_counter(self):
     self._channels[self._current_name]['counter'] = 0
@@ -264,7 +264,7 @@ def open_console(self,vm_name,width=None,height=None):
     _check_console_html(self)
 
     current_folder = os.getcwd()
-    ticket = self.get_mks_ticket(vm_name) 
+    ticket = self.get_mks_ticket(vm_name)
     console_folder = '%s/tools/template/console' % os.environ['RENAT_PATH']
 
     render_var = {}
@@ -278,25 +278,25 @@ def open_console(self,vm_name,width=None,height=None):
         render_var['HEIGHT'] = console_info['height']
     else:
         render_var['HEIGHT'] = height
-        
+
     render_var['SERVER_IP'] = channel['ip']
     render_var['TICKET'] = ticket
 
     console_html = loader.render(render_var)
-    console_file = '%s/tmp/console/console.html' % current_folder 
-    
+    console_file = '%s/tmp/console/console.html' % current_folder
+
     with open(console_file,'w') as file:
         file.write(console_html)
 
     driver = BuiltIn().get_library_instance('SeleniumLibrary')
     driver.open_browser('file:///' + console_file)
     time.sleep(5)
-    driver.set_window_size(1024,768)   
-    driver.maximize_browser_window() 
+    driver.set_window_size(1024,768)
+    driver.maximize_browser_window()
     canvas = driver.get_webelement('mainCanvas')
     # canvas.size = {'width':1024,'height':768}
     size = canvas.size
     width = size['width']
-    height = size['height'] 
+    height = size['height']
     BuiltIn().log('Opened a WebMSK console(%s,%s) to `%s`' % (width,height,vm_name))
     return width,height

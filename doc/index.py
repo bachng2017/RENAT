@@ -1,4 +1,4 @@
-""" 
+"""
 Document for RENAT framework
 
 All in one pdf renat.pdf_
@@ -18,7 +18,7 @@ VChannel_:
 
 Logger_:
     Library provides enhanced loggging keywords
-Optical_: 
+Optical_:
     Library provides keywords to control L1 switches, includes mod_calient_ mod, mod_ntm_ mod
 Router_:
     Library provides keywords to control routers, includes mod_juniper_ mod , mod_cisco_ mod and mod_gr_ mod
@@ -59,9 +59,9 @@ Choose each libraries for detail infomration and samples about keywords.
 .. _mod_avaproxy:   ./tester_mod_avaproxy.html
 .. _mod_calient:    ./optic_mod_calient.html
 .. _mod_ntm:        ./optic_mod_ntm.html
-.. _Samurai:        ./Samurai.html   
-.. _Arbor:          ./Arbor.html   
-.. _Changes:        ./CHANGES.txt  
+.. _Samurai:        ./Samurai.html
+.. _Arbor:          ./Arbor.html
+.. _Changes:        ./CHANGES.txt
 .. _LabKeyword:     ./lab_robot.html
 .. _Hypervisor:     ./Hypervisor.html
 .. _mod_vmware:     ./hpv_mod_vmware.html

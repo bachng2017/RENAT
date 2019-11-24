@@ -31,13 +31,13 @@ def collect_log_from_file_server():
     """  Moves all csv files defined in `${MY_ID}_CSVList.txt` to the current
     result folder.
 
-    The `${MY_ID}` is a hashed specific for each test item. 
+    The `${MY_ID}` is a hashed specific for each test item.
     """
     pass
 
 def snmp_polling_start_for_host(host,filename_prefix='snmp_'):
     """ Starts a predefined polling script for a ``host``
-   
+
     The MIB file used for the polling process is defined in the local yaml
     config for each node.  The results file is appended by prefix
     ``filename_prefix``.
@@ -55,7 +55,7 @@ def snmp_polling_start(termname='apollo',filename_prefix='_snmp'):
 def snmp_polling_stop(termname='apollo'):
     """ Stops the process started by `SNMP Polling Start` on ``termname``
     """
-    pass  
+    pass
 
 def follow_remote_log_start(termname):
     """ Starts monitoring the syslog for nodes that has ``follow-remote-log``
@@ -65,7 +65,7 @@ def follow_remote_log_start(termname):
 
 def follow_remote_log_stop(termname):
     """ Stops the monitoring process started by `Follow Remote Log Start` on
-    ``termname`` 
+    ``termname``
     """
     pass
 
