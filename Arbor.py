@@ -143,27 +143,36 @@ class Arbor(WebApp):
 
     @with_reconnect
     def show_detail_countermeasure(self,name,*method_list):
-        """ Shows detail informatin about a countermeasure
+        """ Shows detail information about a countermeasure
 
         `name` is used to search the the mitigation and `method_list` is a list
         of countermeasures that are listed in Arbor Countermeasures panel
 
+        Return the number of displayed methods
+
+        Notes: the keyword will ignore if the method is not in its list and does not count for that
+
         Example:
         | ${NAME}  |   ${ID}=   |       `Show Detail First Mitigation` |
-        | Arbor.`Show Detail Countermeasure` | ${NAME} | DNS Malformed |
+        | ${COUNT= |  Arbor.`Show Detail Countermeasure` | ${NAME} | DNS Malformed |
         | Arbor.`Capture Screenshot` |
         | Sleep  | 10s |
         | Arbor.`Show Detail Countermeasure` | ${NAME} |  Zombie Detection | HTTP Malformed |
         | Arbor.`Capture Screenshot` |
         """
         self.show_detail_mitigation(name)
+        total_method = len(method_list)
+        count_method = 0
         for item in method_list:
             xpath = '//table//td[(@class="borderright") and (. = "%s")]/../td[1]/a' % item
-            target = self._selenium.get_webelement(xpath)
-            target.click()
-            time.sleep(2)
+            if self._selenium.get_element_count(xpath) > 0:
+                target = self._selenium.get_webelement(xpath)
+                target.click()
+                time.sleep(2)
+                count_method += 1
         self.verbose_capture()
-        BuiltIn().log('Showed detail information for %d countermesure of mitigation `%s`' %(len(method_list),name))
+        BuiltIn().log('Showed detail information for %d/%d countermesure of mitigation `%s`' %(count_method,total_method,name))
+        return count_method
 
 
     @with_reconnect
