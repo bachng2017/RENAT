@@ -413,7 +413,12 @@ _folder = os.path.dirname(__file__)
 if _folder == '': _folder = '.'
 
 ### load global setting
-with open(_folder + '/config/config.yaml') as f:
+_config_path = _folder + '/usr/config/config.yaml'
+if not os.path.exists(_config_path):
+    _config_path = _folder + '/config/config.yaml'
+if not os.path.exists(_config_path):
+    raise Exception("ERR: could not find global config.yaml")
+with open(_config_path) as f:
     file_content = f.read()
     GLOBAL.update(yaml.load(os.path.expandvars(file_content)))
 
