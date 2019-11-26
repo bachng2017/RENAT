@@ -413,7 +413,7 @@ _folder = os.path.dirname(__file__)
 if _folder == '': _folder = '.'
 
 ### load global setting
-_config_path = _folder + '/usr/config/config.yaml'
+_config_path = _folder + '/usr/config.yaml'
 if not os.path.exists(_config_path):
     _config_path = _folder + '/config/config.yaml'
 if not os.path.exists(_config_path):
