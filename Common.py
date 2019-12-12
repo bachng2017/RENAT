@@ -1071,7 +1071,7 @@ def diff_file(path1,path2,method=u'uniq',newline=True):
     with codecs.open(path1,'r','utf-8') as f: f1 = f.readlines()
     with codecs.open(path2,'r','utf-8') as f: f2 = f.readlines()
 
-    if newline:
+    if newline and len(f1) > 0 and len(f2) > 0:
         f1[-1] = f1[-1]+'\n'
         f2[-1] = f2[-1]+'\n'
 
@@ -1666,6 +1666,7 @@ def get_ip_address_increment(prefix,increment):
     | ${ADDRESS}= | `Get IP Address Increment` | 2001:218::1 | 0:0:0:1:0:0:0:0 |
     """
     return str(ipaddress.ip_address(prefix) + int(ipaddress.ip_address(increment)))
+
 
 # set RF global variables and load libraries
 # in doc create mode, there is not RF context, so we need to bypass the errors
