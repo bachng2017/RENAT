@@ -547,7 +547,7 @@ class VChannel(object):
 
                 # execute JUMP cmd
                 if 'jump-cmd' in _device_info:
-                    BultIn().log("Execute %d jump commands" % len(_device_info['jump-cmd']))
+                    BuiltIn().log("Execute %d jump commands" % len(_device_info['jump-cmd']))
                     for item in _device_info['jump-cmd']:
                         channel_info['connection'].write(str(item)+'\r')
                         time.sleep(2)
@@ -610,7 +610,7 @@ class VChannel(object):
                 channel_info['connection'].write("\r")
                 time.sleep(1)
                 channel_info['connection'].read_until_regexp(_prompt)
-                Built().log("Got the 1st prompt as expected")
+                BuiltIn().log("Got the 1st prompt as expected")
 
             # common for all access type
             # open/create a log file for this connection in result_folder
