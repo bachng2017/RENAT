@@ -930,7 +930,7 @@ def stop_and_save_capture(self,prefix='',wait_until_finish=True,monitor_interval
 
     folder = ix.getAttribute(ix.getRoot()+'/testConfiguration','-resultPath')
     # temporary folder
-    folder = Common.get_config_value('ix-remote-tmp') + '/' + os.getcwd().replace('/','_')
+    folder = Common.get_config_value('ix-remote-tmp') + '/' + cli['device'] + '_' + os.getcwd().replace('/','_')
     ix.execute('saveCapture', folder)
 
     count = 0
@@ -1252,6 +1252,7 @@ def get_test_report(self,name='ixnet_report.pdf',enable_all=True):
     # generate report
     ix.execute('generateReport',ix.getRoot()+'/reporter/generate')
     state = ix.getAttribute(ix.getRoot()+'/reporter/generate','-state')
+    BuiltIn().log("init state = %s" % state)
     while state != 'done':
         state = ix.getAttribute(ix.getRoot()+'/reporter/generate','-state')
         BuiltIn().log_to_console('.','STDOUT',True)
@@ -1577,7 +1578,7 @@ def csv_snapshot(self,prefix='snapshot_',*views):
     ix  = cli['connection']
     setting_name='%s_%s' % (Common.get_myid(),time.strftime('%Y%m%d%H%M%S'))
     # remote path
-    remote_path='%s/%s' % (Common.get_config_value('ix-remote-tmp'),os.getcwd().replace('/','_'))
+    remote_path='%s/%s_%s' % (Common.get_config_value('ix-remote-tmp'),cli['device'],os.getcwd().replace('/','_'))
     # first get the default setting
     opt = ix.execute('GetDefaultSnapshotSettings')
     # then customize the setting

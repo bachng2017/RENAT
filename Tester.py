@@ -173,6 +173,7 @@ module.
         client['type']  = type
         client['ip']    = ip
         client['desc']  = desc
+        client['device'] = dname
 
         ### IxNetwork
         if type == 'ixnet':
