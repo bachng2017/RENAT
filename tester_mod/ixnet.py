@@ -1578,7 +1578,7 @@ def csv_snapshot(self,prefix='snapshot_',*views):
     ix  = cli['connection']
     setting_name='%s_%s' % (Common.get_myid(),time.strftime('%Y%m%d%H%M%S'))
     # remote path
-    remote_path='%s/%s_%s' % (Common.get_config_value('ix-remote-tmp'),client['device'],os.getcwd().replace('/','_'))
+    remote_path='%s/%s_%s' % (Common.get_config_value('ix-remote-tmp'),cli['device'],os.getcwd().replace('/','_'))
     # first get the default setting
     opt = ix.execute('GetDefaultSnapshotSettings')
     # then customize the setting
