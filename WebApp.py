@@ -166,7 +166,7 @@ class WebApp(object):
         self._type                  = None
         self._verbose               = False
         self._ajax_timeout          = int(Common.get_config_value('ajax-timeout','web','5'))
-        self._type                  = 'web'
+        self._type                  = 'webapp'
         self._selenium              = None  # SeleniumLibrary instance
         try:
             self._selenium = BuiltIn().get_library_instance('SeleniumLibrary')
@@ -357,6 +357,8 @@ document.documentElement.clientHeight); """
             local_storage = app_info['local-storage']
         else:
             local_storage = None
+        if 'login-xpath' in template:
+            login_xpath = template['login-xpath']
 
         # firefox options
         profile_dir = Common.get_result_path() + '/.%s_%s_profile' % (profile,name)
@@ -463,7 +465,8 @@ document.documentElement.clientHeight); """
         browser_info['browser']  = browser
         browser_info['profile']  = profile
         browser_info['login_url']  = login_url
-        browser_info['local-storage'] = local_storage
+        browser_info['local_storage'] = local_storage
+        browser_info['login_xpath'] = login_xpath
         self._browsers[name] = browser_info
         display_info = Common.get_config_value('display')
         self._selenium.set_window_size(display_info['width'],display_info['height'])
@@ -488,10 +491,46 @@ document.documentElement.clientHeight); """
         BuiltIn().log("Closed all %d the browsers for %s application" % (num,self.__class__.__name__))
 
 
-    def connect(self,app,name):
-        ''' place holder
-        '''
-        pass
+    def connect(self,app,name,delay=u'5s'):
+        """ Connect to the application using login information in the template
+
+        Sample template:
+        ```
+            samurai:
+                access: webapp
+                auth: plain-text
+                login-xpath:
+                    user: name=username
+                    pass: name=password
+                    button: name=Submit
+                    check: //div[@id='infoarea']
+                profile: samurai
+        ```
+        `check` is optional which indicates item that need to be existed after a sucessful login.
+        """
+        self.open_ff_with_profile(app,name)
+        # login
+        auth = self._browsers[name]['auth']
+        login_xpath = self._browsers[name]['login_xpath']
+
+        user_xpath = login_xpath['user']
+        pass_xpath = login_xpath['pass']
+        login_button_xpath = login_xpath['button']
+        if 'check' in login_xpath['check']:
+            login_check_xpath = login_xpath['check']
+        else:
+            login_check_xpath = None
+
+        self._selenium.wait_until_element_is_visible(user_xpath)
+        self._selenium.input_text(user_xpath, auth['username'])
+        self._selenium.input_text(pass_xpath, auth['password'])
+
+        self._selenium.click_button(login_button_xpath)
+        if login_check_xpath:
+            self._selenium.wait_until_page_contains_element(login_check_xpath)
+        time.sleep(DateTime.convert_time(delay))
+        BuiltIn().log("Connected to the application(%s) `%s` by name `%s`" % (self._type,app,name))
+
 
     def connect_all(self):
         """ Connects to all applications defined in ``local.yaml``
