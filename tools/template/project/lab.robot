@@ -184,7 +184,7 @@ Lab Setup
 
     Remove File             ./.stop
 
-    Set Library Search Order    Common  Router
+    Set Library Search Order    Common  Router  WebApp 
 
     Common.Start Display
 

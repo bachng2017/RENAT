@@ -54,23 +54,23 @@ class Arbor(WebApp):
         self._type = 'arbor'
 
 
-    def connect(self,app,name):
-        """ Opens a web browser and connects to application and assigns a
-        ``name``.
-
-        Extra information could be added to the ``webapp`` sections likes
-        ``login-url``, ``browser`` or ``profile-dir``. Default values are:
-        | browser     | firefox |
-        | login-url   | /         |
-        | profile-dir | ./config/samurai.profile |
-        """
-        self.open_ff_with_profile(app,name)
-        # login
-        auth = self._browsers[name]['auth']
-        self._selenium.input_text('name=username', auth['username'])
-        self._selenium.input_text('name=password', auth['password'])
-        self._selenium.click_button('name=Submit')
-        time.sleep(5)
+#     def connect(self,app,name):
+#         """ Opens a web browser and connects to application and assigns a
+#         ``name``.
+#
+#         Extra information could be added to the ``webapp`` sections likes
+#         ``login-url``, ``browser`` or ``profile-dir``. Default values are:
+#         | browser     | firefox |
+#         | login-url   | /         |
+#         | profile-dir | ./config/samurai.profile |
+#         """
+#         self.open_ff_with_profile(app,name)
+#         # login
+#         auth = self._browsers[name]['auth']
+#         self._selenium.input_text('name=username', auth['username'])
+#         self._selenium.input_text('name=password', auth['password'])
+#         self._selenium.click_button('name=Submit')
+#         time.sleep(5)
 
 
     def reconnect(self):

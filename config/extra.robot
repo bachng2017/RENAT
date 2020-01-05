@@ -14,6 +14,7 @@ Library                     ${RENAT_PATH}/Tool.py
 Library                     ${RENAT_PATH}/AChannel.py
 Library                     ${RENAT_PATH}/VChannel.py
 Library                     ${RENAT_PATH}/Router.py
+Library                     ${RENAT_PATH}/WebApp.py
 Library                     ${RENAT_PATH}/Logger.py
 Library                     ${RENAT_PATH}/Extra.py
 

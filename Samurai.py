@@ -70,32 +70,32 @@ class Samurai(WebApp):
         self._type = 'samurai'
 
 
-    def connect(self,app,name):
-        """ Opens a web browser and connects to application and assigns a
-        ``name``.
-
-        - `app` is the name of the application (e.g. samurai-1)
-        - `name` is the name of the browser
-
-        If not defined in ``local.yaml`` those following key will have defaut
-        values:
-        | browser     | firefox             | optional |
-        | login_url   | /                   | optiona  |
-        | proxy:      |                     | optional |
-        |     http:   10.128.8.210:8080     | optional |
-        |     ssl:    10.128.8.210:8080     | optional |
-        |     socks:  10.128.8.210:8080     | optional |
-
-        """
-        self.open_ff_with_profile(app,name)
-        # login
-        auth = self._browsers[name]['auth']
-        self._selenium.wait_until_element_is_visible('name=username')
-        self._selenium.input_text('name=username', auth['username'])
-        self._selenium.input_text('name=password', auth['password'])
-        self._selenium.click_button('name=Submit')
-        self._selenium.wait_until_page_contains_element("//div[@id='infoarea']")
-        BuiltIn().log("Connected to the application `%s` by name `%s`" % (app,name))
+#     def connect(self,app,name):
+#         """ Opens a web browser and connects to application and assigns a
+#         ``name``.
+#
+#         - `app` is the name of the application (e.g. samurai-1)
+#         - `name` is the name of the browser
+#
+#         If not defined in ``local.yaml`` those following key will have defaut
+#         values:
+#         | browser     | firefox             | optional |
+#         | login_url   | /                   | optiona  |
+#         | proxy:      |                     | optional |
+#         |     http:   10.128.8.210:8080     | optional |
+#         |     ssl:    10.128.8.210:8080     | optional |
+#         |     socks:  10.128.8.210:8080     | optional |
+#
+#         """
+#         self.open_ff_with_profile(app,name)
+#         # login
+#         auth = self._browsers[name]['auth']
+#         self._selenium.wait_until_element_is_visible('name=username')
+#         self._selenium.input_text('name=username', auth['username'])
+#         self._selenium.input_text('name=password', auth['password'])
+#         self._selenium.click_button('name=Submit')
+#         self._selenium.wait_until_page_contains_element("//div[@id='infoarea']")
+#         BuiltIn().log("Connected to the application `%s` by name `%s`" % (app,name))
 
 
     def reconnect(self):
