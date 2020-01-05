@@ -4,8 +4,8 @@ default:
     robot-password: ntt0cn
     working-folder: /mnt/fsv01/21_Users/${USER}/working
     renat-master-folder: /mnt/fsv01/00_Master/renat
-    calient-master-path: /mnt/fsv01/00_Master/renat/calient.xlsm 
-    ntm-master-path: /mnt/fsv01/00_Master/renat/g4ntm.xlsm 
+    calient-master-path: /mnt/fsv01/00_Master/renat/calient.xlsm
+    ntm-master-path: /mnt/fsv01/00_Master/renat/g4ntm.xlsm
     ix-remote-tmp: C:/Windows/Temp
     interval-between-retry: 15s
     terminal-timeout: 20m
@@ -34,7 +34,7 @@ vchannel:
 web:
     reconnect: yes
     max-retry: 3
-    ajax-timeout: 5 
+    ajax-timeout: 5
 
 hypervisor:
     mks-console:
@@ -44,6 +44,7 @@ hypervisor:
 extra-lib:
     - Tester
     - OpticalSwitch
+    - WebApp
     - Samurai
     - Arbor
     - Hypervisor
