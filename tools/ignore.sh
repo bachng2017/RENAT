@@ -37,7 +37,7 @@ while [ ! -z "$OPT" ]; do
       ITEM=$2
       shift 2
       ;; 
-    '-d'|'--list' )
+    '-d'|'--delete' )
       if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
         echo "$PROG: option -d requires an argument" 1>&2
         exit 1
