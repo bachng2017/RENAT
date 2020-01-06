@@ -3,7 +3,7 @@
 # $Rev: $
 # $Ver: $
 # $Date: $
-# $Author: $ 
+# $Author: $
 
 usage() {
   echo "Show information about a RENAT project and its items"
@@ -12,7 +12,7 @@ usage() {
 }
 
 if [ $# -lt 1 ];  then usage; fi
-while getopts ":h:" OPT; do 
+while getopts ":h:" OPT; do
     case $OPT in
         :|h|\?)  usage ;;
     esac
@@ -71,6 +71,9 @@ for item in $(find $1 -depth -type f -name "run.sh" | sort); do
     ITEM=$(echo $item | sed "s/^$BASE\///g" | sed "s/\/run.sh//g")
     if [ "$ITEM" == "run.sh" ]; then
         ITEM='.'
+        CURITEM="$CURPATH"
+    else
+        CURITEM="$CURPATH/$ITEM"
     fi
     LOG=$(echo $item | sed "s/run.sh/run.log/g")
     ROBOT=$(echo $item | sed "s/run.sh/main.robot/g")
@@ -82,7 +85,7 @@ for item in $(find $1 -depth -type f -name "run.sh" | sort); do
             else
                 INFO=$(cat $LOG | grep -B3 "Output:.*$CURPATH/$ITEM/result" | grep total | sed 'N;s/\n/\//g')
             fi
-            IGNORE=$(cat $LOG | grep -A1 "Entering.*$CURPATH/$ITEM" | grep .ignore)
+            IGNORE=$(cat $LOG | grep -A1 "Current folder is.*$CURITEM " | grep '.ignore found')
             if [ "$IGNORE" == "" ]; then
                 if [ "$INFO" == "" ]; then
                     INFO='running...'
@@ -95,6 +98,6 @@ for item in $(find $1 -depth -type f -name "run.sh" | sort); do
             printf "%-64s %s %s\n" "$ITEM" "N/A"
         fi
     fi
-done    
+done
 
 

@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 default:
+<<<<<<< HEAD
     robot-server: 127.0.0.1
     robot-password: password!secret
     working-folder: $HOME/work
     renat-master-folder: $RENAT_PATH/config
-    calient-master-path: 
-    ntm-master-path: 
+    calient-master-path:
+    ntm-master-path:
     ix-remote-tmp: C:/Windows/Temp
     interval-between-retry: 15s
     terminal-timeout: 20m
@@ -34,7 +35,7 @@ vchannel:
 web:
     reconnect: yes
     max-retry: 3
-    ajax-timeout: 5 
+    ajax-timeout: 5
 
 hypervisor:
     mks-console:
@@ -42,5 +43,6 @@ hypervisor:
         height: 768
 
 extra-lib:
+    - WebApp
     - Hypervisor
 

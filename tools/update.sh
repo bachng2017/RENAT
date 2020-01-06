@@ -12,6 +12,8 @@ if [[ "$1" == "-q" ]]; then
     QUIET=$1
 fi
 
+PWD=$(pwd)
+
 if [[ ! -f chibalab.robot ]] && [[ ! -f lab.robot ]]; then
   echo "ERROR: should be applied in a project folder which has chibalab.robot or lab.robot"
   exit 1
@@ -20,7 +22,7 @@ elif
   echo "ERROR: it looks like you are in a item folder. update.sh should be executed from insides a project folder."
   exit 1
 else
-  for i in $(find . -path $RENAT_PATH -prune -o -type f -name "chibalab.robot"); do
+  for i in $(find $PWD -not \( -path $RENAT_PATH -prune \) -type f -name "chibalab.robot"); do
     LAB=$(echo $i | sed 's/chiba//')
     mv $i $LAB
     echo "moved chibalab.robot to lab.robot"
@@ -66,7 +68,7 @@ else
   # update lab.robot for items
   echo "try fixing items ..."
   RUN_FILE=$RENAT_PATH/tools/template/item/run.sh
-  for entry in $(find . -path $RENAT_PATH -prune -o -type d -name config); do
+  for entry in $(find $PWD -not \( -path $RENAT_PATH -prune \) -type d -name config); do
     if [[ -f $entry/../main.robot ]] && [[ -f $entry/../lab.robot ]] ; then
        diff $QUIET $RUN_FILE  $entry/../run.sh
        if [[ $? != 0 ]]; then
@@ -87,17 +89,17 @@ else
   echo
 
   echo "try fixing lab.robot symbolic ..."
-  find . -path $RENAT_PATH -prune -o -name "main.robot" -exec sed --follow-symlinks -i 's/chibalab.robot/lab.robot/' {} \;
-  find . -path $RENAT_PATH -prune -o -name "main.robot" -exec sed --follow-symlinks -i 's/\.\.\/lab\.robot/lab\.robot/' {} \;
+  find $PWD -not \( -path $RENAT_PATH -prune \) -name "main.robot" -exec sed --follow-symlinks -i 's/chibalab.robot/lab.robot/' {} \;
+  find $PWD -not \( -path $RENAT_PATH -prune \) -name "main.robot" -exec sed --follow-symlinks -i 's/\.\.\/lab\.robot/lab\.robot/' {} \;
   echo
 
   echo "try fixing local.yaml ..."
-  find . -path $RENAT_PATH -prune -o -name "local.yaml" -exec sed --follow-symlinks -i '/^  *result_folder: result/d' {} \;
+  find $PWD -not \( -path $RENAT_PATH -prune \) -name "local.yaml" -exec sed --follow-symlinks -i '/^  *result_folder: result/d' {} \;
   echo
 
   # try to fix snmp polling issue
   echo "try fixing Follow Syslog Start issue ..."
-  for entry in $(find . -path $RENAT_PATH -prune -o -type f -name local.yaml); do
+  for entry in $(find $PWD \( -path $RENAT_PATH -prune \) -type f -name local.yaml); do
     FLAG=$(grep 'Start Follow Syslog' $(dirname $entry)/../*.robot)
     if [ ! -z "$FLAG" ]; then
       grep -n 'snmp-polling: *yes\|follow-remote-log: *yes' $entry
