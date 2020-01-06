@@ -516,7 +516,7 @@ document.documentElement.clientHeight); """
         user_xpath = login_xpath['user']
         pass_xpath = login_xpath['pass']
         login_button_xpath = login_xpath['button']
-        if 'check' in login_xpath['check']:
+        if 'check' in login_xpath:
             login_check_xpath = login_xpath['check']
         else:
             login_check_xpath = None
