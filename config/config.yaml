@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 default:
-<<<<<<< HEAD
     robot-server: 127.0.0.1
     robot-password: password!secret
     working-folder: $HOME/work
