@@ -38,13 +38,8 @@ while [ ! -z "$OPT" ]; do
       shift 2
       ;; 
     '-d'|'--delete' )
-      if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
-        echo "$PROG: option -d requires an argument" 1>&2
-        exit 1
-      fi
       DEL=1
-      ITEM=$2
-      shift 2
+      shift 1
       ;;
     '-r'|'--recursive' )
       if [[ "$2" =~ ^[0-9]+$ ]]; then
