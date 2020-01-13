@@ -15,8 +15,8 @@ default:
     slack-proxy: 127.0.0.1:8080
     # log-level: TRACE
     # log-level: ERROR
-    log-level: INFO
-    # log-level: DEBUG
+    # log-level: INFO
+    log-level: DEBUG
     ignore-dead-node: FALSE
     display:
         width:  1921

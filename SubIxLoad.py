@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  Copyright 2018 NTT Communications
+#  Copyright 2017-2019 NTT Communications
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-12-02 19:42:33 +0900 (日, 02 12 2018) $
+# $Date: 2018-12-02 19:42:33 +0900 (日, 02 12月 2018) $
 # $Rev: 1652 $
 # $Ver: $
 # $Author: $
@@ -62,10 +62,10 @@ class SubIxLoad(Process):
         self.result_queue.put(["ixload::ok"])
         self.task_queue.task_done()
 
-    
+
     def _ixload_tmp_dir(self):
         """ Returns a temporary folder for this test
-        """ 
+        """
         result_base = Common.GLOBAL['default']['ix-remote-tmp']
 
         tmp = os.getcwd().split('/')
@@ -76,8 +76,8 @@ class SubIxLoad(Process):
         result = result.replace('-','')
         result = result.replace(' ','_')
         result = result.replace('__','_')
-   
-        return result + self.random    
+
+        return result + self.random
 
 
 
@@ -90,18 +90,18 @@ class SubIxLoad(Process):
 
         try:
             ixload_tmp_dir = self._ixload_tmp_dir()
-    
+
             config_src = Common.get_item_config_path() + '/' + config_name
             config_dst = ixload_tmp_dir + '_' + config_name
             log = "IxLoad send file `%s` to `%s`" % (config_src,config_dst)
 
             IxLoad._TclEval("::IxLoad sendFileCopy %s %s" % (config_src,config_dst))
-    
-            
+
+
             self.controller = self.ix.new("ixTestController",outputDir=1)
             self.controller.setResultDir(ixload_tmp_dir)
             self.repository = self.ix.new("ixRepository",name=config_dst)
-    
+
             test_name = self.repository.testList[0].cget('name')
             test = self.repository.testList.getItem(test_name)
             port_num = 0
@@ -111,7 +111,7 @@ class SubIxLoad(Process):
             num = int(test.serverCommunityList.indexCount())
             for i in range(num):
                 port_num = port_num + int(test.serverCommunityList[i].network.portList.indexCount())
-        
+
             if len(port_list) == 0:
                 self.result_queue.put(["ixload::ok"])
             elif port_num != len(port_list):
@@ -119,10 +119,10 @@ class SubIxLoad(Process):
             else:
                 num = int(test.clientCommunityList.indexCount())
                 for i in range(num): test.clientCommunityList[i].network.portList.clear()
-    
+
                 num = int(test.serverCommunityList.indexCount())
                 for i in range(num): test.serverCommunityList[i].network.portList.clear()
-    
+
                 test.setPorts(port_list)
                 self.result_queue.put(["ixload::ok",ixload_tmp_dir,log])
         except Exception as err:
@@ -139,15 +139,15 @@ class SubIxLoad(Process):
             - HTTP Client.csv
             - HTTP Client - Per URL.csv
             - HTTP Server - Per URL.csv
-            - L2-3 Stats for Client Ports.csv 
-            - L2-3 Stats for Server Ports.csv 
-            - L2-3 Throughput Stats.csv 
-            - Port CPU Statistics.csv 
-    
+            - L2-3 Stats for Client Ports.csv
+            - L2-3 Stats for Server Ports.csv
+            - L2-3 Throughput Stats.csv
+            - Port CPU Statistics.csv
+
         Extra file could be add by ``more_file`` which is a comma separated
         filename string
         """
-        
+
         ixload_tmp_dir = self._ixload_tmp_dir()
 
         result_folder = Common.get_result_path()
@@ -156,12 +156,12 @@ class SubIxLoad(Process):
             'HTTP_Client.csv',
             'HTTP Client - Per URL.csv',
             'HTTP Server - Per URL.csv',
-            'L2-3 Stats for Client Ports.csv', 
-            'L2-3 Stats for Server Ports.csv', 
-            'L2-3 Throughput Stats.csv', 
-            'Port CPU Statistics.csv', 
+            'L2-3 Stats for Client Ports.csv',
+            'L2-3 Stats for Server Ports.csv',
+            'L2-3 Throughput Stats.csv',
+            'Port CPU Statistics.csv',
         ]
-        
+
         # add more files
         file_list.extend(more_file.split(','))
         file_list.remove('')
@@ -180,7 +180,7 @@ class SubIxLoad(Process):
             self.result_queue.put([err])
         self.task_queue.task_done()
 
-    
+
     def start_traffic(self):
         test_name = self.repository.testList[0].cget("name")
         test = self.repository.testList.getItem(test_name)
@@ -189,7 +189,7 @@ class SubIxLoad(Process):
             enableResetPorts = 1,
             csvInterval = 2,
             enableForceOwnership = True
-        ) 
+        )
         self.run_start = datetime.now()
         IxLoad._TclEval("set ::ixTestControllerMonitor \"\"")
         self.controller.run(test)
@@ -206,14 +206,14 @@ class SubIxLoad(Process):
         if self.elapsed is None:
             stop = datetime.now()
             self.elapsed = (stop - self.run_start).total_seconds()
-        
+
         self.result_queue.put(["ixload::ok"])
 
 
     def stop_traffic(self):
         try:
             IxLoad._TclEval("set ::test_cont 0")
-         
+
             self.controller.stopRun()
             if self.elapsed is None:
                 stop = datetime.now()
@@ -232,7 +232,7 @@ class SubIxLoad(Process):
         file_list = [
             'IxLoad Detailed Report.pdf'
         ]
-        
+
         try:
             for item in file_list:
                 dst = item.replace('-','')
@@ -246,11 +246,11 @@ class SubIxLoad(Process):
         except Exception as err:
             self.result_queue.put([err])
         self.task_queue.task_done()
-        
-    
+
+
     def disconnect(self):
         # get log
-        try: 
+        try:
             if self.log_engine:
                 # self.log_engine.setFile(self._ixload_tmp_dir()+'/'+Common.get_myid(),4,2048,1)
                 # remote_logfile = "C:/Progra~1/IxLoad/Client/tclext/remoteScriptingService/" + self.log_engine.getFileName()
@@ -266,13 +266,13 @@ class SubIxLoad(Process):
             self.result_queue.put([err])
         self.task_queue.task_done()
 
-         
+
     def run(self):
         while True:
             next_task = self.task_queue.get()
             try:
                 if next_task[0] == "ixload::connect":
-                    ip = next_task[1]   
+                    ip = next_task[1]
                     self.connect(ip)
                 elif next_task[0] == "ixload::disconnect":
                     self.disconnect()
@@ -296,4 +296,4 @@ class SubIxLoad(Process):
         return
 
 
- 
+

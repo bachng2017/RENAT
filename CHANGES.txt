@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  Copyright 2018 NTT Communications
+#  Copyright 2017-2019 NTT Communications
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -13,14 +13,22 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1938 $
+# $Rev: 2204 $
 # $Ver: $
-# $Date: 2019-03-30 16:26:40 +0900 (土, 30 3 2019) $
+# $Date: 2019-09-07 09:51:32 +0900 (土, 07  9月 2019) $
 # $Author: $
 
 RENAT(Robotframework Extension for Network Automation Testing)
 
 == What's new ==
+
+=== 0.1.17 ===
+- add more keyword to support IP address calculation
+- drop support for Python 2.7 from this point
+
+=== 0.1.16 ===
+- change item run.sh from -b to -p
+- fix --debug (-b) for correct debug file while running witn -n option
 
 === 0.1.15 ===
 - fix bugs and consolidate code

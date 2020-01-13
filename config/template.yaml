@@ -204,6 +204,19 @@ access-template:
         login-prompt:
         password-prompt:
         target: cisco-xe-console
+    extreme-bd:
+        access: ssh
+        auth: plain-text 
+        profile: extreme-bd
+        prompt: "\s#$" 
+        # init: 
+        #     - set cli idle-timeout 0 
+        #     - set cli screen-length 0
+    procera-pre:
+        access: ssh
+        auth: plain-text 
+        profile: procera-pre
+        prompt: "\s#$"         
 
 snmp-template:
        juniper:

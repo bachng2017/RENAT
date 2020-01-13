@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  Copyright 2018 NTT Communications
+#  Copyright 2017-2019 NTT Communications
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-07-25 23:50:10 +0900 (木, 25 7 2019) $
-# $Rev: 2101 $
+# $Date: 2019-09-24 18:27:05 +0900 (火, 24  9月 2019) $
+# $Rev: 2253 $
 # $Ver: $
 # $Author: $
 
@@ -37,6 +37,16 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.firefox.options import Options
 
 ### module methods
+
+def _session_check(f, self, *args, **kwargs):
+    BuiltIn().log("Check session timeout ...")
+    error = Common.get_config_value('session-error','web') or "Session Timeout"
+    if self._selenium.get_element_count(error) > 0:
+        self._selenium.reload_page()
+    return f(self, *args, **kwargs)
+
+def session_check(f):
+    return decorate(f, _session_check)
 
 # reconnect methods currenlty focus on Samurai only
 # need to enhance this
@@ -74,7 +84,7 @@ def _with_reconnect(keyword, self, *args, **kwargs):
             BuiltIn().log("ERR: An unexpected error occured", console=True)
             BuiltIn().log("Save last available screen", console=True)
             self.capture_screenshot(extra="_err") # save the last available screen
-            raise 
+            raise
 
 
 def safe_reconnect(self):
@@ -82,8 +92,8 @@ def safe_reconnect(self):
         self.reconnect()
     except:
         self.capture_screenshot(extra="last") # save the last available screen
-        raise 
-        
+        raise
+
 def with_reconnect(f):
     return decorate(f, _with_reconnect)
 
@@ -101,9 +111,9 @@ class WebApp(object):
 | <test node name>:
 |     device:     <device name>
 |     proxy:
-|         http:       <proxy for http>    
-|         https:      <proxy for http>    
-|         ssl:        <proxy for http>    
+|         http:       <proxy for http>
+|         https:      <proxy for http>
+|         ssl:        <proxy for http>
     Where ``<device name>`` is defined in master ``device.yaml``, ``proxy``
     section could be optional.
 
@@ -155,9 +165,9 @@ class WebApp(object):
         self._current_app           = None
         self._type                  = None
         self._verbose               = False
-        self._ajax_wait             = 2
-        self._selenium              = None
-        self._type                  = 'web'
+        self._ajax_timeout          = int(Common.get_config_value('ajax-timeout','web','5'))
+        self._type                  = 'webapp'
+        self._selenium              = None  # SeleniumLibrary instance
         try:
             self._selenium = BuiltIn().get_library_instance('SeleniumLibrary')
         except RobotNotRunningError as e:
@@ -177,12 +187,12 @@ class WebApp(object):
         BuiltIn().log('Got verbose mode: %s' % self._verbose)
         return self._verbose
 
-    
-    def set_ajax_wait(self,wait_time='2s'):
+
+    def set_ajax_timeout(self,wait_time='2s'):
         """ Set the ajax wait time
         """
-        old_value = self._ajax_wait
-        self._ajax_wait = DateTime.convert_time(wait_time)
+        old_value = self._ajax_timeout
+        self._ajax_timeout = DateTime.convert_time(wait_time)
         BuiltIn().log("Set the ajax wait_time to `%d` seconds")
         return old_value
 
@@ -198,8 +208,8 @@ class WebApp(object):
         for more details about the format string.
 
         Examples:
-        | Samurai.`Set Capture Format`  | ${case}_%010d |  # ${case} is a predefined variable | 
-        
+        | Samurai.`Set Capture Format`  | ${case}_%010d |  # ${case} is a predefined variable |
+
         """
         name = self._current_name
         self._browsers[name]['capture_format'] = format
@@ -208,7 +218,7 @@ class WebApp(object):
 
     def set_capture_counter(self,value = 0):
         """ Sets the counter of the screen capture to ``value``
-        """    
+        """
         name = self._current_name
         self._browsers[name]['capture_counter'] = value
         BuiltIn().log("Changed the screenshot capture counter to `%d`" % value)
@@ -216,7 +226,7 @@ class WebApp(object):
 
     def reset_capture_counter(self):
         """ Resets the counter of the screen capture
-        """    
+        """
         self.set_capture_counter(0)
 
 
@@ -227,7 +237,7 @@ class WebApp(object):
         specified. In this case, the filename is defined by a pre-set format. `Set Capture
         Format` could be used to change the current format.
 
-        An extra information will be add to the filename if ``extra`` is defined 
+        An extra information will be add to the filename if ``extra`` is defined
 
         Returns the captured filename.
 
@@ -238,7 +248,7 @@ class WebApp(object):
         | Arbor.`Capture Screenshot`    |   extra=_xxx  | # arbor_0000000001_`xxx`.png |
         | Samurai.`Capture Screenshot`  |   filename=1111.png | # 1111.png |
         """
-        # self.switch(self._current_name) 
+        # self.switch(self._current_name)
         name = self._current_name
         if not filename:
             current_counter = self._browsers[name]['capture_counter']
@@ -249,7 +259,15 @@ class WebApp(object):
         else:
             capture_name = filename
         total_width     = int(self._selenium.execute_javascript("return document.body.offsetWidth;"))
-        total_height    = int(self._selenium.execute_javascript("return document.body.parentNode.scrollHeight;"))
+        # total_height    = int(self._selenium.execute_javascript("return document.body.parentNode.scrollHeight;"))
+
+        script_text=""" return Math.max(document.body.scrollHeight, \
+document.documentElement.scrollHeight, \
+document.body.offsetHeight, \
+document.documentElement.offsetHeight, \
+document.body.clientHeight, \
+document.documentElement.clientHeight); """
+        total_height = int(self._selenium.execute_javascript(script_text))
 
         display_info = Common.get_config_value('display')
 
@@ -263,7 +281,8 @@ class WebApp(object):
         # only update windows height
         self._selenium.set_window_size(old_width, total_height)
         time.sleep(2)
-        self._selenium.capture_page_screenshot(capture_name)  
+        self._selenium.set_screenshot_directory(Common.get_result_path())
+        self._selenium.capture_page_screenshot(capture_name)
         # restore old window size
         self._selenium.set_window_size(old_width, old_height)
         # self._selenium.maximize_browser_window()
@@ -285,7 +304,7 @@ class WebApp(object):
         """
         fp = self._browsers[self._current_name]['ff_profile_dir']
         ignore_dead_node = Common.get_config_value('ignore-dead-node')
-        try: 
+        try:
             old_name = self._current_name
 
             self._selenium.close_browser()
@@ -306,7 +325,7 @@ class WebApp(object):
                 warn_msg = "WARN: Error occured when connect to `%s` but was ignored" % (old_name)
                 BuiltIn().log_to_console(warn_msg)
                 BuiltIn().log(warn_msg)
-                BuiltIn().log(err) 
+                BuiltIn().log(err)
 
 
     def open_ff_with_profile(self,app,name):
@@ -325,7 +344,7 @@ class WebApp(object):
         ip = device_info['ip']
         type = device_info['type']
         template = Common.GLOBAL['access-template'][type]
-        profile = template['profile'] 
+        profile = template['profile']
         auth = {}
         BuiltIn().log('    Using profile `%s`' % profile)
         auth['username']    = Common.GLOBAL['auth']['plain-text'][profile]['user']
@@ -334,6 +353,12 @@ class WebApp(object):
             login_url = app_info['login-url']
         if 'browser' in app_info and app_info['browser']:
             browser  = app_info['browser']
+        if 'local-storage' in app_info and app_info['local-storage']:
+            local_storage = app_info['local-storage']
+        else:
+            local_storage = None
+        if 'login-xpath' in template:
+            login_xpath = template['login-xpath']
 
         # firefox options
         profile_dir = Common.get_result_path() + '/.%s_%s_profile' % (profile,name)
@@ -391,7 +416,7 @@ class WebApp(object):
             if 'https' in app_info['proxy']:    proxy.ssl_proxy   = app_info['proxy']['https']
             if 'ftp' in app_info['proxy']:      proxy.ftp_proxy   = app_info['proxy']['ftp']
             proxy.add_to_capabilities(ff_cap)
-        
+
         # create webdriver
         alias = '_%s_%s' % (profile,name)
         self._selenium.create_webdriver('Firefox',
@@ -421,11 +446,11 @@ class WebApp(object):
                     # shutil.rmtree(fp.path,ignore_errors=True)
         except Exception as err:
             if not ignore_dead_node:
-                err_msg = "ERROR: Error occured when connecting to `%s`" % (name) 
+                err_msg = "ERROR: Error occured when connecting to `%s`" % (name)
                 BuiltIn().log(err_msg)
                 raise
             else:
-                warn_msg = "WARN: Error occured when connect to `%s` but was ignored" % (name) 
+                warn_msg = "WARN: Error occured when connect to `%s` but was ignored" % (name)
                 BuiltIn().log(warn_msg)
                 BuiltIn().log_to_console(warn_msg)
 
@@ -437,9 +462,11 @@ class WebApp(object):
         browser_info['ff_profile_dir'] = ff_pf.path
         browser_info['capture_counter'] = 0
         browser_info['capture_format']  = "%s_%%010d" % app
-        browser_info['browser']         = browser
-        browser_info['profile']         = profile
-        browser_info['login_url']       = login_url
+        browser_info['browser']  = browser
+        browser_info['profile']  = profile
+        browser_info['login_url']  = login_url
+        browser_info['local_storage'] = local_storage
+        browser_info['login_xpath'] = login_xpath
         self._browsers[name] = browser_info
         display_info = Common.get_config_value('display')
         self._selenium.set_window_size(display_info['width'],display_info['height'])
@@ -459,15 +486,51 @@ class WebApp(object):
         """ Closes all current opened applications
         """
         num = len(self._browsers)
-        while len(self._browsers) > 0: 
+        while len(self._browsers) > 0:
             self.close()
         BuiltIn().log("Closed all %d the browsers for %s application" % (num,self.__class__.__name__))
 
 
-    def connect(self,app,name):
-        ''' place holder
-        '''
-        pass
+    def connect(self,app,name,delay=u'5s'):
+        """ Connect to the application using login information in the template
+
+        Sample template:
+        ```
+            samurai:
+                access: webapp
+                auth: plain-text
+                login-xpath:
+                    user: name=username
+                    pass: name=password
+                    button: name=Submit
+                    check: //div[@id='infoarea']
+                profile: samurai
+        ```
+        `check` is optional which indicates item that need to be existed after a sucessful login.
+        """
+        self.open_ff_with_profile(app,name)
+        # login
+        auth = self._browsers[name]['auth']
+        login_xpath = self._browsers[name]['login_xpath']
+
+        user_xpath = login_xpath['user']
+        pass_xpath = login_xpath['pass']
+        login_button_xpath = login_xpath['button']
+        if 'check' in login_xpath:
+            login_check_xpath = login_xpath['check']
+        else:
+            login_check_xpath = None
+
+        self._selenium.wait_until_element_is_visible(user_xpath)
+        self._selenium.input_text(user_xpath, auth['username'])
+        self._selenium.input_text(pass_xpath, auth['password'])
+
+        self._selenium.click_button(login_button_xpath)
+        if login_check_xpath:
+            self._selenium.wait_until_page_contains_element(login_check_xpath)
+        time.sleep(DateTime.convert_time(delay))
+        BuiltIn().log("Connected to the application(%s) `%s` by name `%s`" % (self._type,app,name))
+
 
     def connect_all(self):
         """ Connects to all applications defined in ``local.yaml``
@@ -518,7 +581,7 @@ class WebApp(object):
                 element_id = element.id
             else:
                 element_id = -1
-           
+
         if count >= timeout_sec:
             BuiltIn().log('Timeout happened but element is still not changed')
             if error_on_timeout:
@@ -527,5 +590,12 @@ class WebApp(object):
         BuiltIn().log('Waited for element status changed')
 
 
+    def wait_and_click(self,xpath):
+        """ Waits and clicks an element by its xpath
 
-   
+        Sample:
+        | Wait and Click | //button[normalize-space(.)="OK"] |
+        """
+        self.capture_screenshot()
+        self._selenium.wait_until_element_is_visible(xpath)
+        self._selenium.click_element(xpath)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  Copyright 2018 NTT Communications
+#  Copyright 2017-2019 NTT Communications
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-05-22 05:47:03 +0900 (水, 22 5 2019) $
+# $Date: 2019-05-22 05:47:03 +0900 (水, 22  5月 2019) $
 # $Rev: 2022 $
 # $Ver: $
 # $Author: $
@@ -41,12 +41,12 @@ class Router(object):
     """ A class provides keywords for router control. An instance of Router
     class automatically assigned methods of a VChannel class (*Note*: this is not
     an inheritance but rather 1-to-1 relation)
-    
+
     See [./VChannel.html|VChannel] for more details about `VChannel`.
 
     Device's ``type`` is defined in master ``device.yaml``. The system will load
     appropriate modules for each device.
-    
+
     Details about keywords provided by modules could be found in document of each
     module likes:
     -  [./router_mod_juniper.html|Juniper module]
@@ -58,7 +58,7 @@ class Router(object):
     Examples:
         | Router.`Switch`   | vmx12 |
         | Router.`Xrun`      | Load Config |
-        | Router.`Load Config` |      | 
+        | Router.`Load Config` |      |
 
     """
 
@@ -71,7 +71,7 @@ class Router(object):
         folder = os.path.dirname(__file__)
         sys.path.append(folder)
         try:
-            self._vchannel = BuiltIn().get_library_instance('VChannel') 
+            self._vchannel = BuiltIn().get_library_instance('VChannel')
 
             if self._vchannel is None:
                 raise Exception("Could not find an instance of VChannel. Need import VChannel first")
@@ -80,10 +80,10 @@ class Router(object):
                 for keyword,body in keyword_list:
                     if not keyword.startswith('_'):
                         setattr(self,keyword,body)
-   
-            # sync the nanme with current VChannel instance 
+
+            # sync the nanme with current VChannel instance
             self._cur_name = self._vchannel._current_name
-         
+
             #
             mod_list = glob.glob(Common.get_renat_path() + '/router_mod/*.py')
             keyword_list = []
@@ -93,7 +93,7 @@ class Router(object):
                 mod_name = os.path.basename(item).replace('.py','')
                 # BuiltIn().log_to_console(mod_name)
                 mod  = import_module('router_mod.' + mod_name)
-        
+
                 cmd_list    = inspect.getmembers(mod, inspect.isfunction)
                 for cmd,data in cmd_list:
                     if not cmd.startswith('_') and cmd not in keyword_list:
@@ -107,30 +107,30 @@ class Router(object):
 
         except RobotNotRunningError as e:
             Common.err("WARN: RENAT is not running")
-    
+
 
 
     def xrun(self,cmd,*args,**kwargs):
         """ Runs the vendor independent keywords.
 
         Parametes:
-        - ``cmd``: a keyword 
+        - ``cmd``: a keyword
         - ``args``: other argumemts
-        
+
         Examples:
             | Router.`Xrun` | Flap Interface | ge-0/0/0 |
         This keyword will then actually calling the correspond keyword for the
-        device type. 
-        """ 
+        device type.
+        """
         channel = self.get_current_channel()
         node    = channel['node']
         # type_list    = channel['type'].split('_')
-        type_list = re.split(r'-|_', channel['type']) 
+        type_list = re.split(r'-|_', channel['type'])
         mod_name = ''
         type_list_length = len(type_list)
 
         mod_cmd = cmd.lower().replace(' ','_')
-                 
+
         # go from detail mod to common mode
         for i in range(0,type_list_length):
             mod_name = '_'.join(type_list[0:type_list_length-i])
@@ -143,31 +143,31 @@ class Router(object):
 
         BuiltIn().log("    using `%s` mod for command `%s`" %  (mod_name,cmd))
         result = getattr(mod,mod_cmd)(self,*args,**kwargs)
-    
+
         return result
 
 
     def follow_mib( self,node_list,wait_time='10s',interval_time='5s',\
                     len='12',percentile='80',threshold='75',max_len='300',factor = '1'):
-        """ Waits until all the nodes defined in ``node_list`` become ``stable``. 
+        """ Waits until all the nodes defined in ``node_list`` become ``stable``.
 
         Stableness is checked by SNMP polling result. The MIB list is define by
         ``mib`` in ``node`` section
         Parameter:
         - ``wait_time(1)``: the time before the evaluation starting
         - ``interval_time(2)``: interval between SNMP polling time
-        - ``threshold``: below this value is evaluated as ``stable`` 
+        - ``threshold``: below this value is evaluated as ``stable``
         - ``len(3)``: the size of the evaluation window (number of values that
           are used in each valuation)
         - ``percentile``: real useful percentage of data (ignore top
           ``100-percentile`` percent)
         - ``max_len(4)``: maximum waiting ``lend`` for this checking
-    
+
         | time sequence: --(1)--|-(2)-|-----|-----|----|-----|-----|
-        |                      <--------(3)---------->     poll  poll 
-        |                            <--------(3)----------> 
+        |                      <--------(3)---------->     poll  poll
+        |                            <--------(3)---------->
         |                      <---------------------(4)---------->
-        
+
         """
         time.sleep(DateTime.convert_time(wait_time))
 
@@ -178,12 +178,12 @@ class Router(object):
             type   = Common.GLOBAL['device'][device]['type']
             data[node] = {}
             data[node]['ip']          = Common.GLOBAL['device'][device]['ip']
-            data[node]['community']   = Common.GLOBAL['snmp-template'][type]['community'] 
+            data[node]['community']   = Common.GLOBAL['snmp-template'][type]['community']
             data[node]['mib-file']    = Common.mib_for_node(node)
             f = open(data[node]['mib-file'])
             data[node]['oid_list']    = json.load(f)['miblist']
             f.close()
-            data[node]['poller'] = netsnmp.SNMPSession(data[node]['ip'], data[node]['community']) 
+            data[node]['poller'] = netsnmp.SNMPSession(data[node]['ip'], data[node]['community'])
             data[node]['monitor'] = []
 
         for i in range(int(len)):
@@ -197,7 +197,7 @@ class Router(object):
             time.sleep(interval)
 
         stable  = False
-        count   = 0 
+        count   = 0
 
         BuiltIn().log("Stable checking ...")
 
@@ -215,14 +215,14 @@ class Router(object):
                 stable = stable and Common.is_stable(data[node]['monitor'],float(threshold), int(percentile))
                 BuiltIn().log("node = %s stable = %s" % (node,stable))
                 BuiltIn().log(",".join(str(i) for i in data[node]['monitor']))
-                
-            count += 1   
+
+            count += 1
             time.sleep(interval)
 
         if count < max_len_value:
             BuiltIn().log("Stable checking normaly finished")
         else:
             BuiltIn().log("Stable chekcing forcely finsined")
-            
-    
+
+
 

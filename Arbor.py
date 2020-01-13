@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  Copyright 2018 NTT Communications
+#  Copyright 2017-2019 NTT Communications
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-07-09 12:52:20 +0900 (火, 09 7 2019) $
+# $Date: 2019-07-09 12:52:20 +0900 (火, 09  7月 2019) $
 # $Rev: 2086 $
 # $Ver: $
 # $Author: $
@@ -54,23 +54,23 @@ class Arbor(WebApp):
         self._type = 'arbor'
 
 
-    def connect(self,app,name):
-        """ Opens a web browser and connects to application and assigns a
-        ``name``.
-
-        Extra information could be added to the ``webapp`` sections likes
-        ``login-url``, ``browser`` or ``profile-dir``. Default values are:
-        | browser     | firefox |
-        | login-url   | /         |
-        | profile-dir | ./config/samurai.profile |
-        """
-        self.open_ff_with_profile(app,name)
-        # login 
-        auth = self._browsers[name]['auth']
-        self._selenium.input_text('name=username', auth['username'])
-        self._selenium.input_text('name=password', auth['password'])
-        self._selenium.click_button('name=Submit')
-        time.sleep(5)
+#     def connect(self,app,name):
+#         """ Opens a web browser and connects to application and assigns a
+#         ``name``.
+#
+#         Extra information could be added to the ``webapp`` sections likes
+#         ``login-url``, ``browser`` or ``profile-dir``. Default values are:
+#         | browser     | firefox |
+#         | login-url   | /         |
+#         | profile-dir | ./config/samurai.profile |
+#         """
+#         self.open_ff_with_profile(app,name)
+#         # login
+#         auth = self._browsers[name]['auth']
+#         self._selenium.input_text('name=username', auth['username'])
+#         self._selenium.input_text('name=password', auth['password'])
+#         self._selenium.click_button('name=Submit')
+#         time.sleep(5)
 
 
     def reconnect(self):
@@ -81,37 +81,37 @@ class Arbor(WebApp):
         url             = self._browsers[name]['url']
         self._selenium.go_to(url)
         self._selenium.wait_until_element_is_visible('name=username')
-        
+
         # login
         self._selenium.input_text('name=username', auth['username'])
         self._selenium.input_text('name=password', auth['password'])
         self._selenium.click_button('name=Submit')
         time.sleep(5)
-        BuiltIn().log("Reconnected to the Arbor application(%s)" % name)     
-    
+        BuiltIn().log("Reconnected to the Arbor application(%s)" % name)
+
 
     def login(self):
         """ Logs into the Arbor application
         """
         return self.reconnect()
 
-    @with_reconnect 
+    @with_reconnect
     def logout(self):
         """ Logs-out the current application, the browser remains
         """
-        self.switch(self._current_name) 
+        self.switch(self._current_name)
         self._selenium.click_link("xpath=//a[contains(.,'(Log Out)')]")
 
-        if self._selenium.get_element_count('logout_confirm') > 0: 
+        if self._selenium.get_element_count('logout_confirm') > 0:
             self._selenium.click_button('logout_confirm')
         BuiltIn().log("Exited Arbor application")
-    
-    
-    @with_reconnect 
+
+
+    @with_reconnect
     def show_all_mitigations(self):
         """ Shows all mitigations
         """
-        
+
         self.switch(self._current_name)
         self._selenium.mouse_over("xpath=//a[.='Mitigation']")
         self._selenium.wait_until_element_is_visible("xpath=//a[contains(.,'All Mitigations')]")
@@ -127,43 +127,52 @@ class Arbor(WebApp):
 
         *Note*: the result could include multi mitigations
         """
-        self.show_all_mitigations() 
+        self.show_all_mitigations()
         xpath = "//a[contains(.,'%s')]" %  search_str
         self._selenium.input_text("search_string_id",search_str)
         self._selenium.click_button("search_button")
         time.sleep(2)
-        self._selenium.wait_until_page_contains_element("xpath=//div[@class='sp_page_content']") 
+        self._selenium.wait_until_page_contains_element("xpath=//div[@class='sp_page_content']")
         time.sleep(2)
         self._selenium.wait_until_element_is_visible("search_button")
         self._selenium.click_link(xpath)
         time.sleep(5)
         self.verbose_capture()
-        BuiltIn().log("Showed details of a mitigation searched by `%s`" % search_str)    
+        BuiltIn().log("Showed details of a mitigation searched by `%s`" % search_str)
 
 
     @with_reconnect
     def show_detail_countermeasure(self,name,*method_list):
-        """ Shows detail informatin about a countermeasure
+        """ Shows detail information about a countermeasure
 
         `name` is used to search the the mitigation and `method_list` is a list
         of countermeasures that are listed in Arbor Countermeasures panel
 
+        Return the number of displayed methods
+
+        Notes: the keyword will ignore if the method is not in its list and does not count for that
+
         Example:
         | ${NAME}  |   ${ID}=   |       `Show Detail First Mitigation` |
-        | Arbor.`Show Detail Countermeasure` | ${NAME} | DNS Malformed |
+        | ${COUNT= |  Arbor.`Show Detail Countermeasure` | ${NAME} | DNS Malformed |
         | Arbor.`Capture Screenshot` |
         | Sleep  | 10s |
-        | Arbor.`Show Detail Countermeasure` | ${NAME} |  Zombie Detection | HTTP Malformed |  
+        | Arbor.`Show Detail Countermeasure` | ${NAME} |  Zombie Detection | HTTP Malformed |
         | Arbor.`Capture Screenshot` |
         """
         self.show_detail_mitigation(name)
+        total_method = len(method_list)
+        count_method = 0
         for item in method_list:
             xpath = '//table//td[(@class="borderright") and (. = "%s")]/../td[1]/a' % item
-            target = self._selenium.get_webelement(xpath)
-            target.click()
-            time.sleep(2)
+            if self._selenium.get_element_count(xpath) > 0:
+                target = self._selenium.get_webelement(xpath)
+                target.click()
+                time.sleep(2)
+                count_method += 1
         self.verbose_capture()
-        BuiltIn().log('Showed detail information for %d countermesure of mitigation `%s`' %(len(method_list),name)) 
+        BuiltIn().log('Showed detail information for %d/%d countermesure of mitigation `%s`' %(count_method,total_method,name))
+        return count_method
 
 
     @with_reconnect
@@ -174,7 +183,7 @@ class Arbor(WebApp):
     @with_reconnect
     def show_detail_first_mitigation(self):
         """ Shows details about the 1st mitigation on the list
-    
+
         The keyword returns the `mitigation ID` and its name
         """
         name,id = self.show_detail_mitigation_with_order(1)
@@ -185,21 +194,21 @@ class Arbor(WebApp):
     def show_detail_mitigation_with_order(self,order):
         """ Shows details about the `order`(th) mitigation in the current list
 
-        `order` is counted from ``1``. 
+        `order` is counted from ``1``.
         The keyword returns the mitigation_id and its name
-        
+
         Example:
         | ${NAME} |  ${ID}= | Arbor.`Show Detail Mitigation With Order` | 3 |
         | Log To Console  |   ${NAME}:${ID} |
         | Arbor.`Capture Screenshot` |
         """
-        self.show_all_mitigations() 
+        self.show_all_mitigations()
         # ignore the header line
         xpath = '//table[1]//tr[%s]/td[%s]//a[1]' % (int(order)+1,2)
         link = self._selenium.get_webelement(xpath)
         mitigation_name = link.get_attribute('innerText')
         href=link.get_attribute('href')
-        mitigation_id = href.split('&')[1].split('=')[1] 
+        mitigation_id = href.split('&')[1].split('=')[1]
         self._selenium.click_link(xpath)
         time.sleep(5)
         BuiltIn().log("Displayed detail of `%s`th mitigation in the list" % order)
@@ -254,7 +263,7 @@ class Arbor(WebApp):
 
         Examples:
         | Arbor.`Menu`               |          order=Alerts/Ongoing |
-        | Arbor.`Capture Screenshot` | 
+        | Arbor.`Capture Screenshot` |
         | Arbor.`Menu`               |          order=Alerts/All Alerts |
         | Arbor.`Capture Screenshot` |
         | Arbor.`Menu`               |          order=System/Status/Deployment Status |
@@ -264,7 +273,7 @@ class Arbor(WebApp):
         """
         self.switch(self._current_name)
 
-        self.clean_status_msg()    
+        self.clean_status_msg()
 
         index = 0
         items = order.split('/')
@@ -274,7 +283,7 @@ class Arbor(WebApp):
             if index > 1:
                 menu = '//li[not(contains(@class,\'top_level\'))]'
             else:
-                menu = '' 
+                menu = ''
             if partial_match:
                 xpath = "xpath=%s//a[contains(.,'%s')]" % (menu,item)
             else:
@@ -303,14 +312,14 @@ class Arbor(WebApp):
         BuiltIn().log('Found %d elements' % count)
         if strict and count == 0:
             raise Exception('ERROR: no changes to commit')
-        
+
         if count > 0:
             self.verbose_capture()
             self._selenium.click_button(xpath)
             main_window = self._selenium.select_window('NEW')
             self.verbose_capture()
             self._selenium.click_button(u'commit')
-            
+
             self._selenium.select_window(main_window)
             self._selenium.wait_until_element_is_not_visible(xpath,timeout='20s')
             self.verbose_capture()
@@ -318,4 +327,4 @@ class Arbor(WebApp):
         else:
             BuiltIn().log('WARN:No changes to commit')
 
-        
+

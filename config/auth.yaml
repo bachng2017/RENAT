@@ -8,6 +8,9 @@ auth:
         default:
             user: <user>
             pass: <password>
+        extreme-bd:
+            user: <user>
+            pass: <password>
         samurai:
             user: <user>
             pass: <password>
@@ -15,6 +18,9 @@ auth:
             user: <user>
             pass: <password>
         vmware-esxi:
+            user: <user>
+            pass: <password>
+        procera-pre:
             user: <user>
             pass: <password>
 

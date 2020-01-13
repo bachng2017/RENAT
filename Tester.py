@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  Copyright 2018 NTT Communications
+#  Copyright 2017-2019 NTT Communications
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-04-02 08:19:11 +0900 (火, 02 4 2019) $
+# $Date: 2019-04-02 08:19:11 +0900 (火, 02  4月 2019) $
 # $Rev: 1970 $
 # $Ver: $
 # $Author: $
@@ -31,7 +31,7 @@ try:
     import IxNetwork
 except:
     pass
-try: 
+try:
     import SubIxLoad
 except:
     pass
@@ -65,7 +65,7 @@ class Tester(object):
 |         chassis:
 |             - 10.128.4.40
 |             - 10.128.4.41
-    
+
     ``ip`` is the the IP of Ixia application server and ``chassis`` section is
     optional which describe all the chassis in the chain.
 
@@ -78,11 +78,11 @@ class Tester(object):
 |         device: ixnet03_8009
 |         config: vmx_20161129.ixncfg
 |         real-port:
-|            -   description: to egde router   
+|            -   description: to egde router
 |                chassis: 10.128.32.71
 |                card: 6
 |                port: 11
-|            -   description: to backbone router 
+|            -   description: to backbone router
 |                chassis: 10.128.32.71
 |                card: 6
 |                port: 9
@@ -93,7 +93,7 @@ Otherwise, port remapping will use the ``real-port`` information to reassign
 all existed ports and map to Ixia ports.
 
 In this case, the order will be the order when user created the port in Ixia
-GUI. 
+GUI.
 
 *Note:* User can always confirm the created order by ``clear sorting`` in
 Ixia GUI.
@@ -104,8 +104,8 @@ Ixia GUI.
     | `Sleep` | 30s |
     | Tester.`Stop Traffic` |
 
-Time format used in this module is same with ``time string`` format of Robot Framework. 
-For more details about this, see [http://robotframework.org/robotframework/latest/libraries/DateTime.html|DateTime] 
+Time format used in this module is same with ``time string`` format of Robot Framework.
+For more details about this, see [http://robotframework.org/robotframework/latest/libraries/DateTime.html|DateTime]
 library of Robot Framework.
 
 *Note:* See [./tester_mod_ixnet.html|IxNet module],
@@ -116,7 +116,7 @@ module.
     ROBOT_LIBRARY_SCOPE = 'TEST SUITE'
     ROBOT_LIBRARY_VERSION = Common.version()
 
-    ### 
+    ###
     def __init__(self):
         folder = os.path.dirname(__file__)
         sys.path.append(folder)
@@ -149,7 +149,7 @@ module.
                             return _xrun
                         setattr(self,cmd,MethodType(gen_xrun(cmd),self))
         except RobotNotRunningError as e:
-            Common.err("WARN: RENAT is not running") 
+            Common.err("WARN: RENAT is not running")
 
 
     def switch(self,name):
@@ -168,12 +168,13 @@ module.
         type    = Common.GLOBAL['device'][dname]['type']
         if 'port' in Common.GLOBAL['device'][dname]: port = Common.GLOBAL['device'][dname]['port']
 
-    
+
         client = {}
         client['type']  = type
         client['ip']    = ip
         client['desc']  = desc
-  
+        client['device'] = dname
+
         ### IxNetwork
         if type == 'ixnet':
             ix = IxNetwork.IxNet()
@@ -193,14 +194,14 @@ module.
             client['tasks']         = tasks
             client['results']       = results
 
-            BuiltIn().log_to_console("RENAT: created new process that run IxLoad client") 
+            BuiltIn().log_to_console("RENAT: created new process that run IxLoad client")
             ix_process.start()
             tasks.put(['ixload::connect',ip])
             tasks.join()
             results.get()
         ### Avalanche
         elif type == 'avaproxy':
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((ip,port))
             auth = Common.GLOBAL['auth']['plain-text'][type]
             if 'license-server' in Common.GLOBAL['device'][dname]:
@@ -211,13 +212,13 @@ module.
             # sock.send('ava::login/%s' % auth['user'])
             # session_id = sock.recv(1024)
             session_id = Common.send(sock,'ava::login/%s' % auth['user'])
-            # sock.send('ava::add_license_server/%s' % license_server) 
-            # session_id = sock.recv(1024) 
+            # sock.send('ava::add_license_server/%s' % license_server)
+            # session_id = sock.recv(1024)
             # res = Common.send(sock,'ava::add_license_server/%s' % license_server)
             client['connection'] = sock
 
         ### Breaking point
-        elif type == 'ixbps': 
+        elif type == 'ixbps':
             self._base_url = 'https://%s/api/v1' % ip
             ix = requests.Session()
             auth = Common.GLOBAL['auth']['plain-text'][type]
@@ -226,11 +227,11 @@ module.
             result = ix.post( self._base_url + '/auth/session',data=payload,headers=headers,verify=False)
             if result.status_code != requests.codes.ok:
                 BuiltIn().log(result.text)
-                raise Exception('ERROR: could not login to `%s`' % ip) 
-            client['connection'] = ix   
+                raise Exception('ERROR: could not login to `%s`' % ip)
+            client['connection'] = ix
         else:
             raise Exception("ERROR: wrong module type")
-    
+
         self._cur_name = name
         self._clients[name] = client
         BuiltIn().log("Connected to tester `%s`(%s)" % (self._cur_name,ip))
@@ -239,12 +240,12 @@ module.
     def connect_all(self):
         """ Connects to all testers
         """
-        if 'tester' in Common.LOCAL and not Common.LOCAL['tester']: 
+        if 'tester' in Common.LOCAL and not Common.LOCAL['tester']:
             BuiltIn().log("No valid tester configuration found")
             return True
-        for entry in Common.LOCAL['tester']: 
+        for entry in Common.LOCAL['tester']:
             BuiltIn().log('Connect to tester `%s`' % entry)
-            self.connect(entry) 
+            self.connect(entry)
 
         BuiltIn().log("Connected to all %d testers" % len(self._clients))
 
@@ -256,7 +257,7 @@ module.
             self.switch(entry)
             self.close()
         self._cur_name = ""
-        BuiltIn().log("Closed all connections") 
+        BuiltIn().log("Closed all connections")
 
 
     def _xrun(self,cmd,*args,**kwargs):
