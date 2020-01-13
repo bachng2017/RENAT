@@ -2,5 +2,9 @@ tmp/*
 result/*
 result_*
 setpath.bashrc
+.svn
+.password
+run.log
+.ignore
 !.gitkeep
 !.gitignore

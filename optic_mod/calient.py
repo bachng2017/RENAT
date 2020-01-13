@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  Copyright 2017 NTT Communications
+#  Copyright 2017-2019 NTT Communications
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 
 # $Rev: 1187 $
 # $Ver: $
-# $Date: 2018-08-19 01:04:35 +0900 (日, 19 8 2018) $
+# $Date: 2018-08-19 01:04:35 +0900 (日, 19  8月 2018) $
 # $Author: $
 
 
@@ -32,7 +32,7 @@
     The L1 switch provides a mechanism to remotely connect device interface.
     Each device interface has been wired to L1 switch already. The connection
     was described in the master file located specific by `calient-master-path`
-    in the configuration file `renat/config/config.yaml`. 
+    in the configuration file `renat/config/config.yaml`.
 
     The master file includes several Calients in each tab. The column meaning
     and order is trivial.
@@ -44,18 +44,18 @@
 |   # this is the comment
 |   device1,interface1,-,device2,interface2
 |   device1,interface1,>,device2,interface2
-    
+
     The separator ``-`` means a bidirection connection and ``>`` means a unidirection
     connection. For a unidirection connection, ``device1/interface1`` TX will be
-    connected to ``device2/interface2`` RX. 
-    
+    connected to ``device2/interface2`` RX.
+
     *Note:* The separator character must be surrounded by spaces or commas.
 
     The connection file also support jinja2 template format. After the template
     is evaluated, comment could be used by ``comment char``
 
     There is no need to specify which L1 switch for the x-connection. The system
-    will automatically find the appropriate switch. 
+    will automatically find the appropriate switch.
 
 """
 
@@ -91,11 +91,11 @@ def _read_map(self):
         for c1,c2,c3 in cells:
             if any(x is None for x in [c1.value,c2.value,c3.value]): continue
             if sys.version_info[0] > 2:
-                port    = str(c1.value).lower() 
+                port    = str(c1.value).lower()
                 device  = str(c2.value).lower()
                 intf    = str(c3.value).lower()
             else:
-                port    = unicode(c1.value).lower() 
+                port    = unicode(c1.value).lower()
                 device  = unicode(c2.value).lower()
                 intf    = unicode(c3.value).lower()
             if device not in self._intf_map: self._intf_map[device] = {}
@@ -115,16 +115,16 @@ def _read_map(self):
 
     # create session to all optical switch
     for entry in Common.GLOBAL['device']:
-        dev_type  = Common.GLOBAL['device'][entry]['type']  
+        dev_type  = Common.GLOBAL['device'][entry]['type']
 
         if dev_type != 'calient': continue  # only deal with calient type
-        ip = Common.GLOBAL['device'][entry]['ip']  
+        ip = Common.GLOBAL['device'][entry]['ip']
 
         session = requests.Session()
         credentials = Common.GLOBAL['auth']['plain-text']['calient']
         session.auth = (credentials['user'],credentials['pass'])
-   
-        self._clients[entry] = {} 
+
+        self._clients[entry] = {}
         self._clients[entry]['ip']          = ip
         self._clients[entry]['session']     = session
         self._clients[entry]["cookies"]     = ""
@@ -151,7 +151,7 @@ def _get_circuit_from_port(self,switch,switch_port_id,circuit_types):
 def _make_conn_info(self,dev1,port1,dev2,port2,dir='bi'):
     """ Returns `switch_name` and ``conn_id`` if available.
     and returns ``None`` if the connection stretches over multi optic
-    switches  
+    switches
     """
     sw1 = self._intf_map[dev1.lower()][port1.lower()]['switch-name']
     sw2 = self._intf_map[dev1.lower()][port1.lower()]['switch-name']
@@ -159,8 +159,8 @@ def _make_conn_info(self,dev1,port1,dev2,port2,dir='bi'):
     if sw1 != sw2:
         return ()
     else:
-        s1 = self._intf_map[dev1.lower()][port1.lower()]['switch-port'] 
-        s2 = self._intf_map[dev2.lower()][port2.lower()]['switch-port'] 
+        s1 = self._intf_map[dev1.lower()][port1.lower()]['switch-port']
+        s2 = self._intf_map[dev2.lower()][port2.lower()]['switch-port']
 
         if dir == 'bi':
             connect = '-'
@@ -203,7 +203,7 @@ def _delete_conn_info(self, switch, port1, port2, dir):
     """ Deletes existed connection between ``port1`` and ``port2`` an the switch
     """
     cli     = self._clients[switch]
-    ip      = cli["ip"] 
+    ip      = cli["ip"]
     session = cli["session"]
 
     if dir == "bi":
@@ -214,7 +214,7 @@ def _delete_conn_info(self, switch, port1, port2, dir):
         tmp1 = _get_circuit_from_port(self,switch,port1,['incircuit'])
         tmp2 = _get_circuit_from_port(self,switch,port2,['outcircuit'])
         circuits = list(set(tmp1 + tmp2))
-            
+
     for item in circuits:
         rest_result = session.delete('http://'+ip+'/rest/crossconnects/?conn=' + item)
         if rest_result.status_code != requests.codes.ok:
@@ -233,7 +233,7 @@ def add(self,dev1,intf1,dev2,intf2,direction='bi',force=False):
     If ``direction`` is ``uni``, the tx of ``dev 1:port 1`` will be connected
     to ``dev 2:port 2``.
 
-    With ``force`` mode, existed connection that use those ports will be deleted. 
+    With ``force`` mode, existed connection that use those ports will be deleted.
     Without ``force`` mode, an existed connection will make the keyword fails
 
     Examples:
@@ -256,7 +256,7 @@ def add(self,dev1,intf1,dev2,intf2,direction='bi',force=False):
     result  = False
 
     conn_info = _make_conn_info(self,dev1,intf1,dev2,intf2,direction)
-    
+
     if conn_info:
         switch  = conn_info[0]
         conn_id = conn_info[1]
@@ -269,8 +269,8 @@ def add(self,dev1,intf1,dev2,intf2,direction='bi',force=False):
     ip      = cli['ip']
     session = cli['session']
 
-    # delete existed connection in Force mode    
-    if force: 
+    # delete existed connection in Force mode
+    if force:
         _delete_conn_info(self,switch, port1, port2, direction)
     else:
         tmp1 = _get_circuit_from_port(self,switch,port1,['incircuit','outcircuit'])
@@ -282,7 +282,7 @@ def add(self,dev1,intf1,dev2,intf2,direction='bi',force=False):
                 if not i in used_port: used_port.append(i)
 
         if used_port and (sorted([port1,port2]) != sorted(used_port)):
-            raise Exception("Ports are being used: %s:%s by %s, %s:%s by %s" % (dev1,intf1,str(tmp1),dev2,intf2,str(tmp2))) 
+            raise Exception("Ports are being used: %s:%s by %s, %s:%s by %s" % (dev1,intf1,str(tmp1),dev2,intf2,str(tmp2)))
         else:
             _delete_conn_info(self,switch, port1, port2, direction)
             BuiltIn().log("   deleted old circuits because same owner")
@@ -291,7 +291,7 @@ def add(self,dev1,intf1,dev2,intf2,direction='bi',force=False):
         rest_result1 = session.post('http://'+ip+'/rest/crossconnects/',data={'id':'add','in':port1,'out':port2,'dir':'uni'})
         rest_result2 = session.post('http://'+ip+'/rest/crossconnects/',data={'id':'add','in':port2,'out':port1,'dir':'uni'})
 
-        if rest_result1.status_code == requests.codes.ok and rest_result2.status_code == requests.codes.ok:  
+        if rest_result1.status_code == requests.codes.ok and rest_result2.status_code == requests.codes.ok:
             result = True
             msg1    = rest_result1.json()[0]['msg']
             desc1   = rest_result1.json()[0]['description']
@@ -325,7 +325,7 @@ def add(self,dev1,intf1,dev2,intf2,direction='bi',force=False):
             result = False
             raise Exception("REST API failed (%d) while truing to an uni add x-connction" % (rest_result.status_code))
     return result
-  
+
 
 def delete(self,dev1,intf1,dev2,intf2,direction='bi',force=False):
     """ Deletes the connection between ``dev1:intf1 - dev2:intf2``
@@ -365,7 +365,7 @@ def delete(self,dev1,intf1,dev2,intf2,direction='bi',force=False):
 
     if len(circuits) == 0:
         BuiltIn().log("The connection is not valid")
-    
+
     for item in circuits:
         rest_result = session.delete('http://' + ip+ '/rest/crossconnects/?conn=' + item)
         if rest_result.status_code == requests.codes.ok:
@@ -383,8 +383,8 @@ def delete(self,dev1,intf1,dev2,intf2,direction='bi',force=False):
         else:
             result = False
             raise Exception("Failed to delete the connection %s (%d)" % (item,rest_result.status_code))
-            break 
- 
+            break
+
     return result
 
 

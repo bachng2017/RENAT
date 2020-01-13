@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Date: 2019-06-07 12:37:50 +0900 (金, 07 6 2019) $
+# $Date: 2019-06-07 12:37:50 +0900 (金, 07  6月 2019) $
 # $Rev: 2060 $
 # $Ver: $
 # $Author: $
@@ -14,6 +14,7 @@ Library                     ${RENAT_PATH}/Tool.py
 Library                     ${RENAT_PATH}/AChannel.py
 Library                     ${RENAT_PATH}/VChannel.py
 Library                     ${RENAT_PATH}/Router.py
+Library                     ${RENAT_PATH}/WebApp.py
 Library                     ${RENAT_PATH}/Logger.py
 Library                     ${RENAT_PATH}/Extra.py
 

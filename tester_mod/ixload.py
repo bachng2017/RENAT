@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  Copyright 2018 NTT Communications
+#  Copyright 2017-2019 NTT Communications
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-07-03 22:39:21 +0900 (火, 03 7 2018) $
+# $Date: 2018-07-03 22:39:21 +0900 (火, 03  7月 2018) $
 # $Rev: 1074 $
 # $Ver: $
 # $Author: $
@@ -24,7 +24,7 @@ To use IxLoad module, a IxLoad TCL server should be started properly.
 
 RENAT runs a virtual IxLoad client locally in the background that connects to a
 Windows App server. Keywords from test case will send control messages to the
-client, which in turn will control the test ports. 
+client, which in turn will control the test ports.
 
 Different to IxNetwork, an IxLoad test case usually stops within predefined time
 before ``Stop Traffic`` was called.
@@ -41,7 +41,7 @@ def _check_result(results,keyword,extra="unknown"):
     if result[0] != "ixload::ok":
         raise Exception("RENAT error in `%s` keyword: %s" % (keyword,result))
     return result
-    
+
 
 def close(self):
     """ Disconnects the current tester client
@@ -71,7 +71,7 @@ def start_traffic(self):
 
 def stop_traffic(self):
     """ Stops the current running test
-    
+
     Returns the  elapsed time in seconds
     """
     cli = self._clients[self._cur_name]
@@ -87,7 +87,7 @@ def stop_traffic(self):
 
 def load_traffic(self,file_path):
     BuiltIn().log_to_console('WARNING: `Load Traffic` is deprecated. Using `Load Config` instead')
-    self.load_config(file_path) 
+    self.load_config(file_path)
 
 
 def load_config(self,config_name=""):
@@ -112,13 +112,13 @@ def load_config(self,config_name=""):
     # prepare config file
     if config_name == '':
         config_name = Common.LOCAL['tester'][self._cur_name]['config']
-    
+
     tasks.put(["ixload::load_config",config_name,set_port])
     tasks.join()
     msg = _check_result(results,'ixload::load_config')
     BuiltIn().log("Loaded config file `%s`, set result folder to `%s` and reassigned %d ports" % (config_name,msg[1],len(set_port)))
 
-    
+
 
 def collect_data(self,prefix='',more_file='',ignore_not_found=True):
     """ Collects all result data and save them to the current active ``result``
@@ -137,7 +137,7 @@ def collect_data(self,prefix='',more_file='',ignore_not_found=True):
         - Port CPU Statistics.csv
 
     Extra files could be add by ``more_file`` which is a comma separated
-    filename string 
+    filename string
 
     When ``ignore_not_found`` is True, the keyword will not terminate even when
     the expected file is not found.
@@ -146,7 +146,7 @@ def collect_data(self,prefix='',more_file='',ignore_not_found=True):
     cli = self._clients[self._cur_name]
     tasks   = cli['tasks']
     results = cli['results']
-    
+
     tasks.put(["ixload::collect_data",prefix,more_file,ignore_not_found])
     tasks.join()
     _check_result(results,'ixload::collect_data')
@@ -159,9 +159,9 @@ def get_test_report(self,prefix=''):
     cli = self._clients[self._cur_name]
     tasks   = cli['tasks']
     results = cli['results']
-    
+
     tasks.put(["ixload::get_test_report",prefix])
     tasks.join()
     _check_result(results,'ixload::get_test_report')
     BuiltIn().log("Copied report files to local result folder")
-    
+

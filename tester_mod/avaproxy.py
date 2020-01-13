@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  Copyright 2018 NTT Communications
+#  Copyright 2017-2019 NTT Communications
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-03-19 21:34:12 +0900 (火, 19 3 2019) $
+# $Date: 2019-03-19 21:34:12 +0900 (火, 19  3月 2019) $
 # $Rev: 1897 $
 # $Ver: $
 # $Author: $
@@ -34,7 +34,7 @@ this:
 SPF test files should be exported from AVA GUI.
 
 Sample ``local.yaml`` setting for AVA
-    
+
 | # tester information
 | tester:
 |     ava01:
@@ -85,7 +85,7 @@ def close(self):
     """
     cli  = self._clients[self._cur_name]
     avaproxy = cli['connection']
-    
+
     res = Common.send(avaproxy,'ava::logout')
     BuiltIn().log('Closed the AVA proxy connection')
     return res
@@ -110,10 +110,10 @@ def load_config(self,config_name=''):
                 avaproxy.send(data)
                 data = f.read(1024)
     res = avaproxy.recv(1024)
-    BuiltIn().log('Sent the config file `%s`' % config_name)  
-    
+    BuiltIn().log('Sent the config file `%s`' % config_name)
+
     res = Common.send(avaproxy,'ava::load_config/config.spf')
-    BuiltIn().log('Loaded the SPF config, test handle is `%s`' % res)  
+    BuiltIn().log('Loaded the SPF config, test handle is `%s`' % res)
 
     # reserve ports
     port_data = []
@@ -160,11 +160,11 @@ def get_test_result(self,name='ava'):
     """
     cli  = self._clients[self._cur_name]
     avaproxy = cli['connection']
-  
-    res = Common.send(avaproxy,'ava::get_test_result'); 
+
+    res = Common.send(avaproxy,'ava::get_test_result');
     prefix = '%s/%s' % (Common.get_result_path(),name)
     # delele olf folder
-    if name != '' and os.path.exists(prefix): 
+    if name != '' and os.path.exists(prefix):
         shutil.rmtree(prefix)
 
     while res != 'ava::ok':

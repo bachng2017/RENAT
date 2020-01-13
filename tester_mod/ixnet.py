@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  Copyright 2018 NTT Communications
+#  Copyright 2017-2019 NTT Communications
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-07-17 11:17:57 +0900 (水, 17 7 2019) $
+# $Date: 2019-07-17 11:17:57 +0900 (水, 17  7月 2019) $
 # $Rev: 2094 $
 # $Ver: $
 # $Author: $
@@ -60,13 +60,13 @@ def update_chassis(self):
         BuiltIn().log("    found chassis setting")
         for item in device_info['chassis']:
             item = item.strip()
-            if item in cur_chassis: continue 
-            ix.add(ix.getRoot()+'availableHardware', 'chassis', '-hostname',item) 
+            if item in cur_chassis: continue
+            ix.add(ix.getRoot()+'availableHardware', 'chassis', '-hostname',item)
             BuiltIn().log('    added chassis `%s`' % item)
         ix.commit()
 
         chassis = ix.getList(ix.getRoot()+'availableHardware', 'chassis')
-        # wait until all chassis is ready 
+        # wait until all chassis is ready
         interval = 5
         ready = False
         while not ready:
@@ -127,18 +127,18 @@ def wait_until_connected(self,timeout_str='5m'):
                 for port in vport_list:
                     state   = ix.getAttribute(port,'-isConnected')
                     port_ok = port_ok and (state == 'true')
-    
+
             except IxNetwork.IxNetError as err:
                 port_ok = False
                 BuiltIn().log("err type %s" % type(err))
                 BuiltIn().log(err)
                 raise Exception("ERROR: errors found on ixnetwork ports")
             time.sleep(5)
-            count = count + 5 
+            count = count + 5
         if (count >= timeout):
             raise Exception("ERROR: errors found on ixnetwork ports")
 
-    BuiltIn().log("Finished checking ports, state is %s (%d seconds elapsed)" % (port_ok,count))        
+    BuiltIn().log("Finished checking ports, state is %s (%d seconds elapsed)" % (port_ok,count))
     return port_ok
 
 def load_traffic(self,wait_time='2m',wait_time2='2m',apply=True,protocol=True,force=True,tx_mode=u'interleaved'):
@@ -159,8 +159,8 @@ def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,pr
     remapping happens. Use ``tx_mode`` to set the TxMode of the remapped ports.
 
     Parameters:
-    - ``apply``: applies traffic when ``True`` otherwise 
-    - ``protocol``: starts all protocols when ``True`` otherwise 
+    - ``apply``: applies traffic when ``True`` otherwise
+    - ``protocol``: starts all protocols when ``True`` otherwise
     - ``force``: force to reclaim the ports when ``True`` otherwise
     - ``wait_time``: wait time after applying protocols
     - ``wait_time2``: maximum wait time befor all ports become available. In
@@ -172,7 +172,7 @@ def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,pr
     this:
 | # tester information
 | tester:
-| 
+|
 |     tester:
 |         device: ixnet03_8009
 |         config: bgp.ixncfg
@@ -198,7 +198,7 @@ def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,pr
     ix      = cli['connection']
     if config_name == '':
         config_name = Common.LOCAL['tester'][self._cur_name]['config']
-    
+
     # load config
     config_path = Common.get_item_config_path() + '/' + config_name
     ix.execute('loadConfig',ix.readFrom(config_path))
@@ -211,23 +211,23 @@ def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,pr
         real_port_data = Common.LOCAL['tester'][self._cur_name]['real-port']
         BuiltIn().log("    found port setting")
         if real_port_data and len(real_port_data) != 0: # no need to remap ports
-            # remap ports 
+            # remap ports
             vports = ix.getList(ix.getRoot(),'vport')
             real_ports = []
             for item in real_port_data:
                 chassis = item['chassis'].strip()
                 card    = int(item['card'])
                 port    = int(item['port'])
-                real_ports.append((chassis,card,port)) 
+                real_ports.append((chassis,card,port))
 
             BuiltIn().log("    assigning %d ports to %d vports" % (len(real_ports),len(vports)))
 
             # assign ports
-            result_id = ix.setAsync().execute('assignPorts',real_ports,[],vports,force) 
+            result_id = ix.setAsync().execute('assignPorts',real_ports,[],vports,force)
             interval = 5
             is_done = u"false"
             count = 0
-            while is_done == u"false" and count < wait2:  
+            while is_done == u"false" and count < wait2:
                 count = count + interval
                 BuiltIn().log_to_console('.','STDOUT',True)
                 time.sleep(interval)
@@ -249,7 +249,7 @@ def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,pr
                 ix.setAttribute(port,'-txMode',tx_mode)
             result = ix.commit()
             if result != u'::ixNet::OK' :
-                raise Exception("ERROR: Error while remapping ports: " + result)    
+                raise Exception("ERROR: Error while remapping ports: " + result)
             BuiltIn().log("Loaded config and reassigned %d ports in %d seconds" % (len(vports),count))
 
     # check port status again
@@ -260,7 +260,7 @@ def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,pr
         BuiltIn().log("Starting all protocols...")
         result = ix.execute('startAllProtocols')
         if result != u'::ixNet::OK' :
-            raise Exception("ERROR: Error while starting protocols: "+result)    
+            raise Exception("ERROR: Error while starting protocols: "+result)
         time.sleep(wait) # wait enough for protocol to start
         BuiltIn().log("Started all protocols")
     # apply traffic
@@ -268,7 +268,7 @@ def load_config(self,config_name='',wait_time='2m',wait_time2='2m',apply=True,pr
         BuiltIn().log("Applying traffic ...")
         result = ix.execute('apply',ix.getRoot()+'traffic')
         if result != u'::ixNet::OK' :
-            raise Exception("ERROR: Error while applying traffic: " + result)    
+            raise Exception("ERROR: Error while applying traffic: " + result)
         BuiltIn().log("Applied traffic")
     #
     time.sleep(wait3)
@@ -285,7 +285,7 @@ def start_protocol(self,wait_time='1m'):
 
     result = ix.execute('startAllProtocols')
     if result != '::ixNet::OK' :
-        raise Exception("Error while starting protocols: " + result)    
+        raise Exception("Error while starting protocols: " + result)
 
     wait    = DateTime.convert_time(wait_time)
     time.sleep(wait) # wait enough for protocol to start
@@ -300,13 +300,13 @@ def apply_traffic(self,refresh=True):
     """
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
-   
+
     #
     ix.setAttribute(ix.getRoot()+'traffic','-refreshLearnedInfoBeforeApply',refresh)
- 
+
     # apply traffic
     ix.execute('apply',ix.getRoot()+'traffic')
-    
+
     BuiltIn().log("Applied traffic")
 
 
@@ -326,7 +326,7 @@ def change_frame_rate_dynamic(self,value,pattern='.*'):
 
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
-   
+
     traffic_group_list = ix.getList(ix.getRoot() + 'traffic', 'dynamicRate')
     target_list = []
     for item in traffic_group_list:
@@ -337,16 +337,16 @@ def change_frame_rate_dynamic(self,value,pattern='.*'):
     for  item in target_list: ix.setAttribute(item,'-rate',value)
 
     result = ix.commit()
-    if result != '::ixNet::OK': return False 
+    if result != '::ixNet::OK': return False
 
     BuiltIn().log("Changed traffic rate to %s" % (value))
-        
-    return True 
+
+    return True
 
 
 
 def change_frame_rate(self,value,pattern='.*',flow_pattern='.*'):
-    """ Changes the frame rate 
+    """ Changes the frame rate
 
     Parameter:
         - ``value``: value to set. Depends on the current configuration, this
@@ -359,7 +359,7 @@ def change_frame_rate(self,value,pattern='.*',flow_pattern='.*'):
 
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
-   
+
     traffic_item_list = ix.getList(ix.getRoot() + 'traffic', 'trafficItem')
     item_list = []
     for item in traffic_item_list:
@@ -374,14 +374,14 @@ def change_frame_rate(self,value,pattern='.*',flow_pattern='.*'):
             if re.match(flow_pattern,name):
                 count += 1
                 BuiltIn().log('    Modify flow `%s`' % name)
-                frame_rate  = ix.getList(flow, 'frameRate')[0] 
+                frame_rate  = ix.getList(flow, 'frameRate')[0]
                 ix.setAttribute(frame_rate,'-rate',value)
 
     result1 = ix.commit()
     result2 = ix.execute('apply', ix.getRoot() + 'traffic')
     if result1 != '::ixNet::OK' or result2 != '::ixNet::OK' :
         raise Exception("Failed to change frame rate: (%s)(%s)" % (result1,result2))
-        return False 
+        return False
 
     BuiltIn().log("Changed frame rate of %d items" % count)
     return True
@@ -392,7 +392,7 @@ def change_frame_size(self,type,value,pattern='.*',flow_pattern='.*'):
 
     Parameter:
         - ``type``: could be ``fixed size``, ``increment_from``,``increment_step`` or
-        ``increment_to`` 
+        ``increment_to``
         - ``value``: value to set
         - ``pattern``: a regular expression to identify traffic item
           name, default is everything ``.*``
@@ -401,7 +401,7 @@ def change_frame_size(self,type,value,pattern='.*',flow_pattern='.*'):
     """
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
-   
+
     traffic_item_list = ix.getList(ix.getRoot() + 'traffic', 'trafficItem')
     item_list = []
     for item in traffic_item_list:
@@ -416,7 +416,7 @@ def change_frame_size(self,type,value,pattern='.*',flow_pattern='.*'):
             if re.match(flow_pattern,name):
                 BuiltIn().log('    Modify flow `%s`' % name)
                 count += 1
-                frame_size_list  = ix.getList(flow, 'frameSize') 
+                frame_size_list  = ix.getList(flow, 'frameSize')
                 for frame_size in frame_size_list:
                     if type == 'increment_from' :
                         ix.setAttribute(frame_size,'-incrementFrom',value)
@@ -431,7 +431,7 @@ def change_frame_size(self,type,value,pattern='.*',flow_pattern='.*'):
     result2 = ix.execute('apply', ix.getRoot() + 'traffic')
     if result1 != '::ixNet::OK' or result2 != '::ixNet::OK' :
         raise Exception("Failed to change frame sizce: (%s)(%s)" % (result1,result2))
-        return False 
+        return False
 
     BuiltIn().log("Changed frame size of %d items" % count)
     return True
@@ -441,7 +441,7 @@ def change_frame_size(self,type,value,pattern='.*',flow_pattern='.*'):
 
 def set_traffic_item(self,*items,**kwargs):
     """ Enables/Disables some traffic items ``items``
-        
+
         Parameters:
         - ``items``: a list of Ixia traffic item name
         - ``enabled``: False or True ,the mode to set traffic item to, default is
@@ -454,14 +454,14 @@ def set_traffic_item(self,*items,**kwargs):
 
         Examples:
         | Set Traffic Item | Traffic Item 1 | Traffic Item 2 |
-        | Set Traffic Item | @{item_list}   | 
+        | Set Traffic Item | @{item_list}   |
         | Set Traffic Item | Traffic Item 1 | enabled = ${FALSE} |
 
     """
 
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
-    if kwargs: 
+    if kwargs:
         enabled = kwargs['enabled']
     else:
         enabled = True
@@ -469,10 +469,10 @@ def set_traffic_item(self,*items,**kwargs):
     # create traffic data
     traffic_data = {}
     traffic_items = ix.getList(ix.getRoot()+'traffic','trafficItem')
-    for item in traffic_items:  
+    for item in traffic_items:
         name = ix.getAttribute(item,'-name')
         traffic_data[name] = item
-    
+
     for item in items:
         # acess traffic item by index if the item has format ::<num>
         indexes = re.findall('^::(%d)$',item)
@@ -487,17 +487,17 @@ def set_traffic_item(self,*items,**kwargs):
         if traffic_data[_item]:
             ix.setAttribute(traffic_data[item],'-enabled',enabled)
         else:
-            raise Exception("Error while setting traffic item") 
+            raise Exception("Error while setting traffic item")
 
     result = ix.commit()
-    if result != '::ixNet::OK': 
+    if result != '::ixNet::OK':
         raise Exception("Error while setting traffic item")
 
     BuiltIn().log("Set %d traffic items to `%s` state" % (len(items),enabled))
 
-    return True 
-    
-   
+    return True
+
+
 def set_all_traffic_item(self,enabled=True):
     """ Enables/Disables *all* traffic items at once
     """
@@ -510,8 +510,8 @@ def set_all_traffic_item(self,enabled=True):
         result = ix.setAttribute(item,'-enabled',enabled)
         if result != '::ixNet::OK': return False
     ix.commit()
- 
-    return True 
+
+    return True
 
 
 def start_traffic(self,wait_time='30s'):
@@ -523,7 +523,7 @@ def start_traffic(self,wait_time='30s'):
     By default the keyword will wait for 30 seconds.
     """
     wait = DateTime.convert_time(wait_time)
-    
+
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
 
@@ -533,21 +533,21 @@ def start_traffic(self,wait_time='30s'):
 
 def load_and_start_traffic(self,wait_time1='10s',wait_time2='10s'):
     """ Combines `Load Traffic` and `Start Traffic` to one keyword.
-    """ 
+    """
     self.load_traffic(wait_time1)
     self.start_traffic(wait_time2)
 
 
 def stop_traffic(self,stop_protocol=False,wait_time='10s'):
     """ Stops the current traffic and wait for ``wait_time``
-    
+
     Parameters:
     - stop_protocol: if ``True`` also stops all running protocols
     - wait_time: time to wait after apply the command
     """
 
     wait = DateTime.convert_time(wait_time)
-    
+
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
 
@@ -565,11 +565,11 @@ def stop_all_protocols(self,wait_time='30s'):
     """
 
     wait = DateTime.convert_time(wait_time)
-    
+
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
     ix.execute('stopAllProtocols')
-    
+
     time.sleep(wait)
     BuiltIn().log("Stopped all protocols")
 
@@ -583,7 +583,7 @@ def close(self):
 
     result = ix.disconnect()
     if result != "::ixNet::OK": raise Execption("Error while closing the connection")
-    
+
     BuiltIn().log("Closed connection to `%s`" % self._cur_name)
 
 
@@ -609,13 +609,13 @@ def collect_data(self,view,prefix=u"stat_"):
 
 def get_test_result(self,view,prefix=u"stat_"):
     """ Collects traffic data of a ``view`` and export to a CSV file in
-    ``result`` folder 
+    ``result`` folder
 
-    Currently, supported views are: 
+    Currently, supported views are:
 
-    ``Port Statistics``, 
+    ``Port Statistics``,
     ``Global Protocol Statistics``, ``BGP Aggregated Statistics``,
-    ``BGP Aggregated State Counts``, ``OSPF Aggregated Statistics``, 
+    ``BGP Aggregated State Counts``, ``OSPF Aggregated Statistics``,
     ``OSPF Aggregated State Counts``, ``OSPFv3 Aggregated Statistics``,
     ``OSPFv3 Aggregated State Counts``, ``L2-L3 Test Summary Statistics``,
     ``Flow Statistics``, ``Flow Detective``, ``Data Plane Port Statistics``,
@@ -625,7 +625,7 @@ def get_test_result(self,view,prefix=u"stat_"):
     If there is no valid data, view will be silently ignored
 
     The prefix ``prefix`` is appended to the view name for the CSV file.
-    
+
     *Note*: the name of the result files are modified so that `space` will
     become `underbar`, `hyphen` will be deleted.
     """
@@ -638,17 +638,17 @@ def get_test_result(self,view,prefix=u"stat_"):
 
     # underbar in view name will be converted to space
     view = view.replace('_',' ')
-    
+
     result_path = os.getcwd() + '/' + Common.get_result_folder()
     # null page should be ignored
     result_id = ix.setAsync().getAttribute(view+'/page','-isReady')
     time.sleep(5) # wait for 5 second
-    is_done = ix.isDone(result_id) 
-    if is_done == u"true": 
+    is_done = ix.isDone(result_id)
+    if is_done == u"true":
         ready = ix.getResult(result_id)
-        if ready == u'false': 
-            BuiltIn().log("No statistic data for view `%s`" % view) 
-            return 
+        if ready == u'false':
+            BuiltIn().log("No statistic data for view `%s`" % view)
+            return
 
         # set page size to 500 rows(max)
         ix.setAttribute(view+'/page','-pageSize',500)
@@ -679,7 +679,7 @@ def get_test_result(self,view,prefix=u"stat_"):
             row = ix.getAttribute(view+'/page', '-pageValues')
             if row == '::ixNet::OK':
                 row = ix.getAttribute(view+'/page', '-rowValues')
-            
+
             if type(row) is not list: row = _fix_data(row)
 
             for i in range(len(row)):
@@ -687,18 +687,18 @@ def get_test_result(self,view,prefix=u"stat_"):
                     w.writerow(row[i][j])
 
         f.close()
-    BuiltIn().log("Got statistic data for view `%s`" % view) 
+    BuiltIn().log("Got statistic data for view `%s`" % view)
 
 
 def collect_all_data(self,prefix="stat_"):
     """ Deprecated. Use
     """
-    BuiltIn().log_to_console("WARNING: `Collect All Data` is deprecated. Use `Get All Test Result` instead") 
+    BuiltIn().log_to_console("WARNING: `Collect All Data` is deprecated. Use `Get All Test Result` instead")
     self.get_all_test_result(prefix)
 
 
 def get_all_test_result(self,prefix=u"stat_"):
-    """ Collects all Ixia traffic data after traffic is stopped. 
+    """ Collects all Ixia traffic data after traffic is stopped.
 
     Results are CSV files that are stored in ``result`` folder. The prefix ``prefix`` is appended
     to the original view name
@@ -709,20 +709,20 @@ def get_all_test_result(self,prefix=u"stat_"):
     views = ix.getList(ix.getRoot()+'statistics','view')
     ### work-around for IxNet older than 7.4 which return a string not list for
     ### this
-    if type(views) is not list: 
+    if type(views) is not list:
         BulitIn().log("    Fix data for  some old version of  Ixia NW (<7.4)")
         # views = filter(None,re.split("} {|{|}",views))
         views = _fix_data(views)
 
     for view in views:
-        self.get_test_result(view,prefix)    
+        self.get_test_result(view,prefix)
 
     BuiltIn().log("Got all available test data")
-   
+
 
 def loss_from_file(self,file_name='Flow_Statistics.csv',index='0'):
     """ Returns ``packet loss`` by miliseconds and `delta frame`.
-    
+
     Parameters:
     - `file_name`: flow information (csv format). Default is
       ``Flow_Statistics.csv``
@@ -741,7 +741,7 @@ def loss_from_file(self,file_name='Flow_Statistics.csv',index='0'):
     data = pd.read_csv(file_path,header=0)
     # data = data[data['First TimeStamp'].notnull()] # ignore null rows
     BuiltIn().log("    Read data from %s" % (file_path))
-  
+
     frame_delta = int(data.filter(like='Frames Delta').loc[index_int])
     tx_frame    = int(data['Tx Frames'].loc[index_int])
     BuiltIn().log('----------')
@@ -756,8 +756,8 @@ def loss_from_file(self,file_name='Flow_Statistics.csv',index='0'):
         time1       = datetime.strptime(data['First TimeStamp'].loc[index_int],"%H:%M:%S.%f")
         time2       = datetime.strptime(data['Last TimeStamp'].loc[index_int],"%H:%M:%S.%f")
         msec_delta  = (time2-time1).total_seconds()*1000
-        
-        BuiltIn().log("    Delta sec   = %d" % msec_delta) 
+
+        BuiltIn().log("    Delta sec   = %d" % msec_delta)
         BuiltIn().log("    Delta frame = %d" % frame_delta)
         msec_loss   = int(frame_delta * msec_delta / tx_frame)
         BuiltIn().log("Loss was %d frames, %d miliseconds" % (frame_delta,msec_loss))
@@ -771,10 +771,10 @@ def set_bgp_neighbor(self,*indexes,**kwargs):
     ``kwargs`` contains following parameters:
     - indexes: is a list of index of BGP neighbor (index is started from zero)
     - vport_index: is the target vport index
-    - enabled: TRUE or FALSE 
+    - enabled: TRUE or FALSE
 
     Examples:
-    | Tester.`Set BGP Item` | 0 | 1 | vport_index=0 | enabled=${FALSE} | 
+    | Tester.`Set BGP Item` | 0 | 1 | vport_index=0 | enabled=${FALSE} |
     | Tester.`Set BGP Item` | 0 | 1 | vport_index=1 | enabled=${TRUE} |
     """
     cli = self._clients[self._cur_name]
@@ -792,7 +792,7 @@ def set_bgp_neighbor(self,*indexes,**kwargs):
     vports      = ix.getList(ix.getRoot(),'vport')
     protocols   = ix.getList(ix.getRoot()+vports[vport_index],'protocols')
     bgps        = ix.getList(ix.getRoot()+protocols[0],'bgp')
-    neighbors   = ix.getList(ix.getRoot()+bgps[0],'neighborRange') 
+    neighbors   = ix.getList(ix.getRoot()+bgps[0],'neighborRange')
     for index in indexes:
         ix.setAttribute(ix.getRoot()+neighbors[int(index)],'-enabled',enabled)
 
@@ -804,8 +804,8 @@ def set_bgp_items(self,port_index,neighbor_index,route_range_index,is_enable):
     """ Enables/Disables BGP entry by a set of port,neighbor,route_range index
 
     Parameters:
-    - ``port_index``: index of the port 
-    - ``neighbor_index``: index of the neighbor or ``*`` 
+    - ``port_index``: index of the port
+    - ``neighbor_index``: index of the neighbor or ``*``
     - ``route_range_index``: index of the route range or ``*``
     - ``is_enable``: ${TRUE} or ${FALSE}
 
@@ -823,7 +823,7 @@ def set_bgp_items(self,port_index,neighbor_index,route_range_index,is_enable):
     try:
         protocols       = ix.getList(ix.getRoot()+vports[int(port_index)],'protocols')
         bgps            = ix.getList(ix.getRoot()+protocols[0],'bgp')
-        neighbor_list   = ix.getList(ix.getRoot()+bgps[0],'neighborRange') 
+        neighbor_list   = ix.getList(ix.getRoot()+bgps[0],'neighborRange')
         if neighbor_index == '*':
             for neighbor in neighbor_list:
                 ix.setAttribute(ix.getRoot()+neighbor,'-enabled',is_enable)
@@ -835,7 +835,7 @@ def set_bgp_items(self,port_index,neighbor_index,route_range_index,is_enable):
             else:
                 ix.setAttribute(ix.getRoot()+route_range_list[int(route_range_index)],'-enabled',is_enable)
     except IndexError as err:
-        raise Exception("Index error while trying to access BGP items")  
+        raise Exception("Index error while trying to access BGP items")
 
     ix.commit()
     BuiltIn().log("Set BGP items to value `%s`" % (is_enable))
@@ -883,13 +883,13 @@ def start_capture(self,wait_time='30s'):
     wait = DateTime.convert_time(wait_time)
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
-   
-    ix.execute('startCapture') 
+
+    ix.execute('startCapture')
     time.sleep(wait)
 
     BuiltIn().log("Started packet capture")
 
- 
+
 def stop_and_save_capture(self,prefix='',wait_until_finish=True,monitor_interval='5s'):
     """ Stop current capture and save the resuls to folder specified by ``path``
 
@@ -897,7 +897,7 @@ def stop_and_save_capture(self,prefix='',wait_until_finish=True,monitor_interval
     appended in their names.
 
     Examples:
-    | Tester.`Start Capture` | 
+    | Tester.`Start Capture` |
     | Sleep                  | 10s |
     | Tester.`Stop And Save Capture` | ${RESULT_FOLDER}/capture.zip |
 
@@ -906,10 +906,10 @@ def stop_and_save_capture(self,prefix='',wait_until_finish=True,monitor_interval
     ix  = cli['connection']
     vports      = ix.getList(ix.getRoot(),'vport')
     interval = DateTime.convert_time(monitor_interval)
-   
-    ix.execute('stopCapture') 
-    
-    
+
+    ix.execute('stopCapture')
+
+
     if wait_until_finish:
         all_ready = False
         while not all_ready:
@@ -928,12 +928,12 @@ def stop_and_save_capture(self,prefix='',wait_until_finish=True,monitor_interval
                         ready = ix.getAttribute(port + '/capture', '-controlCaptureState')
                         all_ready = all_ready and (ready == 'ready')
 
-    folder = ix.getAttribute(ix.getRoot()+'/testConfiguration','-resultPath') 
+    folder = ix.getAttribute(ix.getRoot()+'/testConfiguration','-resultPath')
     # temporary folder
-    folder = Common.get_config_value('ix-remote-tmp') + '/' + os.getcwd().replace('/','_')
+    folder = Common.get_config_value('ix-remote-tmp') + '/' + cli['device'] + '_' + os.getcwd().replace('/','_')
     ix.execute('saveCapture', folder)
-   
-    count = 0 
+
+    count = 0
     for port in vports:
         mode = ix.getAttribute(port,'-rxMode')
         if mode == 'capture' or mode == 'captureAndMeasure':
@@ -943,13 +943,13 @@ def stop_and_save_capture(self,prefix='',wait_until_finish=True,monitor_interval
             name = name.replace('-','')
             name = name.replace(' ','_')
             name = name.replace('__','_')
-            dst1 = Common.get_result_path() + '/' + prefix + name + '_HW.cap' 
-            dst2 = Common.get_result_path() + '/' + prefix + name + '_SW.cap' 
+            dst1 = Common.get_result_path() + '/' + prefix + name + '_HW.cap'
+            dst2 = Common.get_result_path() + '/' + prefix + name + '_SW.cap'
 
             ix.execute('copyFile',ix.readFrom(src1,'-ixNetRelative'),ix.writeTo(str(dst1)))
             ix.execute('copyFile',ix.readFrom(src2,'-ixNetRelative'),ix.writeTo(str(dst2)))
             count = count + 2
-        
+
 
     BuiltIn().log("Stopped packet capture and saved %d files" % count)
 
@@ -957,13 +957,13 @@ def stop_and_save_capture(self,prefix='',wait_until_finish=True,monitor_interval
 def get_quicktest_list(self):
     """ Returns current loaded Quicktest list
     """
-        
+
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
 
     test_list = ix.getAttribute(ix.getRoot() + '/quickTest', '-testIds')
     BuiltIn().log("Get current loaded Quictest list: %d items" % (len(test_list)))
-    
+
     return test_list
 
 
@@ -976,7 +976,7 @@ def stop_quicktest(self,test_index='0'):
     index = int(test_index)
     test_list = ix.getAttribute(ix.getRoot() + '/quickTest', '-testIds')
     ix.execute('stop',test_list[index])
-   
+
     BuiltIn().log("Stopped the Quicktest")
 
 
@@ -985,7 +985,7 @@ def add_port(self,force=True,time_out='2m',learn_time='2m'):
 
     - ``time_out`` is the wait time until port is connected (default is 2m)
     - ``learn_time`` is the time waiting for arp to be learned (default is 2m)
-    
+
     Sample of local config
 |tester:
 |    tester:
@@ -1003,10 +1003,10 @@ def add_port(self,force=True,time_out='2m',learn_time='2m'):
                 port: 4
 |                ip: 10.100.14.2
 |                mask: 24
-|                gw: 10.100.14.1 
+|                gw: 10.100.14.1
 
     """
-    
+
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
 
@@ -1019,11 +1019,11 @@ def add_port(self,force=True,time_out='2m',learn_time='2m'):
         chassis = item['chassis']
         card    = item['card']
         port    = item['port']
-        real_ports.append((chassis,card,port)) 
+        real_ports.append((chassis,card,port))
 
     # assign ports
-    result_id = ix.setAsync().execute('assignPorts',real_ports,[],vports,force) 
-        
+    result_id = ix.setAsync().execute('assignPorts',real_ports,[],vports,force)
+
     interval = 5
     is_done = "false"
     count = 0
@@ -1058,14 +1058,14 @@ def add_port(self,force=True,time_out='2m',learn_time='2m'):
 
     result = ix.commit()
     if result != '::ixNet::OK' :
-        raise Exception("ERROR: " + result)    
+        raise Exception("ERROR: " + result)
 
     # need time for the ARP learning
     time.sleep(DateTime.convert_time(learn_time))
 
     BuiltIn().log("Added %d Ixia ports" % len(port_data))
 
-    
+
 
 def add_quicktest(self,name,test_type=u'rfc2544throughput',tx_mode=u'interleaved',clear_all=True):
     """ Create a new Quicktest with default value
@@ -1093,7 +1093,7 @@ def add_quicktest(self,name,test_type=u'rfc2544throughput',tx_mode=u'interleaved
         traffic_item_list = ix.getList(ix.getRoot() + 'traffic', 'trafficItem')
         for item in traffic_item_list:
             ix.remove(item)
-        ix.commit() 
+        ix.commit()
         BuiltIn().log("    cleared all %d existed Quicktest items" % (len(test_list)))
 
     test = ix.add(ix.getRoot()+'/quickTest',str(test_type))
@@ -1105,7 +1105,7 @@ def add_quicktest(self,name,test_type=u'rfc2544throughput',tx_mode=u'interleaved
 
     vports = ix.getList(ix.getRoot(),'vport')
 
-    # apply traffic item 
+    # apply traffic item
     result = ix.execute('apply',test) # apply will create traffic items
     if result != '::ixNet::OK':
         raise Exception("ERROR: could not applying the config of configured Quicktest")
@@ -1129,9 +1129,9 @@ def add_quicktest(self,name,test_type=u'rfc2544throughput',tx_mode=u'interleaved
     # end_point = ix.add(traffic_items[0],'endpointSet','-sources',vports[0]+'/protocols','-destinations',vports[1]+'/protocols')
     result = ix.commit()
     if result != '::ixNet::OK':
-        raise Exception("ERROR: could not create new Quicktest") 
-    
-    BuiltIn().log("Created a new Quicktest with type `%s` for %d ports " % (test_type,len(vports))) 
+        raise Exception("ERROR: could not create new Quicktest")
+
+    BuiltIn().log("Created a new Quicktest with type `%s` for %d ports " % (test_type,len(vports)))
 
 
 def get_quicktest_name(self,test_index='0'):
@@ -1156,7 +1156,7 @@ def get_quicktest_index(self,test_name):
     count = 0
     for item in test_ids:
         name = ix.getAttribute(item,'-name')
-        if name == test_name: 
+        if name == test_name:
             result = count
             break
         count += 1
@@ -1187,18 +1187,18 @@ def run_quicktest(self,test_index='0',wait_until_finish=True):
 
     # interval for recheck the proress
     interval = 30
- 
-    if not wait_until_finish: 
+
+    if not wait_until_finish:
         BuiltIn().log("Started the Quicktest. Test is still running")
     else:
-        elapsed_time = 0 
+        elapsed_time = 0
         is_running = ix.getAttribute(test_list[index]+'/results','-isRunning')
         while is_running == 'true':
             BuiltIn().log_to_console('.','STDOUT',True)
             time.sleep(interval)
             elapsed_time = elapsed_time + interval
             is_running = ix.getAttribute(test_list[index]+'/results','-isRunning')
- 
+
         result = ix.getAttribute(test_list[index]+'/results','-result')
         if result == 'fail':
             str = "ERROR: Quicktest failed"
@@ -1206,7 +1206,7 @@ def run_quicktest(self,test_index='0',wait_until_finish=True):
             raise Exception(str)
         else:
             BuiltIn().log("Ran and finished the Quicktest with result `%s` in %d seconds" % (result,elapsed_time))
-            
+
 
 
 
@@ -1226,10 +1226,10 @@ def get_test_report(self,name='ixnet_report.pdf',enable_all=True):
         '-testDUTName','DUT',
         '-testerName',cli['desc'],
         '-testName',Common.get_item_name())
- 
-    result_path = ix.getAttribute(ix.getRoot()+'/testConfiguration','-resultPath') 
+
+    result_path = ix.getAttribute(ix.getRoot()+'/testConfiguration','-resultPath')
     BuiltIn().log("    current result path is `%s`" % result_path)
-     
+
     # prepare report using default template
     report_file = result_path + '/report.pdf'
     ix.setMultiAttribute(ix.getRoot()+'/reporter/generate',
@@ -1239,10 +1239,10 @@ def get_test_report(self,name='ixnet_report.pdf',enable_all=True):
 
     # enable all statistics
     if enable_all:
-        ix.setAttribute(ix.getRoot()+'/reporter/saveResults','-enableAllResult','true') 
+        ix.setAttribute(ix.getRoot()+'/reporter/saveResults','-enableAllResult','true')
         ix.commit()
     # save result in details
-    ix.execute('saveDetailedResults',ix.getRoot()+'/reporter/saveResults') 
+    ix.execute('saveDetailedResults',ix.getRoot()+'/reporter/saveResults')
     state = ix.getAttribute(ix.getRoot()+'/reporter/saveResults','-state')
     while state != 'done':
         state = ix.getAttribute(ix.getRoot()+'/reporter/saveResults','-state')
@@ -1252,6 +1252,7 @@ def get_test_report(self,name='ixnet_report.pdf',enable_all=True):
     # generate report
     ix.execute('generateReport',ix.getRoot()+'/reporter/generate')
     state = ix.getAttribute(ix.getRoot()+'/reporter/generate','-state')
+    BuiltIn().log("init state = %s" % state)
     while state != 'done':
         state = ix.getAttribute(ix.getRoot()+'/reporter/generate','-state')
         BuiltIn().log_to_console('.','STDOUT',True)
@@ -1260,7 +1261,7 @@ def get_test_report(self,name='ixnet_report.pdf',enable_all=True):
     # copy to local folder (renat server)
     dst_file = Common.get_result_path() + '/' + name
     ix.execute('copyFile',ix.readFrom(report_file,'-ixNetRelative'),ix.writeTo(dst_file,'-overwrite'))
-    BuiltIn().log("Got the report file `%s`" % name) 
+    BuiltIn().log("Got the report file `%s`" % name)
 
 
 def get_quicktest_result_path(self,test_index=u'-1'):
@@ -1273,14 +1274,14 @@ def get_quicktest_result_path(self,test_index=u'-1'):
     ix  = cli['connection']
 
     index = int(test_index)
-    # get quicktest list    
+    # get quicktest list
     index = int(test_index)
     test_list = ix.getAttribute(ix.getRoot() + '/quickTest', '-testIds')
     BuiltIn().log("    Got %d tests" % len(test_list))
     # get the result path
     result_path = ix.getAttribute(test_list[index]+'/results','-resultPath')
     if result_path == "":
-        raise Exception("ERROR: did not found a result of this test. Run it first") 
+        raise Exception("ERROR: did not found a result of this test. Run it first")
 
     BuiltIn().log("Got the path of the newest run: %s" % result_path)
     return result_path
@@ -1297,7 +1298,7 @@ def get_quicktest_result_by_name(self,name=None,prefix='',enable_all=True):
         index = -1
     BuiltIn().log('Got result for quicktest `%s`' % name)
     return self.get_quicktest_result(index,prefix,enable_all)
-    
+
 
 
 def get_quicktest_result(self,test_index=u'-1',prefix='',enable_all=True):
@@ -1313,21 +1314,21 @@ def get_quicktest_result(self,test_index=u'-1',prefix='',enable_all=True):
 
     index = int(test_index)
 
-    # get quicktest list    
+    # get quicktest list
     index = int(test_index)
     test_list = ix.getAttribute(ix.getRoot() + '/quickTest', '-testIds')
 
     # get the result path
     result_path = ix.getAttribute(test_list[index]+'/results','-resultPath')
     if result_path == "":
-        raise Exception("ERROR: did not found a result of this test. Run it first") 
+        raise Exception("ERROR: did not found a result of this test. Run it first")
 
     # enable all statistics
     if enable_all:
-        ix.setAttribute(ix.getRoot()+'/reporter/saveResults','-enableAllResult','true') 
+        ix.setAttribute(ix.getRoot()+'/reporter/saveResults','-enableAllResult','true')
         ix.commit()
     # save result in details
-    ix.execute('saveDetailedResults',ix.getRoot()+'/reporter/saveResults') 
+    ix.execute('saveDetailedResults',ix.getRoot()+'/reporter/saveResults')
     state = ix.getAttribute(ix.getRoot()+'/reporter/saveResults','-state')
     while state != 'done':
         state = ix.getAttribute(ix.getRoot()+'/reporter/saveResults','-state')
@@ -1350,7 +1351,7 @@ def get_quicktest_result(self,test_index=u'-1',prefix='',enable_all=True):
         'Real Time Stats.csv',
         'User Defined Statistics.csv' ]
 
-    count = 0        
+    count = 0
     for item in file_list:
         src_file = result_path + '/' + item
         dst_file = Common.get_result_path() + '/' + prefix + item.replace(' ','_')
@@ -1365,7 +1366,7 @@ def get_quicktest_result(self,test_index=u'-1',prefix='',enable_all=True):
 
 def should_be_pingable(self,dst_ip,src_port_index=0,src_intf_index=0):
     """ Ping from Ixia and raise an error if ping fails
-    
+
         The keyword return `True` if succeeds
     """
     output = self.ping(dst_ip,src_port_index,src_intf_index)
@@ -1373,7 +1374,7 @@ def should_be_pingable(self,dst_ip,src_port_index=0,src_intf_index=0):
         BuiltIn().log("ERROR: ping to `%s` failed with result `%s`" % (dst_ip,output))
         raise Exception(output)
     else:
-        BuiltIn().log("Pinged successful to `%s` with output `%s`" % (dst_ip,output)) 
+        BuiltIn().log("Pinged successful to `%s` with output `%s`" % (dst_ip,output))
         return True
 
 
@@ -1405,7 +1406,7 @@ def ping(self,dst_ip,src_port_index=0,src_intf_index=0):
     port = vports[int(src_port_index)]
     interfaces = ix.getList(port,'interface')
     intf = interfaces[int(src_intf_index)]
-    
+
     output = ix.execute("sendPing",intf,dst_ip)
     BuiltIn().log("Pinged `%s` with result `%s`" % (dst_ip,output))
     return output
@@ -1423,7 +1424,7 @@ def regenerate(self):
 
     for item in traffic_items:
         ix.execute('generate', item)
-    
+
     BuiltIn().log("RegenerFinishedate flows for %d traffic items" % len(traffic_items))
 
 
@@ -1435,13 +1436,13 @@ def start_test_composer(self,script_name=u'Main_Procedure',run_num=u'1',wait_for
     file and loaded properly with `Load Config`
 
     Parameters:
-    - ``script_name`` is the name of the script to run. Default value is ``Main_Procedure``.    
+    - ``script_name`` is the name of the script to run. Default value is ``Main_Procedure``.
     - ``wait_for_test``: if ``${TRUE}`` then wait until the script finishes.
     - ``parameter``: parameter that is passed to the script. Parameter could be
-      in 2 formats: ``{{VAR1 VALUE1} {VAR2 VALUE2}}`` or simply as ``VALUE1 VALUE2``. 
+      in 2 formats: ``{{VAR1 VALUE1} {VAR2 VALUE2}}`` or simply as ``VALUE1 VALUE2``.
     The script must prepare `VAR1` and `VAR2` properly by `Test
     parameter`. See Ixia Network anout composer script for more details.
-    - ``wait``: wait time before go to next keyword 
+    - ``wait``: wait time before go to next keyword
 
     Examples:
     | Tester.`Start Test Composer` | parameter=XXX YYY |
@@ -1452,7 +1453,7 @@ def start_test_composer(self,script_name=u'Main_Procedure',run_num=u'1',wait_for
     """
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
-  
+
     composer_runner = None
     sched = None
 
@@ -1467,9 +1468,9 @@ def start_test_composer(self,script_name=u'Main_Procedure',run_num=u'1',wait_for
                 composer_runner = item
                 sched = ix.getList(composer_runner,'eventScheduler')[0]
                 break
-  
-    # create new quicktest item if it is neccessary 
-    if composer_runner is None: 
+
+    # create new quicktest item if it is neccessary
+    if composer_runner is None:
         composer_runner = ix.add(ix.getRoot() + '/quickTest','eventScheduler')
         ix.setAttribute(composer_runner,'-name','composer_runner')
         sched = ix.add(composer_runner,'eventScheduler')
@@ -1478,7 +1479,7 @@ def start_test_composer(self,script_name=u'Main_Procedure',run_num=u'1',wait_for
 
     # setting parameter
     ix.setAttribute(sched,'-parameters',str(parameter))
-    
+
     config = ix.getList(composer_runner,'testConfig')
     ix.setAttribute(config[0],'-numTrials',int(run_num))
     ix.setAttribute(config[0],'-protocolItem',[])
@@ -1490,23 +1491,23 @@ def start_test_composer(self,script_name=u'Main_Procedure',run_num=u'1',wait_for
     if wait_for_test:
         BuiltIn().log("    Wait until the script finishes")
         ix.execute('waitForTest', composer_runner)
-     
+
     time.sleep(DateTime.convert_time(wait))
     BuiltIn().log("Finished a test compose script")
-    
+
 
 
 def stop_test_composer(self,wait='10s'):
-    """ Stop a running composer 
+    """ Stop a running composer
 
     Do nothing when a test composer has already stopped or no composer has been
     prepared.
-    """ 
+    """
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
-  
+
     composer_runner = None
-    
+
     BuiltIn().log("Stop a test composer script")
     quicktest_list = ix.getList(ix.getRoot() + 'quickTest','eventScheduler')
 
@@ -1533,7 +1534,7 @@ def get_test_composer_result(self,result_file=u'composer.log'):
 
     BuiltIn().log("Get test composer result")
     composer_runner = None
-    
+
     quicktest_list = ix.getList(ix.getRoot() + 'quickTest','eventScheduler')
     if len(quicktest_list) > 0:
         for item in quicktest_list:
@@ -1549,11 +1550,11 @@ def get_test_composer_result(self,result_file=u'composer.log'):
         BuiltIn().log("    result src: %s" % src_path)
         BuiltIn().log("    result dst: %s" % dst_path)
         ix.execute('copyFile',ix.readFrom(src_path,'-ixNetRelative'),ix.writeTo(dst_path))
-         
+
         BuiltIn().log("Got log file from %s" % result_path)
     else:
         BuiltIn().log("No composer runner found")
- 
+
 
 def csv_snapshot(self,prefix='snapshot_',*views):
     """ Get current CSV snapshot
@@ -1564,8 +1565,8 @@ def csv_snapshot(self,prefix='snapshot_',*views):
       ...). If `view` is ``None``, all current available views will be target
 
     Samples:
-    | Tester.`CSV Snapshot`  | snapshot03_  |  # collect all views | 
-    | Tester.`CSV Snapshot`  | snapshot03_  |  Port Statistics  | Flow Statistics | # collect specific views | 
+    | Tester.`CSV Snapshot`  | snapshot03_  |  # collect all views |
+    | Tester.`CSV Snapshot`  | snapshot03_  |  Port Statistics  | Flow Statistics | # collect specific views |
 
     *Note*: the name of result file will be modified so `space` will be replaced
     by `underbar`.
@@ -1577,7 +1578,7 @@ def csv_snapshot(self,prefix='snapshot_',*views):
     ix  = cli['connection']
     setting_name='%s_%s' % (Common.get_myid(),time.strftime('%Y%m%d%H%M%S'))
     # remote path
-    remote_path='%s/%s' % (Common.get_config_value('ix-remote-tmp'),os.getcwd().replace('/','_'))
+    remote_path='%s/%s_%s' % (Common.get_config_value('ix-remote-tmp'),cli['device'],os.getcwd().replace('/','_'))
     # first get the default setting
     opt = ix.execute('GetDefaultSnapshotSettings')
     # then customize the setting
@@ -1605,7 +1606,7 @@ def csv_snapshot(self,prefix='snapshot_',*views):
             raise result
 
     BuiltIn().log('Took snapshots of %d views' % (len(current_views)))
- 
+
 
 def csv_logging(self, enabled=True, *views):
     """ Toggles enable/disable CSV loggin for a view
@@ -1623,12 +1624,12 @@ def csv_logging(self, enabled=True, *views):
     | Tester.`CSV Logging`  | ${FALSE} |  Flow Statistics |
 
     *Note*:
-       Long time enable fof CSV loggin could returns in very big file 
+       Long time enable fof CSV loggin could returns in very big file
     """
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
     count = 0
-    
+
     if enabled:
         value = 'true'
     else:
@@ -1639,15 +1640,15 @@ def csv_logging(self, enabled=True, *views):
     else:
         system_views=ix.getList(ix.getRoot() + 'statistics','view')
         current_views=list(map(lambda x: x.split(':')[-1].replace('"',''),system_views))
-        
+
     for item in current_views:
         view = '%sstatistics/view:\"%s\"' % (ix.getRoot(),item.replace('_',' '))
         ix.setMultiAttribute(view,'-enabled',value,'-enableCsvLogging',value)
         BuiltIn().log('    set CSV logging for %s to %s' % (view,value))
         count += 1
     ix.commit()
-    BuiltIn().log('Enabled CSV logging for %d views' % count) 
-    
+    BuiltIn().log('Enabled CSV logging for %d views' % count)
+
 
 def get_csv_log(self, prefix='', index=u'-1', *views):
     """ Gets all CSV log for a specific views or all from current test folder
@@ -1679,10 +1680,10 @@ def get_csv_log(self, prefix='', index=u'-1', *views):
     filelist = '%s/aptixia_reporter_xmd.xml' % src_folder
     result = ix.execute('copyFile',ix.readFrom(filelist,'-ixNetRelative'),ix.writeTo(tmp_file,'-overwrite'))
     if result != '::ixNet::OK' : raise result
-    
+
     #
     root = ET.parse(tmp_file).getroot()
-    count = 0 
+    count = 0
     for view in current_views:
         # make file list
         csv_list = [x.attrib['scope'] for x in root.findall('.//Source[@entity_name="%s"]' % view) ]
@@ -1702,7 +1703,7 @@ def get_csv_log(self, prefix='', index=u'-1', *views):
             result = ix.execute('copyFile',ix.readFrom(src_file,'-ixNetRelative'),ix.writeTo(dst_file,'-overwrite'))
             if result != '::ixNet::OK' : raise result
             count += 1
-    BuiltIn().log('Got %d CSV log files' % count)        
+    BuiltIn().log('Got %d CSV log files' % count)
 
 
 def get_view_csv_log(self,view,prefix=''):
@@ -1753,7 +1754,7 @@ def link_up_down_by_index(self,port_index=u'0',state=u'up'):
 
 
 def link_up_down_by_name(self,port_name,state=u'up'):
-    """ Simulates a LinkUpDown by port name 
+    """ Simulates a LinkUpDown by port name
 
     Parameters:
         - `port_index`: zero-started port index
@@ -1775,7 +1776,7 @@ def link_up_down_by_name(self,port_name,state=u'up'):
     else:
         raise Exception('ERROR: could not found port name: `%s`' % port_name)
     BuiltIn().log('Simulate a link `%s` on port `%s`' % (state.lower(),port_name))
-    
+
 
 
 

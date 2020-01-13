@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # $Rev: 2117 $
-# $Date: 2019-07-29 09:55:17 +0900 (月, 29 7 2019) $
+# $Date: 2019-07-29 09:55:17 +0900 (月, 29  7月 2019) $
 # $Author: $
 
 access-template:
@@ -9,7 +9,7 @@ access-template:
         auth: public-key
         profile: default
         prompt: "@.*(>|\\$) "
-        init: 
+        init:
             - unalias -a
         finish:
             - exit
@@ -19,22 +19,22 @@ access-template:
         auth: public-key
         profile: default
         prompt: "@.*(>|\\$) "
-        init: 
+        init:
             - unalias -a
         finish:
             - exit
     juniper-withpage:
         access: telnet
-        auth: plain-text 
+        auth: plain-text
         profile: default
-        prompt: "@.*(#|>) " 
+        prompt: "@.*(#|>) "
     juniper:
         access: telnet
-        auth: plain-text 
+        auth: plain-text
         profile: default
-        prompt: "@.*(#|>) " 
-        init: 
-            - set cli idle-timeout 0 
+        prompt: "@.*(#|>) "
+        init:
+            - set cli idle-timeout 0
             - set cli screen-length 0
     cisco:
         access: telnet
@@ -69,14 +69,14 @@ access-template:
         access: telnet
         auth: plain-text
         profile: flets
-        prompt: ".*(#|>) " 
-        init: 
+        prompt: ".*(#|>) "
+        init:
             - set terminal pager disable
     alcatel:
         access: telnet
         auth: plain-text
-        profile: default 
-        prompt: ":.*(#|>|\\$) " 
+        profile: default
+        prompt: ":.*(#|>|\\$) "
         login-prompt: "Login:"
         password-prompt: "Password:"
         init:
@@ -90,7 +90,7 @@ access-template:
         auth: plain-text
         profile: samurai-cli
         prompt: "@.*(#) "
-        init: 
+        init:
             - unalias -a
     arbor-sp:
         access: webapp
@@ -204,46 +204,41 @@ access-template:
         login-prompt:
         password-prompt:
         target: cisco-xe-console
-    extreme-bd:
+    brocade:
         access: ssh
-        auth: plain-text 
-        profile: extreme-bd
-        prompt: "\s#$" 
-        # init: 
-        #     - set cli idle-timeout 0 
-        #     - set cli screen-length 0
-    procera-pre:
-        access: ssh
-        auth: plain-text 
-        profile: procera-pre
-        prompt: "\s#$"         
+        auth: plain-text
+        profile: default
+        prompt: ".*# "
+        init:
+            - ter len 0
+            - timestamp enable
+    jump-cisco29xx-junos:
+        access: jump
+        access-base: ssh
+        auth: plain-text
+        profile: default
+        prompt: ".*"
+        password-prompt: "Password:"
+        target: juniper
+    jump-cisco29xx-brocade:
+        access: jump
+        access-base: ssh
+        auth: plain-text
+        profile: default
+        prompt: ".*"
+        password-prompt: "Password:"
+        target: brocade
 
 snmp-template:
        juniper:
-            mib: /ocn-gin/script/Pooling/mib-Juniper.json
+            mib: <path to mib-Juniper.json>
             community: public
             poller: apollo
        cisco:
-            mib: /ocn-gin/script/Pooling/mib-Cisco.json
-            community: public
-            poller: apollo
-       arbor-sp-cli:
-            mib: /ocn-gin/script/Pooling/mib-PEAKFLOW-SP.json
-            community: public
-            poller: apollo
-       arbor-tms-cli:
-            mib: /ocn-gin/script/Pooling/mib-PEAKFLOW-TMS.json
-            community: public
-            poller: apollo
-       arbor-vsp-cli:
-            mib: /ocn-gin/script/Pooling/mib-PEAKFLOW-vSP.json
-            community: public
-            poller: apollo
-       arbor-tms-hd1000-cli:
-            mib: /ocn-gin/script/Pooling/mib-PEAKFLOW-TMS-HD1000-10G.json
+            mib: <path to mib-Cisco.json>
             community: public
             poller: apollo
        alcatel:
-            mib: /ocn-gin/script/Pooling/mib-AlcatelSR7.json
+            mib: <path to mib-AlcatelSR7.json>
             community: public
             poller: apollo
