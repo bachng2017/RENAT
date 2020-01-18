@@ -299,6 +299,7 @@ class VChannel(object):
         self._connect(_node, name, _log_file, _timeout, _w, _h, 'a+')
         BuiltIn().log("Reconnected successfully to `%s`" % (name))
 
+
     def connect(self, node, name, log_file, timeout=None,
                 w=None, h=None, mode="w", profile=None):
 
@@ -310,6 +311,7 @@ class VChannel(object):
         if h is None:
             h = terminal_info['height']
 
+            
         self._connect(node, name, log_file, timeout, w, h, mode, profile)
         if Common.get_config_value('async-channel', 'vchannel', False):
             self._async_channel._connect(
