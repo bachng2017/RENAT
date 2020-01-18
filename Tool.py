@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-02-14 23:25:17 +0900 (木, 14  2月 2019) $
-# $Rev: 1778 $
-# $Ver: $
-# $Author: $
 
 import os
 import subprocess,time,signal

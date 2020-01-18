@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2215 $
-# $Ver: $
-# $Date: 2019-09-08 09:15:32 +0900 (日, 08  9月 2019) $
-# $Author: $
 
 import threading,traceback,time,datetime
 import Common,VChannel

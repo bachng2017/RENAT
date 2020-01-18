@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# $Date: 2019-04-19 17:38:37 +0900 (金, 19  4月 2019) $
-# $Rev: 1996 $
-# $Ver: $
-# $Author: $
 # suite run script
 # runs all test cases in sub folders if it has `run.sh` and does not has `.ignore` file
 # returns 0 if all sub test cases were succeed otherwise return a non zero value

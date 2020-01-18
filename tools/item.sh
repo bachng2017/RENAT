@@ -1,9 +1,5 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
-# $Rev: 0.1.6 $
-# $Ver: $
-# $Date: 2018-01-17 20:51:29 +0900 (Wed, 17 Jan 2018) $
-# $Author: bachng $
 
 """:"
 for cmd in python3.6 python3.5 python3 python2 python; do

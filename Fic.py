@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-# $Date: 2019-09-07 09:51:32 +0900 (土, 07  9月 2019) $
-# $Rev: 2204 $
-# $Ver: $
-# $Author: $
 
 import io,os,time,re,traceback,shutil,cv2,tempfile,json,base64
 from PIL import Image

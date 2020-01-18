@@ -13,8 +13,4 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 822 $
-# $Ver: $
-# $Date: 2018-03-20 00:33:18 +0900 (火, 20  3月 2018) $
-# $Author: $
 

@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-# $Date: 2019-07-30 06:37:02 +0900 (火, 30  7月 2019) $
-# $Rev: 2119 $ 
-# $Ver: $
-# $Author: $
 
 # Basic setting
 *** Setting ***
