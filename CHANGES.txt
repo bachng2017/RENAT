@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2204 $
-# $Ver: $
-# $Date: 2019-09-07 09:51:32 +0900 (土, 07  9月 2019) $
-# $Author: $
 
 RENAT(Robotframework Extension for Network Automation Testing)
 

@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-12-02 19:42:33 +0900 (日, 02 12月 2018) $
-# $Rev: 1652 $
-# $Ver: $
-# $Author: $
 
 import os,sys,shutil
 import IxLoad

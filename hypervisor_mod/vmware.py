@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-07-03 22:31:44 +0900 (水, 03  7月 2019) $
-# $Rev: 2082 $
-# $Ver: $
-# $Author: $
 
 """ provides function for VMware ESXI
 

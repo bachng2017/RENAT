@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-09-20 09:42:03 +0900 (金, 20  9月 2019) $
-# $Rev: 2252 $
-# $Ver: $
-# $Author: $
 
 import os,time,re,traceback,shutil
 import lxml.html

@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-09-24 18:27:05 +0900 (火, 24  9月 2019) $
-# $Rev: 2253 $
-# $Ver: $
-# $Author: $
 
 import cv2,tempfile
 import pytesseract

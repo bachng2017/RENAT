@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-# $Date: 2019-06-08 13:07:43 +0900 (土, 08  6月 2019) $
-# $Rev: 2072 $
-# $Ver: $
-# $Author: $
 
 *** Setting ***
 # RENAT libraries

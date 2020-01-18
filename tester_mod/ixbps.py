@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-07-17 11:17:57 +0900 (水, 17  7月 2019) $
-# $Rev: 2094 $
-# $Ver: $
-# $Author: $
 
 """ provides functions for Ixia Breaking Point
 

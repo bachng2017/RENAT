@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-# $Date: 2019-07-26 21:36:47 +0900 (金, 26  7月 2019) $
-# $Rev: 2109 $
-# $Ver: $
-# $Author: $
 
 *** Variables ***
 # folder and script for polling process on Apollo

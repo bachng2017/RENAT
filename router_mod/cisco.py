@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1038 $
-# $Ver: $
-# $Date: 2018-06-18 16:57:51 +0900 (月, 18  6月 2018) $
-# $Author: $
 
 ####
 import re

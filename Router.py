@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-05-22 05:47:03 +0900 (水, 22  5月 2019) $
-# $Rev: 2022 $
-# $Ver: $
-# $Author: $
 
 import netsnmp
 import time

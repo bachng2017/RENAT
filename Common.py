@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2254 $
-# $Ver: $
-# $Date: 2019-09-29 20:11:58 +0900 (日, 29  9月 2019) $
-# $Author: $
 
 """ Common library for RENAT
 

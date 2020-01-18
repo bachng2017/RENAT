@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2018-08-28 10:52:25 +0900 (火, 28  8月 2018) $
-# $Rev: 1250 $
-# $Ver: $
-# $Author: $
 
 import os
 import traceback

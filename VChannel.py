@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2259 $
-# $Ver: $
-# $Date: 2019-10-07 11:30:22 +0900 (月, 07 10月 2019) $
-# $Author: $
 
 import os,re,sys,threading
 import yaml,datetime,time
