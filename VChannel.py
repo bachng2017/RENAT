@@ -300,20 +300,25 @@ class VChannel(object):
         BuiltIn().log("Reconnected successfully to `%s`" % (name))
 
 
-    def connect(self,node,name,log_file,\
-                timeout=Common.GLOBAL['default']['terminal-timeout'], \
-                w=Common.LOCAL['default']['terminal']['width'],\
-                h=Common.LOCAL['default']['terminal']['height'],mode='w'):
+    def connect(self, node, name, log_file, timeout=None,
+                w=None, h=None, mode="w", profile=None):
 
-        self._connect(node,name,log_file,timeout,w,h,mode)
-        if Common.get_config_value('async-channel','vchannel',False):
-            self._async_channel._connect(node,name,log_file,timeout,w,h,mode)
+        terminal_info = Common.get_config_value('terminal')
+        if timeout is None:
+            timeout = Common.get_config_value('terminal-timeout')
+        if w is None:
+            w = terminal_info['width']
+        if h is None:
+            h = terminal_info['height']
 
+            
+        self._connect(node, name, log_file, timeout, w, h, mode, profile)
+        if Common.get_config_value('async-channel', 'vchannel', False):
+            self._async_channel._connect(
+                node, name, log_file, timeout, w, h, mode, profile
+            )
 
-    def _connect(self,node,name,log_file,\
-                timeout=Common.GLOBAL['default']['terminal-timeout'], \
-                w=Common.LOCAL['default']['terminal']['width'],\
-                h=Common.LOCAL['default']['terminal']['height'],mode='w'):
+    def _connect(self, node, name, log_file, timeout, w, h, mode, profile):
         """ Connects to the node and create a VChannel instance
 
         Login information is automatically extracted from yaml configuration.
@@ -342,8 +347,12 @@ class VChannel(object):
         ignore_dead_node = Common.get_config_value('ignore-dead-node')
 
         # init values
-        _device         = Common.LOCAL['node'][node]['device']
-        _device_info    = Common.GLOBAL['device'][_device]
+        _device = Common.get_config_value(node, "node")
+        _device_info = None
+        if _device:
+            _device_info = Common.get_config_value(_device, 'device')
+        if _device_info is None:
+            _device_info = Common.get_config_value(node, 'device')
         _ip             = _device_info['ip']
         _type           = _device_info['type']
         _access_tmpl    = Common.GLOBAL['access-template'][_type]
