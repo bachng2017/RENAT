@@ -1,7 +1,6 @@
 --- IxLoad.py.org	2018-08-18 23:34:50.840075631 +0900
 +++ IxLoad.py	2018-08-28 13:26:34.644063184 +0900
 @@ -14,16 +14,16 @@
-
  #
  ################################################################################
  
@@ -30,4 +29,3 @@
          # scriptgen sometimes generates python with escaped brackets [] which
          # isn't necessary for python, so here we need to escape them only if not already escaped
          # Avoid having a path formatted like this: ""[path]""
-
