@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Date: 2019-06-07 12:37:50 +0900 (金, 07  6月 2019) $
-# $Rev: 2060 $
-# $Ver: $
-# $Author: $
 
 import datetime
 import Common

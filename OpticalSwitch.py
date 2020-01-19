@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 898 $
-# $Ver: $
-# $Date: 2018-04-10 15:33:53 +0900 (火, 10  4月 2018) $
-# $Author: $
 
 import requests
 import openpyxl

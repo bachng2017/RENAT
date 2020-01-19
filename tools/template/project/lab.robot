@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-# $Date: 2019-08-08 15:41:35 +0900 (木, 08  8月 2019) $
-# $Rev: 2152 $
-# $Ver: $
-# $Author: $
 
 *** Variables ***
 # folder and script for polling process on Apollo or Artemis

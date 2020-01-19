@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 1151 $
-# $Ver: $
-# $Date: 2018-07-29 02:39:01 +0900 (日, 29  7月 2018) $
-# $Author: $
 """ A collection of user keywords that is commonly used by the lab.
 
 == Common variables ==

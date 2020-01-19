@@ -1,9 +1,5 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
-# $Rev: $
-# $Ver: $
-# $Date: $
-# $Author: $
 
 usage() {
   echo "Show information about a RENAT project and its items"

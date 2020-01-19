@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-# $Date: 2018-03-20 00:33:18 +0900 (火, 20  3月 2018) $
-# $Rev: 822 $ 
-# $Ver: $
-# $Author: $
 
 # Basic setting
 *** Setting ***

@@ -13,10 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# $Rev: 2168 $
-# $Ver: $
-# $Date: 2019-08-17 17:34:00 +0900 (土, 17  8月 2019) $
-# $Author: $
 
 import re
 from robot.api import SuiteVisitor
