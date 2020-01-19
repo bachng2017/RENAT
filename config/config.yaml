@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 default:
     robot-server: 127.0.0.1
-    robot-password: password!secret
+    robot-password: <robotpass>
     working-folder: $HOME/work
     renat-master-folder: $RENAT_PATH/config
-    calient-master-path: 
-    ntm-master-path: 
+    calient-master-path:
+    ntm-master-path:
     ix-remote-tmp: C:/Windows/Temp
     interval-between-retry: 15s
     terminal-timeout: 20m
