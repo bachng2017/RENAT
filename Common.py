@@ -17,7 +17,7 @@
 """ Common library for RENAT
 
 It loads config files and create necessary varibles. The file should be the 1st
-library  included from any test case.
+library included from any test case.
 
 
 == Table of Contents ==
