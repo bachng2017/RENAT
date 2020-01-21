@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 default:
     robot-server: 127.0.0.1
-    robot-password: <robotpass>
+    robot-password: password!secret
     working-folder: $HOME/work
     renat-master-folder: $RENAT_PATH/config
     calient-master-path:
