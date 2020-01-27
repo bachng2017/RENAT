@@ -527,7 +527,7 @@ def get_item_config_path():
 def get_tmp_path():
     """ Returns temporary path
     """
-    return os.getcwd() + '/tmp/'
+    return os.getcwd() + '/tmp'
 
 
 def get_result_path():
