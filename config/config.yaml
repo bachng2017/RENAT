@@ -12,12 +12,14 @@ default:
     cmd-auto-check: False
     newline: "\r\n"
     slack-cmd: /home/robot/work/slack/renat_bot.sh
+    slack-upload: /home/robot/work/slack/upload.sh
     slack-proxy: 10.128.3.103:4713
     # log-level: TRACE
     # log-level: ERROR
     log-level: INFO
     # log-level: DEBUG
     ignore-dead-node: FALSE
+    smtp-server: 10.128.72.8:25
     display:
         width:  1921
         height: 1080

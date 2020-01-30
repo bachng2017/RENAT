@@ -19,8 +19,9 @@ RENAT(Robotframework Extension for Network Automation Testing)
 == What's new ==
 
 === 0.1.17 ===
-- add more keyword to support IP address calculation
 - drop support for Python 2.7 from this point
+- add more keywords to support IP address calculation
+- add more keywords for WebApp module and slack file upload support
 
 === 0.1.16 ===
 - change item run.sh from -b to -p
@@ -33,7 +34,7 @@ RENAT(Robotframework Extension for Network Automation Testing)
 === 0.1.14 ===
 - consolidate VChannel.py for more robust and add support to terminal server
 - update lab.robot
-- add manual for renat docker 
+- add manual for renat docker
 - use `-` instead of `_` in yaml files
 
 === 0.1.13 ===

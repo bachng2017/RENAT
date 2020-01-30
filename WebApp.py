@@ -18,7 +18,7 @@ import cv2,tempfile
 import pytesseract
 from difflib import SequenceMatcher
 import numpy as np
-import os,time,re,traceback,shutil
+import os,time,re,traceback,shutil,sys
 from decorator import decorate
 import Common
 from robot.libraries.BuiltIn import BuiltIn
@@ -31,6 +31,10 @@ from selenium import webdriver
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.firefox.options import Options
+if sys.version_info > (2, 7):
+    from urllib.parse import urlparse
+else:
+    from urlparse import urlparse
 
 ### module methods
 
@@ -164,6 +168,7 @@ class WebApp(object):
         self._ajax_timeout          = int(Common.get_config_value('ajax-timeout','web','5'))
         self._type                  = 'webapp'
         self._selenium              = None  # SeleniumLibrary instance
+        self._site                  = 'http://'
         try:
             self._selenium = BuiltIn().get_library_instance('SeleniumLibrary')
         except RobotNotRunningError as e:
@@ -330,8 +335,9 @@ document.documentElement.clientHeight); """
         if name in self._browsers:
             BuiltIn().log("Browser `%s` already existed" % name)
             return
-        browser         = 'firefox'
-        login_url       = '/'
+        browser = 'firefox'
+        login_url = '/'
+        scheme = 'http'
         ignore_dead_node = Common.get_config_value('ignore-dead-node')
 
         app_info = Common.LOCAL['webapp'][app]
@@ -347,6 +353,8 @@ document.documentElement.clientHeight); """
         auth['password']    = Common.GLOBAL['auth']['plain-text'][profile]['pass']
         if 'login-url' in app_info and app_info['login-url']:
             login_url = app_info['login-url']
+        if 'scheme' in app_info and app_info['scheme']:
+            scheme = app_info['scheme']
         if 'browser' in app_info and app_info['browser']:
             browser  = app_info['browser']
         if 'local-storage' in app_info and app_info['local-storage']:
@@ -429,7 +437,7 @@ document.documentElement.clientHeight); """
             retry = 0
             while retry <= 3:
                 try:
-                    url = 'https://' + ip + '/' + login_url
+                    url = '%s://%s/%s' % (scheme,ip,login_url)
                     self._selenium.go_to(url)
                     time.sleep(5)
                     break
@@ -440,6 +448,8 @@ document.documentElement.clientHeight); """
                     if retry == 3: raise
                 # finally:
                     # shutil.rmtree(fp.path,ignore_errors=True)
+            parsed_uri = urlparse(url)
+            self._site = '%s://%s' % (parsed_uri.scheme,parsed_uri.netloc)
         except Exception as err:
             if not ignore_dead_node:
                 err_msg = "ERROR: Error occured when connecting to `%s`" % (name)
@@ -595,3 +605,32 @@ document.documentElement.clientHeight); """
         self.capture_screenshot()
         self._selenium.wait_until_element_is_visible(xpath)
         self._selenium.click_element(xpath)
+        BuiltIn().log('Waited and clicked the element `%s`' % xpath)
+
+
+    def set_site(self,site):
+        """ Set the default site for this web
+
+        Examples:
+          Set Site | http://www.google.com |
+        """
+        self._site = site
+        BuiltIn().log("Set the site to %s" % site)
+
+
+    def get_site(self):
+        """ Returns the current site information
+        """
+        BuiltIn().log("Got current site as `%s`" % self._site)
+        return site
+
+
+    def go_to_page(self,page,wait_time='5s'):
+        """ Goto a page within this site
+
+        The site is assumed the location defined by login-url by default or by `Set Site keyword
+        """
+        url = '%s/%s' % (self._site,page)
+        self._selenium.go_to(url)
+        time.sleep(DateTime.convert_time(wait_time))
+        BuiltIn().log("Went to page %s" % url)
