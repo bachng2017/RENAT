@@ -1690,7 +1690,7 @@ def get_ip_address_increment(prefix,increment):
     return str(ipaddress.ip_address(prefix) + int(ipaddress.ip_address(increment)))
 
 
-def send_mail(mail_from,send_to,subject,txt,img_path=None,file_path=None):
+def send_mail_with_embeded_data(mail_from,send_to,subject,txt,img_path=None,file_path=None):
     """ Sends a mail with attached file or image
 
     SMTP server is define by smtp-server:port in global default section
@@ -1698,15 +1698,23 @@ def send_mail(mail_from,send_to,subject,txt,img_path=None,file_path=None):
     smtp_info = GLOBAL['default']['smtp-server']
     smtp_server,smtp_port = smtp_info.split(':')
 
-    msg = MIMEMultipart()
+    msg = MIMEMultipart('related')
     msg['Subject'] = subject
     msg['From'] = mail_from
     msg['To'] = COMMASPACE.join([send_to])
     msg['Date'] = formatdate(localtime=True)
-    msg.attach(MIMEText(txt,'plain'))
+    # msg.attach(MIMEText(txt,'plain'))
+    msg.preamble = txt
+
     if img_path:
         BuiltIn().log("   Attached an image from `%s`" % img_path)
+        msg_alt =  MIMEMultipart('alternative')
+        msg.attach(msg_alt)
+        img_txt = MIMEText('<img src="cid:image">', 'html')
+        msg_alt.attach(img_txt)
+
         img_data = MIMEImage(open(img_path,'rb').read(), name=os.path.basename(img_path))
+        img_data.add_header('Content-ID','<image>')
         msg.attach(img_data)
     with smtplib.SMTP(smtp_server,smtp_port) as s:
         s.sendmail(msg['From'],msg['To'],msg.as_string())

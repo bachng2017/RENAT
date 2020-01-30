@@ -1121,6 +1121,16 @@ class VChannel(object):
     def cmd_yesno(self,cmd,ans='yes',question='? [yes,no] ',timeout='5s'):
         """ Executes a ``cmd``, waits for ``question`` and answers that by
         ``ans``
+
+        Example:
+        In case of output like below, the default prompt will block the test
+        ```
+        RP/0/RSP0/CPU0:ascai109tenjmi-9k#clear counters all
+        Thu Jan 30 16:22:58.465 JST
+        Clear "show interface" counters on all interfaces [confirm]
+        ```
+        Below command will proceed the test
+        | Router.CmdYesNo | clear counters all | y |  question=[confirm] |
         """
         channel = self.get_current_channel()
 
