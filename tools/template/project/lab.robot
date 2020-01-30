@@ -180,7 +180,7 @@ Lab Setup
 
     Remove File             ./.stop
 
-    Set Library Search Order    Common  Router  WebApp 
+    Set Library Search Order    Common  Router  WebApp
 
     Common.Start Display
 
@@ -207,7 +207,13 @@ Lab Setup
     Common.Load Plugin
 
     Logger.Log All          TESTING BEGIN   ${TRUE}     ===
-    @{NODE_LIST}=           Node With Tag    init    juniper
+    @{NODE_LIST}=           Node With Tag    juniper    timestamp
+    FOR     ${ITEM}     IN      @{NODE_LIST}
+        Router.Switch       ${ITEM}
+        Router.Cmd          set cli timestamp
+    END
+
+    @{NODE_LIST}=           Node With Tag    juniper    init
     FOR     ${ITEM}     IN      @{NODE_LIST}
         Router.Switch       ${ITEM}
         Router.Cmd          show system uptime | no-more
