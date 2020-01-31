@@ -337,7 +337,7 @@ document.documentElement.clientHeight); """
             return
         browser = 'firefox'
         login_url = '/'
-        scheme = 'http'
+        scheme = 'https'
         ignore_dead_node = Common.get_config_value('ignore-dead-node')
 
         app_info = Common.LOCAL['webapp'][app]
