@@ -325,6 +325,14 @@ except:
 import robot.libraries.DateTime as DateTime
 from robot.libraries.BuiltIn import BuiltIn
 from collections import OrderedDict
+import smtplib
+from email import encoders
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+from email.utils import COMMASPACE, formatdate
+
+
 
 # make sure the yaml dictionary is in its order
 yaml.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
@@ -493,8 +501,6 @@ if 'webaapp' in LOCAL:  WEBAPP = LOCAL['webapp']
 if WEBAPP is None: WEBAPP = []
 
 newline = GLOBAL['default']['newline']
-
-
 
 
 def renat_version():
@@ -1349,15 +1355,35 @@ def cleanup_result(ignore=u'^(log.html|output.xml|report.html)$'):
 
 
 def slack(msg,channel='#automation_dev',user='renat',host=GLOBAL['default']['slack-proxy']):
+    """ Use Slack Post instead
+    """
+    BuilIn().log("WRN: This keyword is deprecated. Use `Slack Post` instead", console=True)
+    return slack_post
+
+
+def slack_post(msg,channel='#automation_dev',user='renat',host=GLOBAL['default']['slack-proxy']):
     """ Post a message to Slack
     """
-
-    BuiltIn().log("Post message to Slack")
+    BuiltIn().log("Post message to Slack channel")
     renat_batch = BuiltIn().get_variable_value('${RENAT_BATCH}')
     if renat_batch is None:
         cmd = GLOBAL['default']['slack-cmd']
         subprocess.call([cmd, msg, channel, user, host])
         BuiltIn().log("Posted message `%s` to Slack channel `%s`" % (msg,channel))
+    else:
+        BuiltIn().log("Ignored Slack msg in batch mode")
+
+
+def slack_upload(file_path,channels='automation_dev',title='',msg='Powered by RENAT',host=None):
+    """ Upload a file to a Slack channel
+    """
+    BuiltIn().log("Upload a file to Slack channel")
+    renat_batch = BuiltIn().get_variable_value('${RENAT_BATCH}')
+    if renat_batch is None:
+        host = host or GLOBAL['default']['slack-proxy']
+        cmd = GLOBAL['default']['slack-upload']
+        subprocess.check_output([cmd,file_path,host,channels,title,msg],stderr=subprocess.STDOUT)
+        BuiltIn().log("Upload the file `%s` to Slack channels `%s`" % (file_path,channels))
     else:
         BuiltIn().log("Ignored Slack msg in batch mode")
 
@@ -1662,6 +1688,38 @@ def get_ip_address_increment(prefix,increment):
     | ${ADDRESS}= | `Get IP Address Increment` | 2001:218::1 | 0:0:0:1:0:0:0:0 |
     """
     return str(ipaddress.ip_address(prefix) + int(ipaddress.ip_address(increment)))
+
+
+def send_mail_with_embeded_data(mail_from,send_to,subject,txt,img_path=None,file_path=None):
+    """ Sends a mail with attached file or image
+
+    SMTP server is define by smtp-server:port in global default section
+    """
+    smtp_info = GLOBAL['default']['smtp-server']
+    smtp_server,smtp_port = smtp_info.split(':')
+
+    msg = MIMEMultipart('related')
+    msg['Subject'] = subject
+    msg['From'] = mail_from
+    msg['To'] = COMMASPACE.join([send_to])
+    msg['Date'] = formatdate(localtime=True)
+    # msg.attach(MIMEText(txt,'plain'))
+    msg.preamble = txt
+
+    if img_path:
+        BuiltIn().log("   Attached an image from `%s`" % img_path)
+        msg_alt =  MIMEMultipart('alternative')
+        msg.attach(msg_alt)
+        img_txt = MIMEText('<img src="cid:image">', 'html')
+        msg_alt.attach(img_txt)
+
+        img_data = MIMEImage(open(img_path,'rb').read(), name=os.path.basename(img_path))
+        img_data.add_header('Content-ID','<image>')
+        msg.attach(img_data)
+    with smtplib.SMTP(smtp_server,smtp_port) as s:
+        s.sendmail(msg['From'],msg['To'],msg.as_string())
+    BuiltIn().log("Sent a mail from `%s` to `%s`"% (mail_from,send_to))
+
 
 
 # set RF global variables and load libraries

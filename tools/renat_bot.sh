@@ -1,6 +1,6 @@
 #!/bin/bash
 # sample slack script to publish a message to a channel
-#
+# the reason to use the script is to keep supporty for both Python 2 & 3
 
 i# usage
 if [ $# -ne 4 ]; then
