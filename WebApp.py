@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  Copyright 2017-2019 NTT Communications
+#  Copyright 2017-2020 NTT Communications
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ from selenium import webdriver
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.firefox.options import Options
-if sys.version_info > (2, 7):
+if sys.version_info[0] > 2:
     from urllib.parse import urlparse
 else:
     from urlparse import urlparse
@@ -337,7 +337,7 @@ document.documentElement.clientHeight); """
             return
         browser = 'firefox'
         login_url = '/'
-        scheme = 'http'
+        scheme = 'https'
         ignore_dead_node = Common.get_config_value('ignore-dead-node')
 
         app_info = Common.LOCAL['webapp'][app]
