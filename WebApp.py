@@ -31,7 +31,7 @@ from selenium import webdriver
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.firefox.options import Options
-if sys.version_info > (2, 7):
+if sys.version_info[0] > 2
     from urllib.parse import urlparse
 else:
     from urlparse import urlparse
