@@ -13,11 +13,13 @@ default:
     newline: "\r\n"
     slack-cmd: /home/robot/work/slack/renat_bot.sh
     slack-proxy: 127.0.0.1:8080
+    slack-upload: /home/robot/work/slack/upload.sh
     # log-level: TRACE
     # log-level: ERROR
     log-level: INFO
     # log-level: DEBUG
     ignore-dead-node: FALSE
+    smtp-server: 127.0.0.1:25
     display:
         width:  1921
         height: 1080
