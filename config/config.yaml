@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 default:
-    robot-server: 10.128.64.99
+    robot-server: 10.128.64.97
     robot-password: password!secret
     working-folder: /mnt/fsv01/21_Users/${USER}/working
     renat-master-folder: /mnt/fsv01/00_Master/renat
