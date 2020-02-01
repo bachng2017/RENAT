@@ -128,17 +128,14 @@ module.
             mod_list = glob.glob(Common.get_renat_path() + '/tester_mod/*.py')
             keyword_list = []
             for item in mod_list:
-                # BuiltIn().log_to_console(item)
                 if item.startswith('_'): continue
                 mod_name = os.path.basename(item).replace('.py','')
-                # BuiltIn().log_to_console(mod_name)
                 mod  = import_module('tester_mod.' + mod_name)
 
                 cmd_list    = inspect.getmembers(mod, inspect.isfunction)
                 for cmd,data in cmd_list:
                     if not cmd.startswith('_') and cmd not in keyword_list:
                         keyword_list.append(cmd)
-                        # BuiltIn().log_to_console('   ' + cmd)
                         def gen_xrun(cmd):
                             def _xrun(self,*args,**kwargs):
                                 return self._xrun(cmd,*args,**kwargs)
@@ -149,14 +146,14 @@ module.
 
 
     def switch(self,name):
-        """ Switchs the current tester to ``name``
+        """ Switches the current tester to ``name``
         """
         self._cur_name = name
         BuiltIn().log("Switched to tester " + name)
 
 
     def connect(self,name):
-        """ Connect to the tester ``name``
+        """ Connects to the tester ``name``
         """
         dname   = Common.LOCAL['tester'][name]['device']
         ip      = Common.GLOBAL['device'][dname]['ip']

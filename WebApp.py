@@ -110,6 +110,7 @@ class WebApp(object):
     The webapp device has following format:
 | <test node name>:
 |     device:     <device name>
+|     scheme:     <http or https>
 |     proxy:
 |         http:       <proxy for http>
 |         https:      <proxy for http>
@@ -126,15 +127,17 @@ class WebApp(object):
 | webapp:
 |     samurai-1:
 |         device: samurai-b
-          profile:
-            auto-save-mime: application/octet-stream
+|         scheme: http
+|         profile:
+|           auto-save-mime: application/octet-stream
 |         proxy:
 |             http:   10.128.8.210:8080
 |             ssl:    10.128.8.210:8080
 |     arbor-1:
 |         device: arbor-sp-a
-          profile:
-            auto-save-mime: application/xml,application/octet-stream
+|         scheme: https
+|         profile:
+|           auto-save-mime: application/xml,application/octet-stream
 |         proxy:
 |             http:   10.128.8.210:8080
 |             ssl:    10.128.8.210:8080
@@ -142,8 +145,8 @@ class WebApp(object):
 
     `Selenium2Library` keywords still could be used along with this library like
     this:
-    | Click Link |                         //a[contains(.,'ユーザ設定')] |
-    | Sleep      |                         2s |
+    | Click Link |                        //a[contains(.,'ユーザ設定')] |
+    | Sleep      |                        2s |
     | Click Link |                        Home設定 |
     | Sleep |                             2s |
     | Samurai.Capture Screenshot |
