@@ -115,19 +115,17 @@ class Router(object):
 
         Examples:
             | Router.`Xrun` | Flap Interface | ge-0/0/0 |
-        This keyword will then actually calling the correspond keyword for the
-        device type.
+        This keyword will then actually calling the correspond keyword for the device type.
         """
         channel = self.get_current_channel()
         node    = channel['node']
-        # type_list    = channel['type'].split('_')
         type_list = re.split(r'-|_', channel['type'])
         mod_name = ''
         type_list_length = len(type_list)
 
         mod_cmd = cmd.lower().replace(' ','_')
 
-        # go from detail mod to common mode
+        # go back from detail mod to common mode
         for i in range(0,type_list_length):
             mod_name = '_'.join(type_list[0:type_list_length-i])
             try:
