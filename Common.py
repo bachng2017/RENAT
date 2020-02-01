@@ -1721,6 +1721,32 @@ def send_mail_with_embeded_data(mail_from,send_to,subject,txt,img_path=None,file
     BuiltIn().log("Sent a mail from `%s` to `%s`"% (mail_from,send_to))
 
 
+def eval_file(file_path=u'.eval',default=None):
+    """ Evaluate a file and returns the result
+
+    The keyword returns a tupple with 2 values. The 1st one is a bool value indicats if the file_path exists or not. The
+    second value is the value that is evaluated from file_path. In case the file does not exists or could not be
+    evaluated, a `default` value is returned.
+
+    Examples:
+    | ${HAS_FILE}  |   ${CHECK}=   |    Eval File |
+    |  Run Keyword If |  $HAS_FILE}  |      Exit For Loop  |
+    |  Run Keyword If |  ${CHECK}    |      Exit For Loop  |
+    """
+    result = default
+    exist = os.path.exists(file_path)
+    if exist:
+        with open(file_path) as f:
+            code = f.read()
+            try:
+                result = eval(code)
+            except:
+                result = default
+        BuiltIn().log("Evaluated the code by `%s`" % file_path)
+    else:
+        BuiltIn().log("File `%s` does not exists. Returns default value")
+    return exist,result
+
 
 # set RF global variables and load libraries
 # in doc create mode, there is not RF context, so we need to bypass the errors
