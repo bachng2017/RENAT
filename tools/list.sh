@@ -1,9 +1,17 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
 
+. gettext.sh
+TEXTDOMAIN=list_ja_JP
+TEXTDOMAINDIR=$(dirname $0)/locale
+export TEXTDOMAIN
+export TEXTDOMAINDIR
+
+PROG=$(basename $0)
+
 usage() {
-  echo "Show information about a RENAT project and its items"
-  echo "usage: $0 <project>"
+  echo "$(eval_gettext "Show information about a RENAT project and its items")"
+  echo "$(eval_gettext "usage: \$PROG [PROJECT]")"
   exit 1
 }
 
@@ -22,7 +30,7 @@ else
     CURPATH=$(pwd)"/"$1
 fi
 
-echo "### all item list in '$BASE' ###"
+echo "$(eval_gettext "### all item list in '\$BASE' ###")"
 echo "----------"
 COUNT=0
 # find all run.sh script
@@ -41,11 +49,11 @@ for item in $(find $1 -depth -type f -name "run.sh" | sort); do
     fi
 done
 echo "---"
-echo "total items: $COUNT"
+echo "$(eval_gettext "total items: \$COUNT")"
 echo ""
 echo ""
 
-echo "### ignored item list in '$BASE' ###"
+echo "$(eval_gettext "### ignored item list in '\$BASE' ###")"
 echo "------------"
 COUNT=0
 for item in $(find $1 -depth -type f -name ".ignore" | sort); do
@@ -58,11 +66,11 @@ for item in $(find $1 -depth -type f -name ".ignore" | sort); do
     COUNT=$(expr $COUNT + 1)
 done
 echo "---"
-echo "ignored items: $COUNT"
+echo "$(eval_gettext "ignored items: \$COUNT")"
 echo ""
 echo ""
 
-echo "### item last run status in '$BASE' ###"
+echo "$(eval_gettext "### item last run status in '$BASE' ###")"
 for item in $(find $1 -depth -type f -name "run.sh" | sort); do
     ITEM=$(echo $item | sed "s/^$BASE\///g" | sed "s/\/run.sh//g")
     if [ "$ITEM" == "run.sh" ]; then
@@ -84,10 +92,10 @@ for item in $(find $1 -depth -type f -name "run.sh" | sort); do
             IGNORE=$(cat $LOG | grep -A1 "Current folder is.*$CURITEM " | grep '.ignore found')
             if [ "$IGNORE" == "" ]; then
                 if [ "$INFO" == "" ]; then
-                    INFO='running...'
+                    INFO="$(eval_gettext "running...")"
                 fi
             else
-                INFO='ignored'
+                INFO="$(eval_gettext "ignored")"
             fi
             printf "%-64s %s %s\n" "$ITEM" "$INFO"
         else

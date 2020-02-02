@@ -1,0 +1,66 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-02-02 15:30+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: /home/bachng/work/renat-chibagit/tools/ignore.sh:12
+#, sh-format
+msgid "Mark an item with ignore flag that would be ignored by run.sh."
+msgstr "run.shで無視されるようにアイテムをマーキングする"
+
+#: /home/bachng/work/renat-chibagit/tools/ignore.sh:14
+#, sh-format
+msgid "  $PROG -l base:                 show the ignore list of the base folder"
+msgstr "  $PROG -l base:                 ベースフォルダーの無視されたリストを表示"
+
+#: /home/bachng/work/renat-chibagit/tools/ignore.sh:15
+#, sh-format
+msgid "  $PROG -d [-r dep] item:        remove ignore flag of an item"
+msgstr "  $PROG -d [-r dep] item:        アイテムの無視フラグを外す"
+
+#: /home/bachng/work/renat-chibagit/tools/ignore.sh:16
+#, sh-format
+msgid "  $PROG [-r dep] item comment:   mark an item as ignore with comment"
+msgstr "  $PROG [-r dep] item comment:   アイテムを無視されるようにマーキングおよびコメントを追加する"
+
+#: /home/bachng/work/renat-chibagit/tools/ignore.sh:17
+#, sh-format
+msgid "Option -r without parameter will mark all the item and its sub items."
+msgstr "パラメータなしの -r はアイテムおよび全ての子アイテムをマーキングする"
+
+#: /home/bachng/work/renat-chibagit/tools/ignore.sh:18
+#, sh-format
+msgid ""
+"Without option -r (aka -r 0), the command only mark the item without its sub "
+"items."
+msgstr ""
+"-r オプションなし（もしくは -r 0)はそのアイテムのみをマーキングする"
+
+#: /home/bachng/work/renat-chibagit/tools/ignore.sh:39
+#, sh-format
+msgid "$PROG: option -l requires an argument"
+msgstr "$PROG: オプション -l にパラメータが必要"
+
+#: /home/bachng/work/renat-chibagit/tools/ignore.sh:101
+#, sh-format
+msgid "removed .ignore in '$TARGET'"
+msgstr "'$TARGET'の .ignore を外した"
+
+#: /home/bachng/work/renat-chibagit/tools/ignore.sh:114
+#, sh-format
+msgid "ignored item '$TARGET'"
+msgstr "'$TARGET'アイテムを無視した"
