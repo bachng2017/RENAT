@@ -1,15 +1,21 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
-# 
+
+. gettext.sh
+TEXTDOMAIN=ignore_ja_JP
+TEXTDOMAINDIR=$(dirname $0)/locale
+export TEXTDOMAIN
+export TEXTDOMAINDIR
+
 PROG=$(basename $0)
 usage () {
-  echo "Mark an item with ignore flag that would be ignored by run.sh."
+  echo "$(eval_gettext "Mark an item with ignore flag that would be ignored by run.sh.")"
   echo 
-  echo "  $PROG -l base:                 show the ignore list of the base folder"
-  echo "  $PROG -d [-r dep] item:        remove ignore flag of an item"
-  echo "  $PROG [-r dep] item comment:   mark an item as ignore with comment"
-  echo "Option -r without parameter will mark all the item and its sub items." 
-  echo "Without option -r (aka -r 0), the command only mark the item without its sub items."
+  echo "$(eval_gettext "  \$PROG -l base:                 show the ignore list of the base folder")"
+  echo "$(eval_gettext "  \$PROG -d [-r dep] item:        remove ignore flag of an item")"
+  echo "$(eval_gettext "  \$PROG [-r dep] item comment:   mark an item as ignore with comment")"
+  echo "$(eval_gettext "Option -r without parameter will mark all the item and its sub items.")"
+  echo "$(eval_gettext "Without option -r (aka -r 0), the command only mark the item without its sub items.")"
   echo 
 }
 
@@ -30,7 +36,7 @@ while [ ! -z "$OPT" ]; do
       ;;
     '-l'|'--list' )
       if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
-        echo "$PROG: option -l requires an argument" 1>&2
+        echo "$(eval_gettext "\$PROG: option -l requires an argument")" 1>&2
         exit 1
       fi
       LIST=1
@@ -92,7 +98,7 @@ if [ ! -z $DEL ]; then
   for TARGET in $(find $ITEM $MAXDEP -type d); do
     if [ -f $TARGET/.ignore ]; then
       rm -f $TARGET/.ignore
-      echo "removed .ignore in '$TARGET'"
+      echo "$(eval_gettext "removed .ignore in '\$TARGET'")"
     fi
   done
   exit 0
@@ -105,7 +111,7 @@ for TARGET in $(find $ITEM $MAXDEP -type d); do
         OLD_COMMENT=$(cat $TARGET/.ignore)
     fi
     echo "$COMMENT" > $TARGET/.ignore
-    echo "ignored item '$TARGET'"
+    echo "$(eval_gettext "ignored item '\$TARGET'")"
   fi
 done
 

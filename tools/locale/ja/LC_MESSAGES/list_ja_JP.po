@@ -1,0 +1,61 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-02-02 15:20+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: /home/bachng/work/renat-chibagit/tools/list.sh:13
+#, sh-format
+msgid "Show information about a RENAT project and its items"
+msgstr "RENATプロジェクト及アイテムの一覧を表示する。"
+
+#: /home/bachng/work/renat-chibagit/tools/list.sh:14
+#, sh-format
+msgid "usage: $PROG [PROJECT]"
+msgstr "使い方: $PROG [PROJECT]"
+
+#: /home/bachng/work/renat-chibagit/tools/list.sh:33
+#, sh-format
+msgid "### all item list in '$BASE' ###"
+msgstr "### '$BASE'の全てのアイテム ###"
+
+#: /home/bachng/work/renat-chibagit/tools/list.sh:52
+#, sh-format
+msgid "total items: $COUNT"
+msgstr "全アイテム数: $COUNT"
+
+#: /home/bachng/work/renat-chibagit/tools/list.sh:56
+#, sh-format
+msgid "### ignored item list in '$BASE' ###"
+msgstr "### '$BASE'の無視されたアイテム"
+
+#: /home/bachng/work/renat-chibagit/tools/list.sh:69
+#, sh-format
+msgid "ignored items: $COUNT"
+msgstr "無視されたアイテム数: $COUNT"
+
+#: /home/bachng/work/renat-chibagit/tools/list.sh:95
+#, sh-format
+msgid "running..."
+msgstr "処理中..."
+
+#: /home/bachng/work/renat-chibagit/tools/list.sh:98
+#, sh-format
+msgid "ignored"
+msgstr "無視"
+
+#~ msgid "usage: $0 project"
+#~ msgstr "使い方: $0 project"
