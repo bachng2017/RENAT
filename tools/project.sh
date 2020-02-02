@@ -32,6 +32,7 @@ if [ -d  "$PROJECT_PATH" ]; then
     read ANS
   fi
 else
+  mkdir $PROJECT_PATH
   ANS="y"
 fi
 
