@@ -1,0 +1,49 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>sample setting for a local user project running on baymax&#xd;
+change $USER/$CASE to use</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.dabsquared.gitlabjenkins.connection.GitLabConnectionProperty plugin="gitlab-plugin@1.5.13">
+      <gitLabConnection>chibagit</gitLabConnection>
+    </com.dabsquared.gitlabjenkins.connection.GitLabConnectionProperty>
+    <com.chikli.hudson.plugin.naginator.NaginatorOptOutProperty plugin="naginator@1.18">
+      <optOut>false</optOut>
+    </com.chikli.hudson.plugin.naginator.NaginatorOptOutProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>master</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>USER=$USER
+CASE=$CASE
+PATH=/usr/local/bin/:$PATH
+export RENAT_PATH=/home/$USER/work/renat
+sudo -i -u $USER sh -c &quot;cd $CASE;./run.sh -X --debug debug.txt -v RENAT_BATCH&quot;</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.plugins.robot.RobotPublisher plugin="robot@2.0.0">
+      <outputPath>$CASE/result</outputPath>
+      <reportFileName>report.html</reportFileName>
+      <logFileName>log.html</logFileName>
+      <outputFileName>output.xml</outputFileName>
+      <disableArchiveOutput>false</disableArchiveOutput>
+      <passThreshold>0.0</passThreshold>
+      <unstableThreshold>0.0</unstableThreshold>
+      <otherFiles>
+        <string>*.log</string>
+      </otherFiles>
+      <enableCache>true</enableCache>
+      <onlyCritical>true</onlyCritical>
+    </hudson.plugins.robot.RobotPublisher>
+  </publishers>
+  <buildWrappers/>
+</project>
