@@ -25,7 +25,7 @@ change $USER/$CASE to use</description>
       <command>USER=$USER
 CASE=$CASE
 PATH=/usr/local/bin/:$PATH
-export RENAT_PATH=/home/$USER/work/renat
+export RENAT_PATH=$RENAT_PATH
 sudo -i -u $USER sh -c &quot;cd $CASE;./run.sh -X --debug debug.txt -v RENAT_BATCH&quot;</command>
     </hudson.tasks.Shell>
   </builders>
