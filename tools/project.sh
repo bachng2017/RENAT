@@ -7,8 +7,9 @@ TEXTDOMAINDIR=$(dirname $0)/locale
 export TEXTDOMAIN
 export TEXTDOMAINDIR
 
+CMD=$0
 if [ ! "$#" -eq 1 ]; then
-  echo "usage: $0 <project_path>"
+  echo "$(eval_gettext "usage: \$CMD [PROJECT]")"
   exit 1
 fi 
 
@@ -23,14 +24,22 @@ if [ -z "$RENAT_PATH" ]; then
 fi
 
 if [ -d  "$PROJECT_PATH" ]; then 
-  echo "$(eval_gettext "Test project existed.")"
-  exit 1
+  if [ -f $PROJECT_PATH/lab.robot ]; then
+    echo "$(eval_gettext "Test project existed.")"
+    exit 1
+  else
+    echo -n "$(eval_gettext "Folder seems not to be a RENAT project. Do you want to convert it? [y/n] ")"
+    read ANS
+  fi
 else
-  TEMPLATE_PATH=$RENAT_PATH/tools/template
-  cp -r $TEMPLATE_PATH/project $PROJECT_PATH
-  find $PROJECT_PATH -name ".svn" -prune -name ".svn" -exec rm -rf {} \;
+  mkdir $PROJECT_PATH
+  ANS="y"
 fi
-echo "$(eval_gettext "created test project: ")" "$PROJECT_PATH"
-echo "$(eval_gettext "entered project folder: ")" "$PROJECT_PATH"
-echo "$(eval_gettext "use item.sh to create test case")"
 
+if [ "$ANS" == "y" ]; then
+  TEMPLATE_PATH=$RENAT_PATH/tools/template
+  cp -r $TEMPLATE_PATH/project/* $PROJECT_PATH
+  find $PROJECT_PATH -name ".svn" -prune -name ".svn" -exec rm -rf {} \;
+  echo "$(eval_gettext "created test project: ")" "$PROJECT_PATH"
+  echo "$(eval_gettext "use item.sh to create test case")"
+fi 

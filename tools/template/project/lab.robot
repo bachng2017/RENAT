@@ -230,12 +230,20 @@ Lab Setup
     # follow syslog and trap with attr follow-remote-log: yes
     Follow Syslog And Trap Start
 
+    # run User Setup
+    ${EXIST_USER_SETUP}=    Run Keyword And Return Status       Keyword Should Exist    User Setup
+    Run Keyword If          ${EXIST_USER_SETUP}                 User Setup
+
     BuiltIn.Log To Console  00. Lab Setup
     BuiltIn.Log To Console  ------------------------------------------------------------------------------
 
 
 Lab Teardown
     [Documentation]         final teardown for all test cases
+    # run User Teardown
+    ${EXIST_USER_TEARDOWN}=     Run Keyword And Return Status       Keyword Should Exist    User Teardown
+    Run Keyword If              ${EXIST_USER_TEARDOWN}              User Teardown
+
     Remove Directory        ${CURDIR}/tmp   recursive=${TRUE}
     # Logger.Log All          TESTING FINISH   ${TRUE}     ===
     # stop follow syslog and trap with attr follow-remote-log: yes
