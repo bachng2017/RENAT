@@ -51,7 +51,8 @@ fi
 
 CRUMB=$(curl -m 5 --user $USER:$JENKINS_TOKEN -s "$JENKINS_URL/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)")
 if [ "$ACTION" == "ADD" ]; then
-  ERR=$(cat $TEMPLATE | sed "s/=\$USER/=$USER/g"  | sed "s|=\$CASE|=$PWD|g" | sed "s|<outputPath>\$CASE|<outputPath>$PWD|g" | \
+  ERR=$(cat $TEMPLATE | sed "s/=\$USER/=$USER/g"  | sed "s|=\$CASE|=$PWD|g" | sed "s|=\$RENAT_PATH|=$RENAT_PATH|g" | \
+        sed "s|<outputPath>\$CASE|<outputPath>$PWD|g" | \
         curl --user $USER:$JENKINS_TOKEN -vs -XPOST $JENKINS_URL/createItem?name=$JOB_NAME --data-binary @- -H "$CRUMB" -H "Content-Type:text/xml" 2>&1 | grep '400 Bad Request')
   if [ ! -z "$ERR" ]; then
     echo "ERROR: $ERR"
