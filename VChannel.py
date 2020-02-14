@@ -199,7 +199,7 @@ class VChannel(object):
             try:
                 self._async_channel = BuiltIn().get_library_instance('AChannel')
             except:
-                pass
+                BuiltIn().log("AChannel not imported.  This might break things...")
 
 
     @property
