@@ -199,7 +199,7 @@ class VChannel(object):
             try:
                 self._async_channel = BuiltIn().get_library_instance('AChannel')
             except:
-                pass
+                BuiltIn().log("AChannel not imported.  This might break things...")
 
 
     @property
@@ -295,21 +295,38 @@ class VChannel(object):
         self._connect(_node, name, _log_file, _timeout, _w, _h, 'a+')
         BuiltIn().log("Reconnected successfully to `%s`" % (name))
 
+    def connect(self, node, name, log_file,
+                timeout=None,
+                w=None,
+                h=None,
+                mode='w'):
 
-    def connect(self,node,name,log_file,\
-                timeout=Common.GLOBAL['default']['terminal-timeout'], \
-                w=Common.LOCAL['default']['terminal']['width'],\
-                h=Common.LOCAL['default']['terminal']['height'],mode='w'):
+        if not timeout:
+            timeout = Common.get_config_value('terminal-timeout')
+        if not w or not h:
+            terminal_info = Common.get_config_value('terminal')
+        if not h:
+            h = terminal_info['height']        
+        if not w:
+            w = terminal_info['width']
 
-        self._connect(node,name,log_file,timeout,w,h,mode)
-        if Common.get_config_value('async-channel','vchannel',False):
-            self._async_channel._connect(node,name,log_file,timeout,w,h,mode)
+        self._connect(node, name, log_file, timeout, w, h, mode)
 
+        BuiltIn().log(Common.get_config_value(
+                'async-channel', 'vchannel', False
+            )
+        )
 
-    def _connect(self,node,name,log_file,\
-                timeout=Common.GLOBAL['default']['terminal-timeout'], \
-                w=Common.LOCAL['default']['terminal']['width'],\
-                h=Common.LOCAL['default']['terminal']['height'],mode='w'):
+        if Common.get_config_value('async-channel', 'vchannel', False):
+            self._async_channel._connect(
+                node, name, log_file, timeout, w, h, mode
+            )
+
+    def _connect(self, node, name, log_file,
+                 timeout=None,
+                 w=None,
+                 h=None,
+                 mode='w'):
         """ Connects to the node and create a VChannel instance
 
         Login information is automatically extracted from yaml configuration.
@@ -317,9 +334,9 @@ class VChannel(object):
         to this channel.
 
         If a login was successful, VChannel will create a log file name
-        ``log_file`` for the connection in the current result folder of the test
-        case. This log file will contain any command input/output executed on
-        this channel.
+        ``log_file`` for the connection in the current result folder of the
+        test case. This log file will contain any command input/output
+        executed onthis channel.
 
         Multi sessions to the same node could be open with different names.
         Use `Switch` to change the current active session by its name
@@ -331,39 +348,61 @@ class VChannel(object):
         See ``Common`` for more detail about the yaml config files.
         """
         if name in self._channels:
-            raise Exception("Channel `%s` already existed. Use different name instead" % name)
+            raise Exception(
+                "Channel `%s` already exists. Use different name instead"
+                % name
+            )
 
         id = 0
         # ignore or raise alarm when the initial connection has errors
         ignore_dead_node = Common.get_config_value('ignore-dead-node')
 
         # init values
-        _device         = Common.LOCAL['node'][node]['device']
-        _device_info    = Common.GLOBAL['device'][_device]
-        _ip             = _device_info['ip']
-        _type           = _device_info['type']
-        _access_tmpl    = Common.GLOBAL['access-template'][_type]
-        _access         = _access_tmpl['access']
-        _auth_type      = _access_tmpl['auth']
-        _profile        = _access_tmpl['profile']
-        _negotiate      = _access_tmpl.get('negotiate')
-        _proxy_cmd      = _access_tmpl.get('proxy-cmd')
-        _port           = _access_tmpl.get('port') or _device_info.get('port')
-        _auth           = Common.GLOBAL['auth'][_auth_type][_profile]
-        _init           = _access_tmpl.get('init')      # init command
-        _finish         = _access_tmpl.get('finish')    # finish  command
-        _login_prompt   = _access_tmpl.get('login-prompt') or Common.get_config_value('default-login-prompt','vchannel')
-        _pass_prompt    = _access_tmpl.get('password-prompt') or Common.get_config_value('default-password-prompt','vchannel')
-        _secret_prompt  = _access_tmpl.get('enable-prompt') or _access_tmpl.get('secret-prompt') or 'Password:'
-        _secret_cmd     = _access_tmpl.get('enable-cmd') or _access_tmpl.get('secret-cmd') or 'enable'
-        _timeout        = timeout
+        try:
+            _device = Common.LOCAL['node'][node]['device']
+            _device_info = Common.get_config_value(_device, 'device')
+        except KeyError:
+            _device_info = Common.get_config_value(node, 'device')
+        if _device_info is None:
+            raise Exception(
+                  'Unable to find device {d} in device.yaml, '
+                  'please check your test script and variables.'.format(
+                      d=node
+                  )
+            )
+        _ip = _device_info['ip']
+        _type = _device_info['type']
+        _access_tmpl = Common.GLOBAL['access-template'][_type]
+        _access = _access_tmpl['access']
+        _auth_type = _access_tmpl['auth']
+        _profile = _access_tmpl['profile']
+        _negotiate = _access_tmpl.get('negotiate')
+        _proxy_cmd = _access_tmpl.get('proxy-cmd')
+        _port = _access_tmpl.get('port') or _device_info.get('port')
+        _auth = Common.GLOBAL['auth'][_auth_type][_profile]
+        _init = _access_tmpl.get('init')      # init command
+        _finish = _access_tmpl.get('finish')    # finish  command
+        _login_prompt = _access_tmpl.get('login-prompt') or \
+            Common.get_config_value('default-login-prompt', 'vchannel')
+        _pass_prompt = _access_tmpl.get('password-prompt') or \
+            Common.get_config_value('default-password-prompt', 'vchannel')
+        _secret_prompt = _access_tmpl.get('enable-prompt') or \
+            _access_tmpl.get('secret-prompt') or 'Password:'
+        _secret_cmd = _access_tmpl.get('enable-cmd') or \
+            _access_tmpl.get('secret-cmd') or \
+            'enable'
+        _timeout = timeout
 
         # using strict prompt or not
-        _prompt  = _access_tmpl.get('prompt') or '.*'
-        if Common.get_config_value('prompt-strict','vchannel',True):
-            if _prompt[-1] != '$': _prompt += '$'
+        _prompt = _access_tmpl.get('prompt') or '.*'
+        if Common.get_config_value('prompt-strict', 'vchannel', True):
+            if _prompt[-1] != '$':
+                _prompt += '$'
 
-        BuiltIn().log("Opening connection to `%s(%s):%s` as name `%s` by `%s`" % (node,_ip,_port,self._aprefix+name,_access))
+        BuiltIn().log(
+            "Opening connection to `%s(%s):%s` as name `%s` by `%s`"
+            % (node, _ip, _port, self._aprefix+name, _access)
+        )
 
         channel_info = {}
 
