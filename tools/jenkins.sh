@@ -3,7 +3,7 @@
 # script to add/remove job for this case to jenkins
 JENKINS_URL=http://10.128.64.99:8082
 PROG=$(basename $0)
-TEMPLATE=$(dirname $0)/template/jenkins_job.xml
+TEMPLATE=$RENAT_PATH/template/jenkins_job.xml
 
 usage() {
   echo "usage: $PROG [OPTIONS] [JOB_NAME]"
