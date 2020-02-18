@@ -65,6 +65,7 @@ if [ "$ACTION" == "ADD" ]; then
         curl -b ./.cookie -u $CREDENT -s -XPOST $JENKINS_URL/createItem?name=$JOB_NAME --data-binary @- -H "$CRUMB" -H "Content-Type:text/xml")
   if [ ! -z "$ERR" ]; then
     echo "could not add job $JOB_NAME"
+    echo "$ERR"
   else 
     echo "added job $JOB_NAME"
   fi
@@ -74,6 +75,7 @@ if [ "$ACTION" == "DEL" ]; then
   ERR=$(curl -b ./.cookie -u $CREDENT -s -H "$CRUMB" -XPOST $JENKINS_URL/job/$JOB_NAME/doDelete)
   if [ ! -z "$ERR" ]; then
     echo "ERROR: job not found"
+    echo "$ERR"
   else 
     echo "deleted job $JOB_NAME"
   fi
