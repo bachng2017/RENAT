@@ -3,7 +3,7 @@
 # script to add/remove job for this case to jenkins
 JENKINS_URL=http://10.128.64.99:8082
 PROG=$(basename $0)
-TEMPLATE=$(dirname $0)/template/jenkins_job.xml
+TEMPLATE=$RENAT_PATH/tools/template/jenkins_job.xml
 
 usage() {
   echo "usage: $PROG [OPTIONS] [JOB_NAME]"
@@ -65,6 +65,7 @@ if [ "$ACTION" == "ADD" ]; then
         curl -b ./.cookie -u $CREDENT -s -XPOST $JENKINS_URL/createItem?name=$JOB_NAME --data-binary @- -H "$CRUMB" -H "Content-Type:text/xml")
   if [ ! -z "$ERR" ]; then
     echo "could not add job $JOB_NAME"
+    echo "$ERR"
   else 
     echo "added job $JOB_NAME"
   fi
@@ -74,6 +75,7 @@ if [ "$ACTION" == "DEL" ]; then
   ERR=$(curl -b ./.cookie -u $CREDENT -s -H "$CRUMB" -XPOST $JENKINS_URL/job/$JOB_NAME/doDelete)
   if [ ! -z "$ERR" ]; then
     echo "ERROR: job not found"
+    echo "$ERR"
   else 
     echo "deleted job $JOB_NAME"
   fi
