@@ -1142,11 +1142,18 @@ class VChannel(object):
 
         # result checking
         cmd_auto_check = Common.get_config_value('cmd-auto-check')
-        if cmd_auto_check and match_err != '' and re.search(match_err, output):
-            err_msg = "ERROR: error while execute command `%s`" % cmd
-            BuiltIn().log(err_msg)
-            BuiltIn().log(output)
-            raise Exception(err_msg)
+        if cmd_auto_check and match_err != '':
+            err_mat = re.search(match_err, output)
+            if err_mat:
+                err_msg = (
+                    "ERROR: Error encountered while execututing command - '{c}'" \
+                    "\n    - {m}".format(
+                        c=cmd, m=err_mat
+                    )
+                )
+                BuiltIn().log(err_msg)
+                BuiltIn().log(output)
+                raise Exception(err_msg)
 
         # remove PROMPT from the result if necessary
         if remove_prompt:
