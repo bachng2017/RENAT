@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 default:
     robot-server: 127.0.0.1
-    robot-password: password!secret
+    robot-password: <password>
     working-folder: $HOME/work
     renat-master-folder: $RENAT_PATH/config
-    calient-master-path:
-    ntm-master-path:
+    calient-master-path: 
+    ntm-master-path: 
     ix-remote-tmp: C:/Windows/Temp
     interval-between-retry: 15s
     terminal-timeout: 20m
     cmd-auto-check: False
     newline: "\r\n"
     slack-cmd: /home/robot/work/slack/renat_bot.sh
-    slack-proxy: 127.0.0.1:8080
     slack-upload: /home/robot/work/slack/upload.sh
+    slack-proxy: 127.0.0.1:8080
     # log-level: TRACE
     # log-level: ERROR
     log-level: INFO

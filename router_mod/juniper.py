@@ -443,7 +443,7 @@ def get_file(self,src_file,dst_file=None):
     if dst_file is None:
         filename = os.path.basename(src_file)
         tmp_path    = os.getcwd() + '/tmp/%s' % filename
-        dest_path   = os.getcwd() + '/' + Common.get_result_folder() + filename
+        dest_path   = os.getcwd() + '/' + Common.get_result_folder() + '/' + filename
     else:
         tmp_path    = os.getcwd() + '/tmp/' + dst_file
         dest_path   = os.getcwd() + '/' + Common.get_result_folder() + '/' + dst_file
