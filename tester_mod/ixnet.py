@@ -456,7 +456,7 @@ def set_traffic_item(self,*items,**kwargs):
     """
 
     cli = self._clients[self._cur_name]
-    ix  = cli['connection']
+    ix = cli['connection']
     if kwargs:
         enabled = kwargs['enabled']
     else:
@@ -464,32 +464,32 @@ def set_traffic_item(self,*items,**kwargs):
 
     # create traffic data
     traffic_data = {}
-    traffic_items = ix.getList(ix.getRoot()+'traffic','trafficItem')
+    traffic_items = ix.getList(ix.getRoot()+'traffic', 'trafficItem')
     for item in traffic_items:
-        name = ix.getAttribute(item,'-name')
+        name = ix.getAttribute(item, '-name')
         traffic_data[name] = item
 
     for item in items:
         # acess traffic item by index if the item has format ::<num>
-        indexes = re.findall('^::(%d)$',item)
-        if len(indexes) == 1 :
-            if indexes[0] < len(traffic_items):
-               _item = traffic_items[indexes[0]]
+        indexes = re.findall(r'^::(\d+)$', item)
+        if len(indexes) == 1:
+            _index = int(indexes[0])
+            if _index < len(traffic_items):
+                target = traffic_items[_index]
             else:
                 raise Exception("Error while setting traffic item")
         else:
-            _item = item
+            target = traffic_data[item]
 
-        if traffic_data[_item]:
-            ix.setAttribute(traffic_data[item],'-enabled',enabled)
+        if target:
+            ix.setAttribute(target, '-enabled', enabled)
         else:
             raise Exception("Error while setting traffic item")
-
     result = ix.commit()
     if result != '::ixNet::OK':
         raise Exception("Error while setting traffic item")
 
-    BuiltIn().log("Set %d traffic items to `%s` state" % (len(items),enabled))
+    BuiltIn().log("Set %d traffic items to `%s` state" % (len(items), enabled))
 
     return True
 
