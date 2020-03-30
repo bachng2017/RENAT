@@ -19,7 +19,7 @@ default:
     log-level: INFO
     # log-level: DEBUG
     ignore-dead-node: FALSE
-    smtp-server: 10.128.72.8:25
+    smtp-server: 127.0.0.1:25
     display:
         width:  1921
         height: 1080
