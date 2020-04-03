@@ -109,7 +109,7 @@ class Arbor(WebApp):
         """
 
         self.switch(self._current_name)
-        self._selenium.mouse_over("xpath=//a[.='Mitigation']")
+        self._selenium.mouse_over("xpath=//*[@class='top_level']/a[.='Mitigation']")
         self._selenium.wait_until_element_is_visible("xpath=//a[contains(.,'All Mitigations')]")
         self._selenium.click_link("xpath=//a[contains(.,'All Mitigations')]")
         self._selenium.wait_until_element_is_visible("//div[@class='sp_page_content']")
