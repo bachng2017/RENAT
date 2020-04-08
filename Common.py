@@ -1714,9 +1714,10 @@ def send_mail_with_embeded_data(mail_from,send_to,subject,txt,img_path=None,file
         msg_alt.attach(img_txt)
 
         img_data = MIMEImage(open(img_path,'rb').read(), name=os.path.basename(img_path))
+        BuiltIn().log("    Loaded data from `%s`" % img_path)
         img_data.add_header('Content-ID','<image>')
         msg.attach(img_data)
-    with smtplib.SMTP(smtp_server,smtp_port) as s:
+    with smtplib.SMTP(smtp_server,int(smtp_port)) as s:
         s.sendmail(msg['From'],msg['To'],msg.as_string())
     BuiltIn().log("Sent a mail from `%s` to `%s`"% (mail_from,send_to))
 

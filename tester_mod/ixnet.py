@@ -1421,7 +1421,7 @@ def regenerate(self):
     for item in traffic_items:
         ix.execute('generate', item)
 
-    BuiltIn().log("RegenerFinishedate flows for %d traffic items" % len(traffic_items))
+    BuiltIn().log("Regenerate flows for %d traffic items" % len(traffic_items))
 
 
 
@@ -1774,6 +1774,14 @@ def link_up_down_by_name(self,port_name,state=u'up'):
     BuiltIn().log('Simulate a link `%s` on port `%s`' % (state.lower(),port_name))
 
 
+def clear_statistics(self):
+    """
+    Clear all statistics information
+    """
+    cli = self._clients[self._cur_name]
+    ix  = cli['connection']
+    ix.execute('clearStats')
+    BuiltIn().log("Cleared all statisctics information")
 
 
 
