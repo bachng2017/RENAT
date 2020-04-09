@@ -1749,6 +1749,17 @@ def eval_file(file_path=u'.eval',default=None):
     return exist,result
 
 
+def run_keyword_if_exist(keyword,*args, **kwargs):
+    """ Runs keyword if exists
+    """
+    e = BuiltIn().keyword_should_exist(keyword)
+    if e:
+        BuiltIn().log("Found keyword `%s`" % keyword)
+        BuiltIn().run_keyword(keyword, *args, **kwargs)
+    else:
+        BuiltIn().log("Keyword `%s` not found" % keyword)
+
+
 # set RF global variables and load libraries
 # in doc create mode, there is not RF context, so we need to bypass the errors
 try:
