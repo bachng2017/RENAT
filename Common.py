@@ -1752,12 +1752,15 @@ def eval_file(file_path=u'.eval',default=None):
 def run_keyword_if_exist(keyword,*args, **kwargs):
     """ Runs keyword if exists
     """
-    e = BuiltIn().keyword_should_exist(keyword)
-    if e:
-        BuiltIn().log("Found keyword `%s`" % keyword)
-        BuiltIn().run_keyword(keyword, *args, **kwargs)
-    else:
-        BuiltIn().log("Keyword `%s` not found" % keyword)
+    try:
+        e = BuiltIn().keyword_should_exist(keyword)
+        if e:
+            BuiltIn().log("Found keyword `%s`" % keyword)
+            BuiltIn().run_keyword(keyword, *args, **kwargs)
+        else:
+            BuiltIn().log("WRN: Keyword `%s` not found" % keyword)
+    except:
+        BuiltIn().log("WRN: Keyword `%s` not found" % keyword)
 
 
 # set RF global variables and load libraries
