@@ -1714,9 +1714,10 @@ def send_mail_with_embeded_data(mail_from,send_to,subject,txt,img_path=None,file
         msg_alt.attach(img_txt)
 
         img_data = MIMEImage(open(img_path,'rb').read(), name=os.path.basename(img_path))
+        BuiltIn().log("    Loaded data from `%s`" % img_path)
         img_data.add_header('Content-ID','<image>')
         msg.attach(img_data)
-    with smtplib.SMTP(smtp_server,smtp_port) as s:
+    with smtplib.SMTP(smtp_server,int(smtp_port)) as s:
         s.sendmail(msg['From'],msg['To'],msg.as_string())
     BuiltIn().log("Sent a mail from `%s` to `%s`"% (mail_from,send_to))
 
@@ -1746,6 +1747,20 @@ def eval_file(file_path=u'.eval',default=None):
     else:
         BuiltIn().log("File `%s` does not exists. Returns default value")
     return exist,result
+
+
+def run_keyword_if_exist(keyword,*args, **kwargs):
+    """ Runs keyword if exists
+    """
+    try:
+        e = BuiltIn().keyword_should_exist(keyword)
+        if e:
+            BuiltIn().log("Found keyword `%s`" % keyword)
+            BuiltIn().run_keyword(keyword, *args, **kwargs)
+        else:
+            BuiltIn().log("WRN: Keyword `%s` not found" % keyword)
+    except:
+        BuiltIn().log("WRN: Keyword `%s` not found" % keyword)
 
 
 # set RF global variables and load libraries
