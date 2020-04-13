@@ -738,7 +738,8 @@ def loss_from_file(self,file_name='Flow_Statistics.csv',index='0'):
     # data = data[data['First TimeStamp'].notnull()] # ignore null rows
     BuiltIn().log("    Read data from %s" % (file_path))
 
-    frame_delta = int(data.filter(like='Frames Delta').loc[index_int])
+    # frame_delta = int(data.filter(like='Frames Delta').loc[index_int])
+    frame_delta = int(data.filter(regex='^.*Frames Delta$').loc[index_int])
     tx_frame    = int(data['Tx Frames'].loc[index_int])
     BuiltIn().log('----------')
     BuiltIn().log(data['First TimeStamp'].loc[index_int])
