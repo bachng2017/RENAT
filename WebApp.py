@@ -273,7 +273,7 @@ document.documentElement.scrollHeight, \
 document.body.offsetHeight, \
 document.documentElement.offsetHeight, \
 document.body.clientHeight, \
-document.documentElement.clientHeight) + document.body.scrollHeight; """
+document.documentElement.clientHeight) + 200; """
         total_height = int(self._selenium.execute_javascript(script_text))
 
         display_info = Common.get_config_value('display')
