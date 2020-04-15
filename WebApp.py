@@ -268,6 +268,8 @@ class WebApp(object):
         total_width     = int(self._selenium.execute_javascript("return document.body.offsetWidth;"))
         # total_height    = int(self._selenium.execute_javascript("return document.body.parentNode.scrollHeight;"))
 
+        # add 200 pixel to the calculated height is a work-around
+        # need something more robust
         script_text=""" return Math.max(document.body.scrollHeight, \
 document.documentElement.scrollHeight, \
 document.body.offsetHeight, \
