@@ -262,6 +262,9 @@ class WebApp(object):
             self._browsers[name]['capture_counter'] = new_counter
         else:
             capture_name = filename
+
+        self._selenium.execute_javascript("window.scrollBy(0,-document.body.scrollHeight)")
+
         total_width     = int(self._selenium.execute_javascript("return document.body.offsetWidth;"))
         # total_height    = int(self._selenium.execute_javascript("return document.body.parentNode.scrollHeight;"))
 
@@ -270,7 +273,7 @@ document.documentElement.scrollHeight, \
 document.body.offsetHeight, \
 document.documentElement.offsetHeight, \
 document.body.clientHeight, \
-document.documentElement.clientHeight); """
+document.documentElement.clientHeight) + document.body.scrollHeight; """
         total_height = int(self._selenium.execute_javascript(script_text))
 
         display_info = Common.get_config_value('display')

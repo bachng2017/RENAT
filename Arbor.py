@@ -107,8 +107,8 @@ class Arbor(WebApp):
     def show_all_mitigations(self):
         """ Shows all mitigations
         """
-
         self.switch(self._current_name)
+        BuiltIn().log("Switched to `%s` and start to display all mitigations" % self._current_name)
         self._selenium.mouse_over("xpath=//*[@class='top_level']/a[.='Mitigation']")
         self._selenium.wait_until_element_is_visible("xpath=//a[contains(.,'All Mitigations')]")
         self._selenium.click_link("xpath=//a[contains(.,'All Mitigations')]")
@@ -160,14 +160,14 @@ class Arbor(WebApp):
         total_method = len(method_list)
         count_method = 0
         for item in method_list:
-            xpath = '//table//td[(@class="borderright") and (. = "%s")]/../td[1]/a' % item
+            xpath = '//table//td[(@class="borderright") and (.="%s")]/../td[1]/a' % item
             if self._selenium.get_element_count(xpath) > 0:
                 target = self._selenium.get_webelement(xpath)
                 target.click()
                 time.sleep(2)
                 count_method += 1
         self.verbose_capture()
-        BuiltIn().log('Showed detail information for %d/%d countermesure of mitigation `%s`' %(count_method,total_method,name))
+        BuiltIn().log('Showed detail information for %d/%d countermesure of mitigation `%s`' % (count_method,total_method,name))
         return count_method
 
 
