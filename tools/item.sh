@@ -108,7 +108,10 @@ hyper_list  = re.split(r'[, ]+',str_hyper)
 if '' in hyper_list: hyper_list.remove('')
 
 # base copy and necessary symbolic
-shutil.copytree(TEMPLATE, NAME)
+try:
+  shutil.copytree(TEMPLATE, NAME)
+except OSError as e:
+  pass
 os.system("ln -sf ../lab.robot %s/lab.robot" % NAME)
 
 # create local.yaml from template
