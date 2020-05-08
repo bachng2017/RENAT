@@ -143,7 +143,7 @@ def _make_conn_info(self,dev1,port1,dev2,port2,dir='bi'):
     switches
     """
     sw1 = self._intf_map[dev1.lower()][port1.lower()]['switch-name']
-    sw2 = self._intf_map[dev1.lower()][port1.lower()]['switch-name']
+    sw2 = self._intf_map[dev2.lower()][port2.lower()]['switch-name']
 
     if sw1 != sw2:
         return ()
