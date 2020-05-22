@@ -306,6 +306,38 @@ def apply_traffic(self,refresh=True):
     BuiltIn().log("Applied traffic")
 
 
+def _rate_to_val_type(rate_str):
+    if type(rate_str) is not str:
+        rate_str = str(rate_str)
+
+    m = re.match(r'^\s*([\d\.,]+)\s*([KMG])?(pcnt|%|fps|bps|pps)?\s*$', rate_str)
+    if not m:
+        raise Exception("ERROR: invalid rate format '%s'" % rate_str)
+
+    rate_value, rate_si, rate_type = m.groups()
+    rate_value = float(rate_value)
+    
+    rate_type = {
+        None: None,
+        'pcnt': 'percentLineRate',
+        '%': 'percentLineRate',
+        'fps': 'framesPerSecond',
+        'pps': 'framesPerSecond',
+        'bps': 'bitsPerSecond',
+    }[rate_type]
+
+    if rate_type == 'percentLineRate' and rate_si:
+        raise Exception("ERROR: invalid rate format '%s'" % rate_str)
+
+    rate_value *= {
+        None: 1,
+        'K': 1000,
+        'M': 10**6,
+        'G': 10**9
+    }[rate_si]
+
+    return (rate_value, rate_type)
+
 
 def change_frame_rate_dynamic(self,value,pattern='.*'):
     """ Changes the traffic flow rate on-fly
@@ -320,25 +352,47 @@ def change_frame_rate_dynamic(self,value,pattern='.*'):
           name, default is everything ``.*``
     """
 
+    rate_value, rate_type = _rate_to_val_type(value)
+    BuiltIn().log('setting rate for "{}" to {} {}'.format(pattern, rate_value, rate_type))
+
     cli = self._clients[self._cur_name]
     ix  = cli['connection']
 
-    traffic_group_list = ix.getList(ix.getRoot() + 'traffic', 'dynamicRate')
-    target_list = []
-    for item in traffic_group_list:
-        name = ix.getAttribute(item,'-name')
-        if re.match(pattern,name): target_list.append(item)
-    # target_list = [ item for item in traffic_group_list if re.match(pattern,item) ]
+    traffic_item_list = ix.getList(ix.getRoot() + 'traffic', 'trafficItem')
+    target_idx_list = []
+    for idx, item in enumerate(traffic_item_list):
+        name = ix.getAttribute(item, '-name')
+        if re.match(pattern, name):
+            target_idx_list.append(idx)
 
-    for  item in target_list: ix.setAttribute(item,'-rate',value)
+    if not target_idx_list:
+        raise Exception("ERROR: no traffic items matching pattern")
+
+    traffic_group_list = ix.getList(ix.getRoot() + 'traffic', 'dynamicRate')
+    target_group_list = [traffic_group_list[i] for i in target_idx_list]
+
+    for item in target_group_list:
+        BuiltIn().log('found traffic group: {}'.format(item))
+        if rate_type:
+            ix.setAttribute(item, '-rateType', rate_type)
+        ix.setAttribute(item, '-rate', rate_value)
 
     result = ix.commit()
-    if result != '::ixNet::OK': return False
+    if result != '::ixNet::OK':
+        return False
 
     BuiltIn().log("Changed traffic rate to %s" % (value))
 
     return True
 
+
+def get_root(self):
+    cli = self._clients[self._cur_name]
+    return cli['connection'].getRoot()
+
+def get_list(self, container, item):
+    cli = self._clients[self._cur_name]
+    return cli['connection'].getList(container, item)
 
 
 def change_frame_rate(self,value,pattern='.*',flow_pattern='.*'):
@@ -435,7 +489,7 @@ def change_frame_size(self,type,value,pattern='.*',flow_pattern='.*'):
 
 
 
-def set_traffic_item(self,*items,**kwargs):
+def set_traffic_item(self, *items, **kwargs):
     """ Enables/Disables some traffic items ``items``
 
         Parameters:
@@ -456,7 +510,7 @@ def set_traffic_item(self,*items,**kwargs):
     """
 
     cli = self._clients[self._cur_name]
-    ix = cli['connection']
+    ix  = cli['connection']
     if kwargs:
         enabled = kwargs['enabled']
     else:
@@ -464,7 +518,7 @@ def set_traffic_item(self,*items,**kwargs):
 
     # create traffic data
     traffic_data = {}
-    traffic_items = ix.getList(ix.getRoot()+'traffic', 'trafficItem')
+    traffic_items = ix.getList(ix.getRoot()+'traffic','trafficItem')
     for item in traffic_items:
         name = ix.getAttribute(item, '-name')
         traffic_data[name] = item
@@ -485,6 +539,7 @@ def set_traffic_item(self,*items,**kwargs):
             ix.setAttribute(target, '-enabled', enabled)
         else:
             raise Exception("Error while setting traffic item")
+
     result = ix.commit()
     if result != '::ixNet::OK':
         raise Exception("Error while setting traffic item")
@@ -524,7 +579,18 @@ def start_traffic(self,wait_time='30s'):
     ix  = cli['connection']
 
     ix.execute('start',ix.getRoot()+'traffic')
-    time.sleep(wait)
+
+    interval = 5
+    elapsed_time = 0
+    started = False
+    while not started:
+        BuiltIn().log('    wait %d seconds until traffic is started' % wait)
+        time.sleep(interval)
+        started = ix.getAttribute(ix.getRoot()+'traffic','-state') == u"started"
+        elapsed_time += interval
+        if elapsed_time >= wait and not started:
+            raise Exception("ERROR: start traffic timed out")
+
 
 
 def load_and_start_traffic(self,wait_time1='10s',wait_time2='10s'):
@@ -578,7 +644,8 @@ def close(self):
     ix  = cli['connection']
 
     result = ix.disconnect()
-    if result != "::ixNet::OK": raise Execption("Error while closing the connection")
+    if result != "::ixNet::OK": 
+        raise Exception("Error while closing the connection")
 
     BuiltIn().log("Closed connection to `%s`" % self._cur_name)
 
@@ -738,8 +805,7 @@ def loss_from_file(self,file_name='Flow_Statistics.csv',index='0'):
     # data = data[data['First TimeStamp'].notnull()] # ignore null rows
     BuiltIn().log("    Read data from %s" % (file_path))
 
-    # frame_delta = int(data.filter(like='Frames Delta').loc[index_int])
-    frame_delta = int(data.filter(regex='^.*Frames Delta$').loc[index_int])
+    frame_delta = int(data.filter(like='Frames Delta').loc[index_int])
     tx_frame    = int(data['Tx Frames'].loc[index_int])
     BuiltIn().log('----------')
     BuiltIn().log(data['First TimeStamp'].loc[index_int])
@@ -906,7 +972,6 @@ def stop_and_save_capture(self,prefix='',wait_until_finish=True,monitor_interval
 
     ix.execute('stopCapture')
 
-
     if wait_until_finish:
         all_ready = False
         while not all_ready:
@@ -942,10 +1007,29 @@ def stop_and_save_capture(self,prefix='',wait_until_finish=True,monitor_interval
             name = name.replace('__','_')
             dst1 = Common.get_result_path() + '/' + prefix + name + '_HW.cap'
             dst2 = Common.get_result_path() + '/' + prefix + name + '_SW.cap'
-
-            ix.execute('copyFile',ix.readFrom(src1,'-ixNetRelative'),ix.writeTo(str(dst1)))
-            ix.execute('copyFile',ix.readFrom(src2,'-ixNetRelative'),ix.writeTo(str(dst2)))
-            count = count + 2
+            try:
+                ix.execute('copyFile',ix.readFrom(src1,'-ixNetRelative'),ix.writeTo(str(dst1)))
+            except:
+                err_msg = (
+                    'Tried to copy file {s}'
+                    'because interface {p} was in mode {m}'
+                    'This operation failed, please investigate'.format(
+                        s=src1, p=port, m=mode
+                    )
+                )
+                BuiltIn().log(err_msg)
+            try:
+                ix.execute('copyFile',ix.readFrom(src2,'-ixNetRelative'),ix.writeTo(str(dst2)))
+            except:
+                err_msg = (
+                    'Tried to copy file {s}'
+                    'because interface {p} was in mode {m}'
+                    'This operation failed, please investigate'.format(
+                        s=src2, p=port, m=mode
+                    )
+                )
+                BuiltIn().log(err_msg)
+                count = count + 2
 
 
     BuiltIn().log("Stopped packet capture and saved %d files" % count)
@@ -1422,7 +1506,7 @@ def regenerate(self):
     for item in traffic_items:
         ix.execute('generate', item)
 
-    BuiltIn().log("Regenerate flows for %d traffic items" % len(traffic_items))
+    BuiltIn().log("RegenerFinishedate flows for %d traffic items" % len(traffic_items))
 
 
 
@@ -1780,11 +1864,8 @@ def clear_statistics(self):
     Clear all statistics information
     """
     cli = self._clients[self._cur_name]
-    ix  = cli['connection']
+    ix = cli['connection']
     ix.execute('clearStats')
     BuiltIn().log("Cleared all statisctics information")
-
-
-
 
 
