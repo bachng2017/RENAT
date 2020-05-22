@@ -299,7 +299,7 @@ class VChannel(object):
                 timeout=None,
                 w=None,
                 h=None,
-                mode='w'):
+                mode='w', profile=None):
 
         if not timeout:
             timeout = Common.get_config_value('terminal-timeout')
@@ -310,23 +310,24 @@ class VChannel(object):
         if not w:
             w = terminal_info['width']
 
-        self._connect(node, name, log_file, timeout, w, h, mode)
+        self._connect(node, name, log_file, timeout, w, h, mode, profile)
 
         BuiltIn().log(Common.get_config_value(
                 'async-channel', 'vchannel', False
             )
         )
 
-        if Common.get_config_value('async-channel', 'vchannel', False):
+        # Put in cause i got a none error , discuss with nguyen
+        if Common.get_config_value('async-channel', 'vchannel', False) and self._async_channel is not None :
             self._async_channel._connect(
-                node, name, log_file, timeout, w, h, mode
+                node, name, log_file, timeout, w, h, mode, profile
             )
 
     def _connect(self, node, name, log_file,
                  timeout=None,
                  w=None,
                  h=None,
-                 mode='w'):
+                 mode='w', profile=None,):
         """ Connects to the node and create a VChannel instance
 
         Login information is automatically extracted from yaml configuration.
@@ -375,11 +376,20 @@ class VChannel(object):
         _access_tmpl = Common.GLOBAL['access-template'][_type]
         _access = _access_tmpl['access']
         _auth_type = _access_tmpl['auth']
-        _profile = _access_tmpl['profile']
+        try:
+            _profile = profile or Common.LOCAL['node'][node]['profile']
+        except KeyError:
+            _profile = _access_tmpl['profile']
         _negotiate = _access_tmpl.get('negotiate')
         _proxy_cmd = _access_tmpl.get('proxy-cmd')
         _port = _access_tmpl.get('port') or _device_info.get('port')
-        _auth = Common.GLOBAL['auth'][_auth_type][_profile]
+        try:
+            _auth = Common.GLOBAL['auth'][_auth_type][_profile]
+        except KeyError:
+            raise Exception(
+                'Unable to find a matching profile for {p}'
+                ' in auth.yaml'.format(p=_profile)
+            )
         _init = _access_tmpl.get('init')      # init command
         _finish = _access_tmpl.get('finish')    # finish  command
         _login_prompt = _access_tmpl.get('login-prompt') or \
@@ -392,6 +402,10 @@ class VChannel(object):
             _access_tmpl.get('secret-cmd') or \
             'enable'
         _timeout = timeout
+    
+        if _access_tmpl.get('disable-achannel') is True:
+            self._async_channel = None
+            BuiltIn().log('AChannel Disabled by access template')
 
         # using strict prompt or not
         _prompt = _access_tmpl.get('prompt') or '.*'
@@ -424,7 +438,13 @@ class VChannel(object):
                 time.sleep(1)
                 if _login_prompt is not None:
                     BuiltIn().log("Trying to login by username/password as `%s/%s`" % (_auth['user'],_auth['pass']))
+                    if _access_tmpl.get('pre-login-cmd'):
+                        _pre_login_cmd = _access_tmpl.get('pre-login-cmd')
+                        BuiltIn().log(_pre_login_cmd)
+                        _telnet.write(_pre_login_cmd)
                     output = _telnet.login(_auth['user'],_auth['pass'], login_prompt=_login_prompt,password_prompt=_pass_prompt)
+                    output += _telnet.read()
+                    BuiltIn().log(output)
                 else:
                     BuiltIn().log("Trying to login only by password as `%s`" % _auth['pass'])
                     output = _telnet.read_until(_pass_prompt)
@@ -530,6 +550,7 @@ class VChannel(object):
 
                     if _login_prompt is not None:
                         BuiltIn().log("Trying to login by username/password as `%s/%s`" % (_auth['user'],_auth['pass']))
+                        _telnet.write("")
                         output = _telnet.login(_auth['user'],_auth['pass'], login_prompt=_login_prompt,password_prompt=_pass_prompt)
                     else:
                         if _pass_prompt is not None:
@@ -711,6 +732,7 @@ class VChannel(object):
         except Exception as err:
             if not ignore_dead_node:
                 err_msg = "ERROR: Error occured when connecting to `%s(%s)`" % (self._aprefix + name,_ip)
+                BuiltIn().log(err)
                 BuiltIn().log(err_msg,console=True)
                 raise
             else:
@@ -1105,6 +1127,7 @@ class VChannel(object):
         self.log(cmd + Common.newline,channel)
 
         cur_prompt = prompt or channel['prompt']
+        # BuiltIn().log(cur_prompt)
         output = ''
 
         delay_time = DateTime.convert_time(delay)
@@ -1142,18 +1165,17 @@ class VChannel(object):
 
         # result checking
         cmd_auto_check = Common.get_config_value('cmd-auto-check')
-        if cmd_auto_check and match_err != '':
-            err_mat = re.search(match_err, output)
-            if err_mat:
-                err_msg = (
-                    "ERROR: Error encountered while execututing command - '{c}'" \
-                    "\n    - {m}".format(
-                        c=cmd, m=err_mat
-                    )
+        if cmd_auto_check and match_err != '' and re.search(match_err, output):
+            err_mat = re.search(match_err, output).group(0)
+            err_msg = (
+                "ERROR: Error encountered while execututing command - '{c}'" \
+                "\n    - {m}".format(
+                    c=cmd, m=err_mat
                 )
-                BuiltIn().log(err_msg)
-                BuiltIn().log(output)
-                raise Exception(err_msg)
+            )
+            BuiltIn().log(err_msg)
+            BuiltIn().log(output)
+            raise Exception(err_msg)
 
         # remove PROMPT from the result if necessary
         if remove_prompt:
@@ -1230,6 +1252,12 @@ class VChannel(object):
 
     def _close(self,msg,with_time,mark):
         channels = self.get_channels()
+        if not channels:
+            BuiltIn().log(
+                "WARN: Vchannel was given a close statement "\
+                "but there where no active channels to close"
+            )
+            return
         old_name = self._current_name
         channel = channels[old_name]
         finish_cmd = channel['finish']
@@ -1255,7 +1283,8 @@ class VChannel(object):
             channel['connection'].write_bare('' + '\r')
             # time.sleep(x1)
             output = channels[self._current_name]['connection'].close_connection()
-            if output is not None: self.log(output,channel)
+            if output is not None: 
+                self.log(output,channel)
         except Exception as err:
             BuiltIn().log('WARN: ignore errors while closing channel')
             BuiltIn().log(err)
