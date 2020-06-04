@@ -750,8 +750,14 @@ def loss_from_file(self,file_name='Flow_Statistics.csv',index='0'):
         msec_loss   = None
         BuiltIn().log("Loss was %d frames, N/A miliseconds" % (frame_delta))
     else:
-        time1       = datetime.strptime(data['First TimeStamp'].loc[index_int],"%H:%M:%S.%f")
-        time2       = datetime.strptime(data['Last TimeStamp'].loc[index_int],"%H:%M:%S.%f")
+        h,res = data['First TimeStamp'].loc[index_int].split(':',1)
+        time1 = datetime.timedelta(hours=int(h)) + datetime.timedelta(res,'%M:%S.%f')
+
+        h,res = data['Last TimeStamp'].loc[index_int].split(':',1)
+        time2 = datetime.timedelta(hours=int(h)) + datetime.timedelta(res,'%M:%S.%f')
+
+        # time1       = datetime.strptime(data['First TimeStamp'].loc[index_int],"%H:%M:%S.%f")
+        # time2       = datetime.strptime(data['Last TimeStamp'].loc[index_int],"%H:%M:%S.%f")
         msec_delta  = (time2-time1).total_seconds()*1000
 
         BuiltIn().log("    Delta sec   = %d" % msec_delta)
