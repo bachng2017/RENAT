@@ -384,7 +384,7 @@ def log(msg,level=1):
     if int(_level) >= int(level):
         BuiltIn().log(msg)
 
-def log_to_console(msg,level=1):
+def log_to_console(msg,level=1,no_newline=False):
     """ Logs a message to console
 
     See Common.`Print` for more details about debug level
@@ -397,7 +397,10 @@ def log_to_console(msg,level=1):
         pass
     if _level is None: _level=1
     if int(_level) >= int(level):
-        BuiltIn().log_to_console(msg)
+        if no_newline :
+            BuiltIn().log_to_console(msg,no_newline=True)
+        else :
+            BuiltIn().log_to_console(msg)
 
 
 def err(msg):
