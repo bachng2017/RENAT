@@ -21,13 +21,29 @@ usage() {
     echo "  -h/--help               print this usage"
     echo "  -p/--parallel           parallelly run the items"
     echo "  -r/--report             remake reports with existed results (without run the test)"
-    echo "  -v CLEAN                ccleanup result folder before run the test"
-    echo "  -X                      stop immediately if a step fails (default is not set)"
+    echo "  -v CLEAN                cleanup result folder before run the test"
+    echo "  -X                      stop immediately if an item fails (default is not set)"
     echo "  -v VAR:VALUE            define a global RF variable ${VAR} with value VALUE"
     echo "  -v CLEAN                execute CleanUp Result keyword before in Setup step"
     echo "  -v RENAT_BATCH          do not wait for user input (useful for patch run)"
     echo
 }
+
+
+report() {
+    PROJ_NAME=$(basename $PWD)
+    if [ -z "$REPORT_FOLDER" ]; then
+      for item in $(find . -name output.xml | sort); do
+        REPORT_FOLDER+=" $item"
+      done
+    fi
+    COUNT=$(echo "$REPORT_FOLDER" | wc -w)
+    echo "Make reports for project $PROJ_NAME from $COUNT folders:"
+    echo "$REPORT_FOLDER"
+    rebot --name $PROJ_NAME -L INFO $REPORT_FOLDER
+}
+
+
 
 PIDS=""
 declare -A ITEMS
@@ -52,10 +68,16 @@ run() {
     else
         NAME="$PREFIX/$(basename $PWD)"
     fi
-    
+   
+    # call run recursivily 
     for folder in $(find . -mindepth 1 -maxdepth 1 -type d | sort); do
         if [ -f $folder/run.sh ]; then
             run $folder $NAME
+            if [ ! -z $XSTOP ] && [ $CODE -ne 0 ]; then
+                echo "ERR: An error happened, no more items are exectuted"
+                report
+                exit $RETURN
+            fi
         fi
     done
 
@@ -64,11 +86,11 @@ run() {
         cat .ignore 
     elif [ -f ./main.robot ]; then
         if [ "$PARALLEL" == "1" ]; then 
-            ./run.sh $PARAM &
+            ./run.sh $XSTOP $PARAM &
             PIDS="$PIDS $!" 
             ITEMS[$!]=$PWD
         else
-            ./run.sh $PARAM
+            ./run.sh $XSTOP $PARAM
             CODE=$?
             RETURN=$(expr $RETURN + $CODE)
             if [ $CODE -eq 0 ]; then
@@ -107,6 +129,10 @@ while [ ! -z "$OPT" ]; do
             ;;
         '-r'|'--report' )
             REPORT=1
+            shift 1
+            ;;
+        '-X' )
+            XSTOP="-X"
             shift 1
             ;;
         '-d'|'--dir' )
@@ -160,16 +186,17 @@ if [ -z "$REPORT" ]; then
     echo
 fi
 
-PROJ_NAME=$(basename $PWD)
-if [ -z "$REPORT_FOLDER" ]; then
-  for item in $(find . -name output.xml | sort); do
-    REPORT_FOLDER+=" $item"
-  done
-fi
-COUNT=$(echo "$REPORT_FOLDER" | wc -w)
-echo "Make reports for project $PROJ_NAME from $COUNT folders:"
-echo "$REPORT_FOLDER"
-rebot --name $PROJ_NAME -L INFO $REPORT_FOLDER
+# PROJ_NAME=$(basename $PWD)
+# if [ -z "$REPORT_FOLDER" ]; then
+#   for item in $(find . -name output.xml | sort); do
+#     REPORT_FOLDER+=" $item"
+#   done
+# fi
+# COUNT=$(echo "$REPORT_FOLDER" | wc -w)
+# echo "Make reports for project $PROJ_NAME from $COUNT folders:"
+# echo "$REPORT_FOLDER"
+# rebot --name $PROJ_NAME -L INFO $REPORT_FOLDER
+report
 
 exit $RETURN
 

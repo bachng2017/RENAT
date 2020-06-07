@@ -72,7 +72,7 @@ class OpticalSwitch(object):
         """
 
         # get device type, should be `calient` or `ntm`
-        switch_name = self._intf_map[dev][intf]['switch-name']
+        switch_name = self._intf_map[str(dev).lower()][str(intf).lower()]['switch-name']
         type = Common.GLOBAL['device'][switch_name]['type']
         try:
             mod  = import_module('optic_mod.'+ type)
