@@ -257,6 +257,12 @@ module.
         """ Local method for execute module command
         At this time, connection has been already made
         """
+        if self._cur_name == "":
+            raise Exception(
+                "No valid tester connection to issue command - "\
+                +cmd
+            )
+        
         BuiltIn().log("xrun for command %s" % cmd)
 
         client  = self._clients[self._cur_name]
