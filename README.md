@@ -251,7 +251,7 @@ Install a typical Centos7 with following parameters:
        ```
 
 - sudo privilege
-    - add a file named `renat` (persion 0440) to folder `/etc/sudoers.d`
+    - add a file named `renat` (permision 0440) to folder `/etc/sudoers.d`
     
         ```
         Defaults    env_keep += "PATH PYTHONPATH LD_LIBRARY_PATH MANPATH XDG_DATA_DIRS PKG_CONFIG_PATH RENAT_PATH"
@@ -403,7 +403,7 @@ Install a typical Centos7 with following parameters:
 
 - login as the new user
     
-- create a key for the account `robot` that would be used for using with SSH proxy. Enter when asked for password (2 times)
+- create a key for the account `robot` that would be used for using with SSH proxy. Push `Enter` when asked for password (2 times)
 
     ```
     mkdir ~/.ssh
