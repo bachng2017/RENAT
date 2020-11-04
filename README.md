@@ -471,7 +471,7 @@ Install a typical Centos7 with following parameters:
     chkconfig chronyd on
     chronyc source
     ```
-  -  wkhtmltox についてより新しいバージョンを用いる
+  - Using wkhtmltox  with newer version
     ```
     cd /root/work/download
     wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox-0.12.6-1.centos8.x86_64.rpm
