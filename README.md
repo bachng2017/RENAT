@@ -456,8 +456,27 @@ Install a typical Centos7 with following parameters:
 
     Detail for `avaproxy` could be found in `misc` folder
 
-## Installation for CentOS6
-Install instructions for CentOS6 Python2.x environment could be found in [here](./README_python2x.md)
+
+## Installation for other OSes:
+
+- CentOS 6: Install instructions for CentOS6 Python2.x environment could be found in [here](./README_python2x.md)
+- CentOS 8: is almost identical with CenOS 7 with following differences
+  - Installing epel8 before other packages
+    ```
+    yum -y install epel-release
+    ```
+  - Using `chrony` instead of ntp. Editing `/etc/chrony.conf` for proper NTP server and active by
+    ```
+    service chronyd start
+    chkconfig chronyd on
+    chronyc source
+    ```
+  -  wkhtmltox についてより新しいバージョンを用いる
+    ```
+    cd /root/work/download
+    wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox-0.12.6-1.centos8.x86_64.rpm
+    rpm -Uvh wkhtmltox-0.12.6-1.centos8.x86_64.rpm
+    ```
 
 
 ## RENAT checkout and preparation
