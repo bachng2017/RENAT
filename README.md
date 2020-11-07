@@ -33,7 +33,7 @@ For details about Robot Framework see [RobotFramework](http://www.robotframework
 - [A glimpse of RENAT by docker](#a-glimpse-of-renat-by-docker)
 - [Installation by Ansible](#installation-by-ansible)
 - [Installation for CentOS7](#installation-for-centos7)
-- [Installation for CentOS6](#installation-for-centos6)
+- [Installation for other CentOSes](#installation-for-other-centoses)
 - [RENAT checkout and preparation](#renat-checkout-and-preparation)
 - [Create scenarios](#create-scenarios)
 - [More Examples](#more-examples)
@@ -457,7 +457,7 @@ Install a typical Centos7 with following parameters:
     Detail for `avaproxy` could be found in `misc` folder
 
 
-## Installation for other OSes:
+## Installation for other CentOSes:
 
 - CentOS 6: Install instructions for CentOS6 Python2.x environment could be found in [here](./README_python2x.md)
 - CentOS 8: is almost identical with CenOS 7 with following differences
