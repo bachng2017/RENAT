@@ -9,7 +9,7 @@ default:
     ix-remote-tmp: C:/Windows/Temp
     interval-between-retry: 15s
     terminal-timeout: 20m
-    cmd-auto-check: False
+    cmd-auto-check: no
     newline: "\r\n"
     slack-cmd: /home/robot/work/slack/renat_bot.sh
     slack-upload: /home/robot/work/slack/upload.sh
@@ -18,17 +18,17 @@ default:
     # log-level: ERROR
     log-level: INFO
     # log-level: DEBUG
-    ignore-dead-node: FALSE
+    ignore-dead-node: no
     smtp-server: 127.0.0.1:25
     display:
         width:  1921
         height: 1080
 
 vchannel:
-    async-channel: yes
+    async-channel: no
     max-retry: 3
     wait-time-before-close: 2s
-    ignore-init-finish: False
+    ignore-init-finish: no
     prompt-strict: yes
     default-login-prompt: "login: "
     default-password-prompt: "Password:"
