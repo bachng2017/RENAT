@@ -109,7 +109,7 @@ done
 
 
 # check the anoyance \u200B code 
-WARN=$(grep -Psrn '\x{200B}' *.{yaml,robot})
+WARN=$(LC_ALL=en_US.utf-8 grep -Psrn '\x{200B}' *.{yaml,robot})
 if [ "$WARN" != "" ]; then
     if [ -z $RM_NULL_SPACE ]; then
         echo -e "\e[31mWARNING: an unexpect ZERO WIDTH SPACE is found in your scenario. Check and remove them or use -b option\e[m"
