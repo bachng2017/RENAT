@@ -9,6 +9,6 @@ jobs:
     steps:
         - name: Trigger bachng2017/renat-container build
           run: |
-            curl -XPOST -u "bachng2017:${{ secrets.CR_PAT }}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/bachng2017/renat_container/actions/workflows/build.yaml/dispatches --data '{"ref": "master"}'
+            curl -XPOST -u "bachng2017:${{ secrets.CR_PAT }}" -H "Accept: application/vnd.github.v3+json" -H "Content-Type: application/json" https://api.github.com/repos/bachng2017/renat_container/actions/workflows/main.yaml/dispatches --data '{"ref": "master"}'
 
         
