@@ -74,13 +74,13 @@ A super simple way to try RENAT is running it from a container. Below are instru
 
 *Notes*: this container does not include proprietary softwares. See manuals for more details on how to install those.
 
-1. import docker image from dockerhub
+1. Import docker image from dockerhub
 
     ```
     docker pull bachng/renat:latest
     ```
 
-2. start the container that open port 80 and 10022
+2. Start the container that open port 80 and 10022
 
     ```
     mkdir -p /opt/renat
@@ -91,7 +91,7 @@ A super simple way to try RENAT is running it from a container. Below are instru
 
     The folder `/opt/renat` on the container is also bound to `/opt/renat` on the host.
 
-3. login to the container as `robot` user
+3. Login to the container as `robot` user
 
     ```
     docker exec -it --user robot renat /bin/bash --login
@@ -101,7 +101,7 @@ A super simple way to try RENAT is running it from a container. Below are instru
     ssh -l robot -p 10022 <host_ip>
     ```
 
-4. create a test scenario. Enter `y` to create a local configuration file and `Enter` for other questions.
+4. Create a test scenario. Enter `y` to create a local configuration file and `Enter` for other questions.
 
     ```
     [robot@afeb42da1974 renat]$RENAT_PATH/tools/project.sh renat-sample
@@ -110,7 +110,7 @@ A super simple way to try RENAT is running it from a container. Below are instru
     ```
 
     A `do nothing` scenario is made. Check test01/main.robot for more details
-5. run and check the result
+5. Run and check the result
 
     ```
     [robot@afeb42da1974 renat]cd test01
@@ -119,7 +119,7 @@ A super simple way to try RENAT is running it from a container. Below are instru
 
     Test results and logs could be checked by `http://<this machine IP>/~robot/result.log`
 
-6. to use with real devices for useful tests, edit below files for correct information
+6. Edit following configuration files
     - $RENAT_PATH/config/device.yaml: device's IP
     - $RENAT_PATH/config/auth.yaml: authentication (username/password)
     - $RENAT_PATH/config/template.yaml(optional): in case current templates are not fit for your devices
@@ -129,14 +129,14 @@ See [Create scenarios](#create-scenarios) for more detail about creating a sampl
     
 ## Installation by Ansible
 Installation instructions using Ansible
-1. prepare an Ansible server
+1. Prepare an Ansible server
 Prepare an Ansible service with necessary packages
 
-2. install a base CentOS
+2. Install a base CentOS
     - install a base CentOS7 with `minimum distribution` and `developer package`
     - set and remember password for the root account
 
-3. prepare the playbook
+3. Prepare the playbook
     - extract playbooks from `misc/ansible-renat-github.tar.gz`
     - add an entry in ansible server for the install target `genesis` in `/etc/hosts` file
 
@@ -154,7 +154,7 @@ Prepare an Ansible service with necessary packages
 
     - if the target is behind a proxy, configure the proxy IP in `host_vars/genesis`
 
-4. run the playbook
+4. Run the playbook
 
     ```
     cd ansible-renat-github
@@ -168,7 +168,7 @@ Add necessary more users and go to [here](#renat-checkout-and-preparation) to co
 ## Installation for CentOS7
 Basic install instruction for Centos7 and Python3
 
-### 1. base install
+### 1. Base install
 Install a typical Centos7 with following parameters:
 
     - memory: 16G (or more)
@@ -180,7 +180,7 @@ Install a typical Centos7 with following parameters:
     - dns: 10.128.3.101 (sample)
     - hostname: renat.localhost (sample)
 
-### 2. post install configuration
+### 2. Post install configuration
 - disable SE linux:
     - disable the feature
 
@@ -197,7 +197,7 @@ Install a typical Centos7 with following parameters:
     reboot
     ```
         
-### 3. library installation
+### 3. Library installation
 - install python3 and related library
 
     ```
@@ -237,7 +237,7 @@ Install a typical Centos7 with following parameters:
     yum install -y jenkins
     ```
         
-### 4. more system configuration 
+### 4. Configure system
 - modify NTP server
     - modify /etc/ntp.conf for favourite NTP server
     - activate and make the service auto start
@@ -393,7 +393,7 @@ Install a typical Centos7 with following parameters:
 - make skeleton for users
     - create a folder call `work` under `/etc/skel` with mode `0750`
 
-### 5. add a renat user
+### 5. Add renat user
 - add a user (e.g. robot) to the group `renat`
 
     ```
@@ -415,7 +415,7 @@ Install a typical Centos7 with following parameters:
     ssh-copy-id -i robot_id_rsa.pub robot@<proxy server IP>
     ```
 
-### 6. install Ixia related (optional)
+### 6. Install Ixia related (optional)
 - download necessary files (below are samples. Use the correct install files in your environment)
 
     ```
