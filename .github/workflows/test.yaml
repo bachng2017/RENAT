@@ -76,6 +76,8 @@ jobs:
 #             # cache-to: mode=max,type=local,dest=/tmp/.buildx-cache
 
       - name: Run Tests
-        run: ./.test/docker-compose up --exit-code-from test_renat
+        run: |
+            cd .test
+            docker-compose up --exit-code-from test_renat
 
 
