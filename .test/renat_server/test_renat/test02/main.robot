@@ -15,7 +15,11 @@ Resource        lab.robot
 
 
 *** Test Cases ***
-06. Show version
+01. Show version
     ${VER}=     Cmd     show version
     Log To Console      ${VER}
 
+02. Get BGP neighbor
+    Router.Switch                   R1
+    ${NUM}=                         Number Of BGP Neighbor
+    Should Be Equal As Numbers      ${NUM}      1
