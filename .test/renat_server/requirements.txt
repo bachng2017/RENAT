@@ -49,7 +49,7 @@ robotremoteserver==1.1
 scp==0.13.2
 selenium==3.14.1
 six==1.11.0
-urllib3==1.23
+urllib3==1.24.2
 wcwidth==0.1.7
 opencv-python==4.1.0.25
 pytesseract==0.2.7
