@@ -37,6 +37,7 @@ services:
         # using the latest image of renat_base7
         image: bachng/renat_base7:latest
         volumes:
+            - GITHUB_WORKSPACE:/home/robot/work/renat
             - ./renat_server/config:/home/robot/work/renat/config
             - ./renat_server/test_renat:/home/robot/work/test_renat
             - ./renat_server/test_shell:/home/robot/work/test_shell

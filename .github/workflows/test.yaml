@@ -28,16 +28,16 @@ jobs:
         with:
             fetch-depth: 0
 
-      - name: Get timestamp
-        id: time_stamp
-        run: |
-            echo ::set-output name=value::$(date "+%Y%m%d_%H%M%S")
+#       - name: Get timestamp
+#         id: time_stamp
+#         run: |
+#             echo ::set-output name=value::$(date "+%Y%m%d_%H%M%S")
 
-      - name: Checkout RENAT
-        uses: actions/checkout@v2
-        with:
-            repository: bachng2017/RENAT
-            path: renat/renat_project
+#       - name: Checkout RENAT
+#         uses: actions/checkout@v2
+#         with:
+#             repository: bachng2017/RENAT
+#             path: renat/renat_project
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
