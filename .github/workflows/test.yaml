@@ -64,16 +64,16 @@ jobs:
 #          restore-keys: |
 #            ${{ runner.os }}-buildx-
 
-      - name: Build and Load
-        uses: docker/build-push-action@v2
-        with:
-            push: false
-            load: true
-            context: renat
-            file: renat/Dockerfile
-            tags: ghcr.io/bachng2017/renat_base7:latest
-            # cache-from: type=local,src=/tmp/.buildx-cache
-            # cache-to: mode=max,type=local,dest=/tmp/.buildx-cache
+#       - name: Build and Load
+#         uses: docker/build-push-action@v2
+#         with:
+#             push: false
+#             load: true
+#             context: renat
+#             file: renat/Dockerfile
+#             tags: ghcr.io/bachng2017/renat_base7:latest
+#             # cache-from: type=local,src=/tmp/.buildx-cache
+#             # cache-to: mode=max,type=local,dest=/tmp/.buildx-cache
 
       - name: Run Tests
         run: ./.test/docker-compose up --exit-code-from test_renat
