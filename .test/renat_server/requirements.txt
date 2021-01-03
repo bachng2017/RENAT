@@ -40,7 +40,7 @@ pyvim==2.0.22
 PyVirtualDisplay==0.2.1
 pyvmomi==6.7.0.2018.9
 PyYAML==4.2b1
-requests==2.19.1
+requests==2.20.0
 robotframework==3.1.1
 robotframework-selenium2library==3.0.0
 robotframework-seleniumlibrary==3.3.1
