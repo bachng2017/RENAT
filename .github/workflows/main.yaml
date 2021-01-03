@@ -82,4 +82,10 @@ jobs:
             cd .test
             docker-compose up --exit-code-from test_renat
 
+      - name: Post message to slack
+        env:
+            RENAT_SLACK_WEBHOOK1: ${{ secrets.RENAT_SLACK_WEBHOOK1 }}
+        run: |
+            curl -X POST -H 'Content-type: application/json' --data '{"text":"RENAT source has been updated. Pls, check https://github.com/bachng2017/RENAT"}' "${RENAT_SLACK_WEBHOOK1}"
+M
 
