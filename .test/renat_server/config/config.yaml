@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 default:
     robot-server: 127.0.0.1
     robot-password: <password>
@@ -7,19 +6,18 @@ default:
     calient-master-path: 
     ntm-master-path: 
     ix-remote-tmp: C:/Windows/Temp
+    max-retry-for-connect: 3
     interval-between-retry: 15s
     terminal-timeout: 20m
-    cmd-auto-check: no
+    cmd-auto-check: False
     newline: "\r\n"
     slack-cmd: /home/robot/work/slack/renat_bot.sh
-    slack-upload: /home/robot/work/slack/upload.sh
-    slack-proxy: 127.0.0.1:8080
-    # log-level: TRACE
-    # log-level: ERROR
-    log-level: INFO
-    # log-level: DEBUG
-    ignore-dead-node: no
-    smtp-server: 127.0.0.1:25
+    slack-proxy: 10.128.3.103:4713
+    log-level: DEBUG
+    ignore-dead-node: FALSE
+    mks-console:
+        width:  1024
+        height: 768
     display:
         width:  1921
         height: 1080
@@ -28,22 +26,15 @@ vchannel:
     async-channel: no
     max-retry: 3
     wait-time-before-close: 2s
-    ignore-init-finish: no
+    ignore-init-finish: False
     prompt-strict: yes
     default-login-prompt: "login: "
     default-password-prompt: "Password:"
 
-web:
-    reconnect: yes
-    max-retry: 3
-    ajax-timeout: 5
-
-hypervisor:
-    mks-console:
-        width:  1024
-        height: 768
-
 extra-lib:
-    - WebApp
-    - Hypervisor
+#    - Tester
+#    - OpticalSwitch
+#    - Samurai
+#    - Arbor
+#    - Hypervisor
 

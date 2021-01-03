@@ -392,8 +392,13 @@ class VChannel(object):
             )
         _init = _access_tmpl.get('init')      # init command
         _finish = _access_tmpl.get('finish')    # finish  command
-        _login_prompt = _access_tmpl.get('login-prompt') or \
+        # in case the device has no login prompt, set the a null `login-prompt`
+        # in template.yaml otherwise a default value from global vchannel
+        # configuration will be used
+        if 'login-prompt' not in _access_tmpl:
             Common.get_config_value('default-login-prompt', 'vchannel')
+        else:
+            _login_prompt = _access_tmpl.get('login-prompt') 
         _pass_prompt = _access_tmpl.get('password-prompt') or \
             Common.get_config_value('default-password-prompt', 'vchannel')
         _secret_prompt = _access_tmpl.get('enable-prompt') or \

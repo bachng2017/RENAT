@@ -1503,7 +1503,7 @@ def close_display():
     global DISPLAY
     # tmpfile = '/tmp/xvfb.%s' % DISPLAY.new_display_var.replace(':','')
     DISPLAY.stop()
-    DISPLAY.sendstop()
+    # DISPLAY.sendstop()
     BuiltIn().log('Closed the virtual display')
 
 
