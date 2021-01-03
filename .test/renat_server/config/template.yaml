@@ -1,0 +1,8 @@
+access-template:
+    quagga:
+        access: telnet
+        auth: plain-text
+        profile: default
+        prompt: ".*(>|#) "
+        login-prompt:
+        password-prompt: "Password: "

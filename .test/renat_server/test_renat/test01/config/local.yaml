@@ -1,0 +1,32 @@
+# -*- coding: utf-8 -*-
+
+# router, server setting
+node:
+    R1:
+        device: R1
+        snmp-polling: no
+        follow-remote-log: no
+    R2:
+        device: R2
+        snmp-polling: no
+        follow-remote-log: no
+
+# web application setting
+webapp:
+
+# hypervisor setting
+hypervisor:
+
+# L1 switch information
+optic:
+    connection:
+
+# tester information
+tester:
+
+# other default information
+default:
+    terminal:
+        width: 200
+        height: 50 
+

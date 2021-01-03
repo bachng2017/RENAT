@@ -1,0 +1,48 @@
+version: '3.7'
+
+services:
+    router1:
+        container_name: R1
+        build:
+            context: quagga
+        privileged: true
+        volumes:
+            - ./quagga/R1:/etc/quagga
+        ports:
+            - 1179:179
+            - 2611:2601
+            - 2615:2605
+
+    router2:
+        container_name: R2
+        build:
+            context: quagga
+        privileged: true
+        volumes:
+            - ./quagga/R2:/etc/quagga
+        ports:
+            - 2179:179
+            - 2621:2601
+            - 2625:2605
+
+    test_renat:
+        environment: 
+            - GITHUB_WORKSPACE:/github/workspace
+        container_name: renat_server
+        depends_on:
+            - "router1"
+            - "router2"
+        # build:
+        #    context: renat 
+        # using the latest image of renat_base7
+        image: bachng/renat_base7:latest
+        volumes:
+            - ./renat_server/config:/home/robot/work/renat/config
+            - ./renat_server/test_renat:/home/robot/work/test_renat
+            - ./renat_server/test_shell:/home/robot/work/test_shell
+            - ./run_test.sh:/run_test.sh
+        privileged: true
+        entrypoint: /run_test.sh
+
+
+         

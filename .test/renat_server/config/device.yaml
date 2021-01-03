@@ -1,0 +1,14 @@
+# -*- coding: utf-8 -*-
+
+device:
+    # Quagga routers
+    R1:
+        type: quagga
+        description:  R1 test router
+        ip: R1
+        port: 2601
+    R2:
+        type: quagga
+        description:  R2 test router
+        ip: R2
+        port: 2601

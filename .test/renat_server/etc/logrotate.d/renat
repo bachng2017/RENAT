@@ -1,0 +1,9 @@
+/var/log/renat/renat.log {
+  daily
+  rotate 90
+  missingok
+  notifempty
+  copytruncate
+  dateext
+  dateformat %Y-%m-%d
+}
