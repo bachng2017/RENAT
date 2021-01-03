@@ -3,12 +3,12 @@
 device:
     # Quagga routers
     R1:
-        type: quagga
+        type: quagga_bgp
         description:  R1 test router
         ip: R1
-        port: 2601
+        port: 2605
     R2:
-        type: quagga
+        type: quagga_bgp
         description:  R2 test router
         ip: R2
-        port: 2601
+        port: 2605

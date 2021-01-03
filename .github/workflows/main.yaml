@@ -19,6 +19,7 @@ jobs:
 
     env:
         GITHUB_WORKSPACE: ${{ github.workspace }}
+        RENAT_PATH: ${{ github.workspace }}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -38,6 +39,7 @@ jobs:
 #         with:
 #             repository: bachng2017/RENAT
 #             path: renat/renat_project
+
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1

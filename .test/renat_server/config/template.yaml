@@ -1,5 +1,5 @@
 access-template:
-    quagga:
+    quagga_bgp:
         access: telnet
         auth: plain-text
         profile: default
