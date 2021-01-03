@@ -1,5 +1,0 @@
-Defaults    env_keep += "PATH PYTHONPATH LD_LIBRARY_PATH MANPATH XDG_DATA_DIRS PKG_CONFIG_PATH RENAT_PATH"
-Cmnd_Alias CMD_ROBOT_ALLOW  = /bin/kill,/usr/local/bin/nmap,/usr/sbin/hping3,/usr/sbin/tcpdump
-%renat ALL=NOPASSWD: CMD_ROBOT_ALLOW
-%jenkins ALL=NOPASSWD: CMD_ROBOT_ALLOW  
-
