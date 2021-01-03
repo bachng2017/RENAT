@@ -11,7 +11,11 @@ services:
         ports:
             - 1179:179
             - 2611:2601
+            - 2614:2604
             - 2615:2605
+        networks:
+            switch_net:
+                ipv4_address: 192.168.0.101
 
     router2:
         container_name: R2
@@ -23,7 +27,11 @@ services:
         ports:
             - 2179:179
             - 2621:2601
+            - 2624:2604
             - 2625:2605
+        networks:
+            switch_net:
+                ipv4_address: 192.168.0.102
 
     test_renat:
         environment: 
@@ -32,6 +40,9 @@ services:
         depends_on:
             - "router1"
             - "router2"
+        networks:
+            switch_net:
+                ipv4_address: 192.168.0.100
         # build:
         #    context: renat 
         # using the latest image of renat_base7
@@ -45,5 +56,10 @@ services:
         privileged: true
         entrypoint: /run_test.sh
 
-
+networks:
+    switch_net:
+        name: switch_net
+        ipam:
+            config:
+                - subnet: 192.168.0.0/24 
          
