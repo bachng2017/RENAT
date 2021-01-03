@@ -1,4 +1,4 @@
-name: Nightly build
+name: Trigger container build
 
 on: 
   workflow_dispatch:
