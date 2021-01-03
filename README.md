@@ -33,7 +33,7 @@ For details about Robot Framework see [RobotFramework](http://www.robotframework
 - [A glimpse of RENAT by docker](#a-glimpse-of-renat-by-docker)
 - [Installation by Ansible](#installation-by-ansible)
 - [Installation for CentOS7](#installation-for-centos7)
-- [Installation for CentOS6](#installation-for-centos6)
+- [Installation for other CentOSes](#installation-for-other-centoses)
 - [RENAT checkout and preparation](#renat-checkout-and-preparation)
 - [Create scenarios](#create-scenarios)
 - [More Examples](#more-examples)
@@ -74,52 +74,52 @@ A super simple way to try RENAT is running it from a container. Below are instru
 
 *Notes*: this container does not include proprietary softwares. See manuals for more details on how to install those.
 
-1. import docker image from dockerhub
+1. Import docker image from dockerhub
 
     ```
-    $ docker pull bachng/renat:latest
+    docker pull bachng/renat:latest
     ```
 
-2. start the container that open port 80 and 10022
+2. Start the container that open port 80 and 10022
 
     ```
-    $ mkdir -p /opt/renat
-    $ docker run --rm -d --privileged -v /opt/renat:/opt/renat -p 80:80 -p 10022:22 --name renat bachng/renat:latest
+    mkdir -p /opt/renat
+    docker run --rm -d --privileged -v /opt/renat:/opt/renat -p 80:80 -p 10022:22 --name renat bachng/renat:latest
     ```
 
     At this point, a RENAT server will all necessary packages and latest RENAT is ready with predefined `robot` user. 
 
     The folder `/opt/renat` on the container is also bound to `/opt/renat` on the host.
 
-3. login to the container as `robot` user
+3. Login to the container as `robot` user
 
     ```
-    $ docker exec -it --user robot renat /bin/bash --login
+    docker exec -it --user robot renat /bin/bash --login
     ```
     or using SSH with `robot/password!secret` account
     ```
-    $ ssh -l robot -p 10022 <host_ip>
+    ssh -l robot -p 10022 <host_ip>
     ```
 
-4. create a test scenario. Enter `y` to create a local configuration file and `Enter` for other questions.
+4. Create a test scenario. Enter `y` to create a local configuration file and `Enter` for other questions.
 
     ```
-    [robot@afeb42da1974 renat]$ $RENAT_PATH/tools/project.sh renat-sample
-    [robot@afeb42da1974 renat]$ cd renat-sample
-    [robot@afeb42da1974 renat]$ $RENAT_PATH/tools/item.sh test01
+    [robot@afeb42da1974 renat]$RENAT_PATH/tools/project.sh renat-sample
+    [robot@afeb42da1974 renat]cd renat-sample
+    [robot@afeb42da1974 renat]$RENAT_PATH/tools/item.sh test01
     ```
 
     A `do nothing` scenario is made. Check test01/main.robot for more details
-5. run and check the result
+5. Run and check the result
 
     ```
-    [robot@afeb42da1974 renat]$ cd test01
-    [robot@afeb42da1974 renat]$ ./run.sh 
+    [robot@afeb42da1974 renat]cd test01
+    [robot@afeb42da1974 renat]./run.sh 
     ```
 
     Test results and logs could be checked by `http://<this machine IP>/~robot/result.log`
 
-6. to use with real devices for useful tests, edit below files for correct information
+6. Edit following configuration files
     - $RENAT_PATH/config/device.yaml: device's IP
     - $RENAT_PATH/config/auth.yaml: authentication (username/password)
     - $RENAT_PATH/config/template.yaml(optional): in case current templates are not fit for your devices
@@ -129,14 +129,14 @@ See [Create scenarios](#create-scenarios) for more detail about creating a sampl
     
 ## Installation by Ansible
 Installation instructions using Ansible
-1. prepare an Ansible server
+1. Prepare an Ansible server
 Prepare an Ansible service with necessary packages
 
-2. install a base CentOS
+2. Install a base CentOS
     - install a base CentOS7 with `minimum distribution` and `developer package`
     - set and remember password for the root account
 
-3. prepare the playbook
+3. Prepare the playbook
     - extract playbooks from `misc/ansible-renat-github.tar.gz`
     - add an entry in ansible server for the install target `genesis` in `/etc/hosts` file
 
@@ -154,11 +154,11 @@ Prepare an Ansible service with necessary packages
 
     - if the target is behind a proxy, configure the proxy IP in `host_vars/genesis`
 
-4. run the playbook
+4. Run the playbook
 
     ```
-    $ cd ansible-renat-github
-    $ ansible-playbook -i inventories/host -e "hosts=genesis" RENAT_INSTALL.yml -vvvv --diff
+    cd ansible-renat-github
+    ansible-playbook -i inventories/host -e "hosts=genesis" RENAT_INSTALL.yml -vvvv --diff
     ```
 
 The playbook will install necessary packages and environment for RENAT
@@ -168,7 +168,7 @@ Add necessary more users and go to [here](#renat-checkout-and-preparation) to co
 ## Installation for CentOS7
 Basic install instruction for Centos7 and Python3
 
-### 1. base install
+### 1. Base install
 Install a typical Centos7 with following parameters:
 
     - memory: 16G (or more)
@@ -180,12 +180,12 @@ Install a typical Centos7 with following parameters:
     - dns: 10.128.3.101 (sample)
     - hostname: renat.localhost (sample)
 
-### 2. post install configuration
+### 2. Post install configuration
 - disable SE linux:
     - disable the feature
 
         ```
-        $ set enforce 0
+        set enforce 0
         ```
 
     - configure `SELINUX=disabled` in the `/etc/selinux/config` file:
@@ -193,65 +193,65 @@ Install a typical Centos7 with following parameters:
 - update install package and `reboot` the system
 
     ```
-    $ yum update -y
-    $ reboot
+    yum update -y
+    reboot
     ```
         
-### 3. library installation
+### 3. Library installation
 - install python3 and related library
 
     ```
-    $ yum install -y python3 python3-libs python3-devel python3-pip
-    $ pip3.6 install --upgrade pip 
+    yum install -y python3 python3-libs python3-devel python3-pip
+    pip3.6 install --upgrade pip 
     ```
 
 - install extra libraries
 
     ```
-    $ yum install -y net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python3-tkinter xorg-x11-server-Xvfb  vim httpd xorg-x11-fonts-75dpi  nfs samba4 samba-client samba-winbind cifs-utils tcpdump hping3 telnet nmap wireshark java-1.8.0-openjdk firefox telnet ld-linux.so.2 ghostscript ImageMagick vlgothic-fonts vlgothic-p-fonts ntp openssl sshpass
-    $ pip3.6 install pytest-runner
-    $ pip3.6 install numpy pyte PyYAML openpyxl Jinja2 pandas lxml requests netsnmp-py pdfkit robotframework robotframework-selenium2library robotframework-sshlibrary docutils pyvmomi PyVirtualDisplay pyscreenshot pillow decorator imgurscrot opencv-python pytesseract
+    yum install -y net-snmp net-snmp-devel net-snmp-utils czmq czmq-devel python3-tkinter xorg-x11-server-Xvfb  vim httpd xorg-x11-fonts-75dpi  nfs samba4 samba-client samba-winbind cifs-utils tcpdump hping3 telnet nmap wireshark java-1.8.0-openjdk firefox telnet ld-linux.so.2 ghostscript ImageMagick vlgothic-fonts vlgothic-p-fonts ntp openssl sshpass
+    pip3.6 install pytest-runner
+    pip3.6 install numpy pyte PyYAML openpyxl Jinja2 pandas lxml requests netsnmp-py pdfkit robotframework robotframework-selenium2library robotframework-sshlibrary docutils pyvmomi PyVirtualDisplay pyscreenshot pillow decorator imgurscrot opencv-python pytesseract
     ```
     
 - install libraries (besides yum)
 
     ```
-    $ cd /root
-    $ mkdir -p work/download
+    cd /root
+    mkdir -p work/download
 
-    $ cd /root/work/download
-    $ wget https://github.com/mozilla/geckodriver/releases/download/v0.21.0/geckodriver-v0.21.0-linux64.tar.gz
-    $ tar xzvf /root/work/download/geckodriver-v0.21.0-linux64.tar.gz -C /usr/local/bin
+    cd /root/work/download
+    wget https://github.com/mozilla/geckodriver/releases/download/v0.21.0/geckodriver-v0.21.0-linux64.tar.gz
+    tar xzvf /root/work/download/geckodriver-v0.21.0-linux64.tar.gz -C /usr/local/bin
 
-    $ cd /root/work/download
-    $ wget https://downloads.wkhtmltopdf.org/0.12/0.12.5/wkhtmltox-0.12.5-1.centos7.x86_64.rpm
-    $ rpm -Uvh wkhtmltox-0.12.5-1.centos7.x86_64.rpm
+    cd /root/work/download
+    wget https://downloads.wkhtmltopdf.org/0.12/0.12.5/wkhtmltox-0.12.5-1.centos7.x86_64.rpm
+    rpm -Uvh wkhtmltox-0.12.5-1.centos7.x86_64.rpm
     ```
 
 - install jenkins (optional)
 
     ```
-    $ cd work/download        
-    $ sudo wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
-    $ sudo rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key
-    $ yum install -y jenkins
+    cd work/download        
+    sudo wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
+    sudo rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key
+    yum install -y jenkins
     ```
         
-### 4. more system configuration 
+### 4. Configure system
 - modify NTP server
     - modify /etc/ntp.conf for favourite NTP server
     - activate and make the service auto start
        ```
-       $ service ntpd start
-       $ chkconfig ntpd on
+       service ntpd start
+       chkconfig ntpd on
        ```
     - check the current NTP
        ```
-       $ ntpq -p
+       ntpq -p
        ```
 
 - sudo privilege
-    - add a file named `renat` (persion 0440) to folder `/etc/sudoers.d`
+    - add a file named `renat` (permision 0440) to folder `/etc/sudoers.d`
     
         ```
         Defaults    env_keep += "PATH PYTHONPATH LD_LIBRARY_PATH MANPATH XDG_DATA_DIRS PKG_CONFIG_PATH RENAT_PATH"
@@ -278,9 +278,9 @@ Install a typical Centos7 with following parameters:
 - add a default group and user and set its password
 
     ```
-    $ groupadd renat -o -g 1000
-    $ useradd robot -g renat
-    $ passwd robot
+    groupadd renat -o -g 1000
+    useradd robot -g renat
+    passwd robot
     ```
 
     *Note*: the password of this `robot` account is set in the RENAT config file `${RENAT_PATH}/config/config.yaml`
@@ -289,9 +289,9 @@ Install a typical Centos7 with following parameters:
     - prepare a log folder
 
     ```
-    $ mkdir /var/log/renat
-    $ chown root:renat /var/log/renat
-    $ chmod 0775 /var/log/renat
+    mkdir /var/log/renat
+    chown root:renat /var/log/renat
+    chmod 0775 /var/log/renat
     ```
 
     - add setting for renat to the end of `/etc/rsyslog.conf`
@@ -304,7 +304,7 @@ Install a typical Centos7 with following parameters:
     - and restart the rsyslog daemon
 
     ```
-    $ service rsyslog restart
+    service rsyslog restart
     ```
 
     - prepare a logrotate file `/etc/logrotate.d/renat`
@@ -332,18 +332,18 @@ Install a typical Centos7 with following parameters:
     - enable the service
     
         ```
-        $ systemctl enable jenkins
-        $ systemctl start jenkins
+        systemctl enable jenkins
+        systemctl start jenkins
         ```
 
 - configure iptables:
     By default, Centos7 does not support saving iptables from `service` command. 
     ```
-    $ systemctl stop firewalld
-    $ systemctl disable firewalld
-    $ yum install -y iptables-services
-    $ systemctl enable iptables.service
-    $ systemctl start iptables.service
+    systemctl stop firewalld
+    systemctl disable firewalld
+    yum install -y iptables-services
+    systemctl enable iptables.service
+    systemctl start iptables.service
     ```
     
     Then configure `iptables` to allow necessary ports like `80`,`8082`,`22` and traffic from IxiaAppServer.
@@ -378,44 +378,44 @@ Install a typical Centos7 with following parameters:
     - prepare the document folder
     
         ```  
-        $ mkdir -p /var/www/html/renat-doc
-        $ chown apache:renat /var/www/html/renat-doc/
-        $ chmod 0775 /var/www/html/renat-doc/
+        mkdir -p /var/www/html/renat-doc
+        chown apache:renat /var/www/html/renat-doc/
+        chmod 0775 /var/www/html/renat-doc/
         ```
             
     - enable and restart the service
     
         ```
-        $ systemctl restart httpd
-        $ systemctl enable httpd
+        systemctl restart httpd
+        systemctl enable httpd
         ```
 
 - make skeleton for users
     - create a folder call `work` under `/etc/skel` with mode `0750`
 
-### 5. add a renat user
+### 5. Add renat user
 - add a user (e.g. robot) to the group `renat`
 
     ```
-    $ useradd robot -g renat
-    $ passwd robot
+    useradd robot -g renat
+    passwd robot
     ```
 
 - login as the new user
     
-- create a key for the account `robot` that would be used for using with SSH proxy. Enter when asked for password (2 times)
+- create a key for the account `robot` that would be used for using with SSH proxy. Push `Enter` when asked for password (2 times)
 
     ```
-    $ mkdir ~/.ssh
-    $ cd ~/.ssh
-    $ ssh-keygen -C for_robot_`whoami` -f robot_id_rsa
+    mkdir ~/.ssh
+    cd ~/.ssh
+    ssh-keygen -C for_robot_`whoami` -f robot_id_rsa
     
 - push to key to proxy server using `robot` password
     ```
-    $ ssh-copy-id -i robot_id_rsa.pub robot@<proxy server IP>
+    ssh-copy-id -i robot_id_rsa.pub robot@<proxy server IP>
     ```
 
-### 6. install Ixia related (optional)
+### 6. Install Ixia related (optional)
 - download necessary files (below are samples. Use the correct install files in your environment)
 
     ```
@@ -426,21 +426,21 @@ Install a typical Centos7 with following parameters:
 - install IxOS. Choose `Tcl8.5` and default destination folder `/opt/ixia/ixos/6.80-EA-SP1`
 
     ```
-    $ tar xzvf IxOS6.80.1100.9Linux64.bin.tar.gz
-    $ ./IxOS6.80.1100.9Linux64.bin -i console
+    tar xzvf IxOS6.80.1100.9Linux64.bin.tar.gz
+    ./IxOS6.80.1100.9Linux64.bin -i console
     ```
     
 - install IxNetwork. Choose `/opt/ixia/ixnet/7.41-EA` for default destination folder and `1-Yes` for `HTLAPI` when asked (let other option as default)
 
     ```
-    $ tar xzvf IxNetworkTclClient7.41.945.9Linux.bin.tgz
-    $ ./IxNetworkTclClient7.41.945.9Linux.bin -i console
+    tar xzvf IxNetworkTclClient7.41.945.9Linux.bin.tgz
+    ./IxNetworkTclClient7.41.945.9Linux.bin -i console
     
 - install IOxLoad. Choose `/opt/ixia/ixload/8.01.99.14` for default destination folder.
 
     ```
-    $ tar xzvf IxLoadTclApi8.01.99.14Linux_x64.bin.tgz
-    $ ./IxLoadTclApi8.01.99.14Linux_x64.bin -i console
+    tar xzvf IxLoadTclApi8.01.99.14Linux_x64.bin.tgz
+    ./IxLoadTclApi8.01.99.14Linux_x64.bin -i console
     ```
 *Note*: 
 - if it is necessary remove the folder if you chose wrong destination folder and reinstall
@@ -450,14 +450,33 @@ Install a typical Centos7 with following parameters:
 - install avalanch api
     
     ```
-    $ pip3.6 install avalancheapi
+    pip3.6 install avalancheapi
     ```
 - install avaproxy
 
     Detail for `avaproxy` could be found in `misc` folder
 
-## Installation for CentOS6
-Install instructions for CentOS6 Python2.x environment could be found in [here](./README_python2x.md)
+
+## Installation for other CentOSes:
+
+- CentOS 6: Install instructions for CentOS6 Python2.x environment could be found in [here](./README_python2x.md)
+- CentOS 8: is almost identical with CenOS 7 with following differences
+  - Installing epel8 before other packages
+    ```
+    yum -y install epel-release
+    ```
+  - Using `chrony` instead of ntp. Editing `/etc/chrony.conf` for proper NTP server and active by
+    ```
+    service chronyd start
+    chkconfig chronyd on
+    chronyc source
+    ```
+  - Using wkhtmltox  with newer version
+    ```
+    cd /root/work/download
+    wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox-0.12.6-1.centos8.x86_64.rpm
+    rpm -Uvh wkhtmltox-0.12.6-1.centos8.x86_64.rpm
+    ```
 
 
 ## RENAT checkout and preparation
@@ -465,10 +484,10 @@ Install instructions for CentOS6 Python2.x environment could be found in [here](
     Prepare a RENAT folder in user working folder and check out the source
 
     ```
-    $ cd
-    $ mkdir work
-    $ cd work
-    $ git clone https://github.com/bachng2017/RENAT.git renat
+    cd
+    mkdir work
+    cd work
+    git clone https://github.com/bachng2017/RENAT.git renat
     ```
 
 2. RENAT  configuration
@@ -477,11 +496,11 @@ Install instructions for CentOS6 Python2.x environment could be found in [here](
 
     If you have multi renat (different version) checked out, modify this varible to use the correct RENAT version.
     ```
-    $ export RENAT_PATH=~/work/renat
+    export RENAT_PATH=~/work/renat
     ```
     Or edit your startup script
     ```
-    $ echo "export RENAT_PATH=~/work/renat" >> ~/.bashrc
+    echo "export RENAT_PATH=~/work/renat" >> ~/.bashrc
     ```
 
 3. Adjust the test enviroment
@@ -510,8 +529,8 @@ For example change the IP for device `vmx11` in `device.yaml` and change the `de
 1. Create a sample project
 
     ```
-    $ cd ~/work
-    $ $RENAT_PATH/tools/project.sh sample
+    cd ~/work
+    $RENAT_PATH/tools/project.sh sample
     created test project:  sample
     use item.sh to create test case
     
@@ -526,8 +545,8 @@ For example change the IP for device `vmx11` in `device.yaml` and change the `de
 2. Create a sample test item
 
     ```
-    $ cd sample
-    $ $RENAT_PATH/tools/item.sh item01
+    cd sample
+    $RENAT_PATH/tools/item.sh item01
     Create local configuration file (local.yaml) or not [yes,no=default]:y
     Use tester [ex:ixnet03_8009]:
     Use tester config file [ex:traffic.ixncfg]:
@@ -541,7 +560,7 @@ For example change the IP for device `vmx11` in `device.yaml` and change the `de
     Tester config file:/home/user/work/renat/tools/item01/config/
     Check and change the `local.yaml` local config file if necessary
 
-    $ tree item01
+    tree item01
     item01
     ├── config
     │   ├── local.yaml
@@ -583,7 +602,7 @@ For example change the IP for device `vmx11` in `device.yaml` and change the `de
 4. Use `--dryrun` option to check the syntax
 
     ```
-    $ ./run.sh --dryrun
+    ./run.sh --dryrun
     Current RENAT path: /home/user/work/renat
     Run only once
     Current local.yaml: /home/user/work/renat/sample/item01/config/local.yaml
@@ -606,7 +625,7 @@ For example change the IP for device `vmx11` in `device.yaml` and change the `de
 5. Execute `./run.sh` to run the test. Test result and log files are in the `./result` folder.
 
     ```
-    $ ./run.sh
+    ./run.sh
     Current RENAT path: /home/user/work/renat
     Run only once
     Current local.yaml: /home/user/work/renat/sample/item01/config/local.yaml
