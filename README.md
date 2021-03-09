@@ -123,8 +123,10 @@ A super simple way to try RENAT is running it from a container. Below are instru
     - $RENAT_PATH/config/device.yaml: device's IP
     - $RENAT_PATH/config/auth.yaml: authentication (username/password)
     - $RENAT_PATH/config/template.yaml(optional): in case current templates are not fit for your devices
+
+    Notes: By default, `config` is a symbolic link to `misc/config.sample`. Change it to other permanent path to keep your configurations if it is necessary.
     
-See [Create scenarios](#create-scenarios) for more detail about creating a sample to interact with routers.
+See [Create scenarios](#create-scenarios) for more details about creating a sample to interact with routers.
 
     
 ## Installation by Ansible
