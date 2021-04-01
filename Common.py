@@ -1011,7 +1011,12 @@ def get_test_device():
 def md5(str):
     """ Returns MD5 hash of a string
     """
-    return hashlib.md5(str).hexdigest()
+    result = ""
+    if sys.version_info[0] > 2:
+        result = hashlib.md5(str.encode('utf-8')).hexdigest()
+    else:
+        result = hashlib.md5(str).hexdigest()
+    return result
 
 
 def file_md5(path):
