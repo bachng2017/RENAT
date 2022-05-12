@@ -299,7 +299,8 @@ class VChannel(object):
                 timeout=None,
                 w=None,
                 h=None,
-                mode='w', profile=None):
+                mode='w', profile=None,
+                username=None, password=None):
 
         if not timeout:
             timeout = Common.get_config_value('terminal-timeout')
@@ -310,24 +311,30 @@ class VChannel(object):
         if not w:
             w = terminal_info['width']
 
-        self._connect(node, name, log_file, timeout, w, h, mode, profile)
+        self._connect(
+            node, name, log_file, timeout, w, h, 
+            mode=mode, profile=profile,
+            username=username, password=password    
+        )
 
         BuiltIn().log(Common.get_config_value(
                 'async-channel', 'vchannel', False
             )
         )
 
-        # Put in cause i got a none error , discuss with nguyen
         if Common.get_config_value('async-channel', 'vchannel', False) and self._async_channel is not None :
             self._async_channel._connect(
-                node, name, log_file, timeout, w, h, mode, profile
+                node, name, log_file, timeout, w, h, 
+                mode=mode, profile=profile,
+                username=username, password=password    
             )
 
     def _connect(self, node, name, log_file,
                  timeout=None,
                  w=None,
                  h=None,
-                 mode='w', profile=None,):
+                 mode='w', profile=None,
+                 username=None, password=None):
         """ Connects to the node and create a VChannel instance
 
         Login information is automatically extracted from yaml configuration.
@@ -342,9 +349,13 @@ class VChannel(object):
         Multi sessions to the same node could be open with different names.
         Use `Switch` to change the current active session by its name
 
+        User can specify a username/password on connect which will override
+        any values specified in ${RENAT_PATH}/config/auth.yaml for the session.
+
         Examples:
         | `Connect` | vmx11 | vmx11 | vmx11.log |
         | `Connect` | vmx11 | vmx11 | vmx11.log | 80 | 64 |
+        | `Connect` | vmx11 | vmx11 | vmx11.log | username=User | password=Pass |
 
         See ``Common`` for more detail about the yaml config files.
         """
@@ -390,6 +401,18 @@ class VChannel(object):
                 'Unable to find a matching profile for {p}'
                 ' in auth.yaml'.format(p=_profile)
             )
+       
+        if username is not None or password is not None:
+            if username is None:
+                raise Exception(
+                    'ERR: Password specified but no matching username provided'
+                )
+            if password is None:
+                raise Exception(
+                    'ERR: Username specified but no matching password provided'
+                )
+            _auth['user'], _auth['pass'] = username, password
+
         _init = _access_tmpl.get('init')      # init command
         _finish = _access_tmpl.get('finish')    # finish  command
         # in case the device has no login prompt, set the a null `login-prompt`
