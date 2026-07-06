@@ -315,7 +315,7 @@ class Fic(WebApp):
         """
         self.capture_screenshot(extra="_failure")
         self.close()
-        BuiltIn().log("A failure has been occured, quit the browser")
+        BuiltIn().log("A failure has been occurred, quit the browser")
 
 
     def close(self):
