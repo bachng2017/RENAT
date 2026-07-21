@@ -219,7 +219,7 @@ Usually the ``local.yaml`` has following parts:
 - WEB node information: started by ``webapp`` keyword
 - Tester device information: started by ``tester`` keyword
 - Default information: automatically created and started by ``default`` keyword
-- And other neccessary information for the test by yaml format
+- And other necessary information for the test by yaml format
 
 
 
