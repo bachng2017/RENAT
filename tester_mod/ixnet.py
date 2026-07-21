@@ -1556,7 +1556,7 @@ def start_test_composer(self,script_name=u'Main_Procedure',run_num=u'1',wait_for
                 sched = ix.getList(composer_runner,'eventScheduler')[0]
                 break
 
-    # create new quicktest item if it is neccessary
+    # create new quicktest item if it is necessary
     if composer_runner is None:
         composer_runner = ix.add(ix.getRoot() + '/quickTest','eventScheduler')
         ix.setAttribute(composer_runner,'-name','composer_runner')
