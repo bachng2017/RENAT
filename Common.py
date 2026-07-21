@@ -1698,7 +1698,7 @@ def get_ip_address_increment(prefix,increment):
     return str(ipaddress.ip_address(prefix) + int(ipaddress.ip_address(increment)))
 
 
-def send_mail_with_embeded_data(mail_from,send_to,subject,txt,img_path=None,file_path=None):
+def send_mail_with_embedded_data(mail_from,send_to,subject,txt,img_path=None,file_path=None):
     """ Sends a mail with attached file or image
 
     SMTP server is define by smtp-server:port in global default section
